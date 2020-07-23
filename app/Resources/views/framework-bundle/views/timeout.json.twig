@@ -1,0 +1,24 @@
+{% extends "./layout.json.twig" %}
+
+{% block body %}
+  "server":"nodefony",
+  {% if error.code %}
+  "code":{{error.code}},
+  {% else %}
+  "code":408,
+  {% endif %}
+  {% if error.errorType %}
+  "type":"{{error.errorType}}",
+  {% else %}
+  "type":"Error",
+  {% endif %}
+  {% if error.pdu %}
+  "pdu":{{ error.pdu }},
+  {% endif %}
+  "url":"{{error.url }}",
+  {% if error.message %}
+  "message":"{{error.message }}"
+  {% else %}
+  "message":"Response Timeout"
+  {% endif %}
+{% endblock %}

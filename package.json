@@ -1,0 +1,52 @@
+{
+  "name": "nodefony-mediasoup",
+  "version": "1.0.0",
+  "description": "Project Description",
+  "main": "nodefony",
+  "scripts": {
+    "nodefony": "nodefony",
+    "pm2": "pm2",
+    "start": "nodefony",
+    "dev": "nodefony dev",
+    "build": "nodefony build",
+    "rebuild": "nodefony rebuild",
+    "stop": "nodefony stop",
+    "prod": "nodefony prod",
+    "kill": "nodefony kill",
+    "test": "nodefony test",
+    "help": "nodefony -h"
+  },
+  "private": true,
+  "keywords": [
+    "Node.js",
+    "nodefony"
+  ],
+  "repository": {},
+  "bugs": {},
+  "license": "",
+  "os": [
+    "darwin",
+    "linux",
+    "freebsd",
+    "win32"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "dependencies": {
+    "mongoose": "^5.9.24",
+    "nodefony": "^6.0.0-beta.15",
+    "pm2": "^4.4.0",
+    "pm2-logrotate": "^2.7.0",
+    "sequelize": "^6.3.3",
+    "webpack": "^4.43.0",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "devDependencies": {
+    "node-gyp": "^7.0.0",
+    "node-pre-gyp": "^0.15.0"
+  },
+  "author": "Christophe CAMENSULI <ccamensuli@gmail.com>",
+  "readmeFilename": "README.md",
+  "contributors": [{}]
+}
