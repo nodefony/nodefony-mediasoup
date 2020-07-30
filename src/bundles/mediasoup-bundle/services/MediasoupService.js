@@ -9,6 +9,7 @@ module.exports = class Mediasoup extends nodefony.Service {
     this.config = this.bundle.settings.mediasoup;
     this.workers = [];
     this.nextMediasoupWorkerIdx = 0;
+    console.log("passsssssss")
     if (!kernel.ready) {
       this.kernel.once("onReady", () => {
         this.roomsService = this.get("rooms");

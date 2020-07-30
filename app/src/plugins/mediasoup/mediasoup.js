@@ -25,7 +25,7 @@ class Mediasoup extends nodefony.Service {
   connect(){
     const exampleSocket = new WebSocket("wss://localhost:5152/mediasoup/ws?roomId=eee&peerId=cci");
     exampleSocket.onopen =  (event) =>{
-      exampleSocket.send("sbobobobob");
+      //exampleSocket.send("sbobobobob");
     }
     exampleSocket.onmessage =  (event) =>{
       this.log(event.data,"DEBUG", 'WebSocket message')

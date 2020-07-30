@@ -6,5 +6,9 @@ module.exports = {
   rooms: {
     class: nodefony.services.rooms,
     arguments: ["@container"]
+  },
+  Bot: {
+    class: nodefony.services.Bot,
+    arguments: ["@container"]
   }
 };
