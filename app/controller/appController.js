@@ -1,4 +1,3 @@
-
 /**
  *	@class appController
  *	@constructor
@@ -13,15 +12,15 @@ class appController extends nodefony.Controller {
     this.startSession();
   }
 
-/**
- *    @Route ("/",
- *      name="home")
- */
+  /**
+   *    @Route ("/",
+   *      name="home")
+   */
   indexAction() {
     return this.render("app::index.html.twig", {
       name: this.kernel.projectName,
-			description: this.kernel.package.description    });
-
+      description: this.kernel.package.description
+    });
   }
 }
 

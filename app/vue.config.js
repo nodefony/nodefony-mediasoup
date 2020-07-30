@@ -8,9 +8,11 @@ const publicPath = "/app";
 const template = path.resolve('public', 'index.html');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const title = package.name;
+const packageVuetify = require(path.resolve("node_modules", "vuetify", "package.json"));
 
 process.env.VUE_APP_VERSION = package.version;
 process.env.VUE_APP_VUE_VERSION = packageVue.version;
+process.env.VUE_APP_VUETIFY_VERSION = packageVuetify.version;
 process.env.VUE_APP_DEBUG = process.env.DEBUG_MODE;
 process.env.VUE_APP_NODE_ENV = process.env.NODE_ENV;
 
