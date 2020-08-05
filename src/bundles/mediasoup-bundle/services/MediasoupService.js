@@ -9,37 +9,60 @@ module.exports = class Mediasoup extends nodefony.Service {
     this.config = this.bundle.settings.mediasoup;
     this.workers = [];
     this.nextMediasoupWorkerIdx = 0;
-    console.log("passsssssss")
     if (!kernel.ready) {
       this.kernel.once("onReady", () => {
-        this.roomsService = this.get("rooms");
+        this.roomsService = this.get("Rooms");
+        this.peersService = this.get("Peers");
         this.runMediasoupWorkers();
       });
       this.kernel.once("onTerminate", () => {
         this.closeWorkers()
       });
-      /*setTimeout(() => {
-        this.closeWorkers()
-      }, 20000);*/
-    }else{
-      this.roomsService = this.get("rooms");
+    } else {
+      this.roomsService = this.get("Rooms");
+      this.peersService = this.get("Peers");
     }
   }
 
-  async handShakeRealTime(query, context){
-    if ( query.roomId && query.peerId){
-      let info = `websocket connection request :
+  async handShake(query, context) {
+    if (query.roomId && query.peerId) {
+      let info = `websocket handshake connection :
       [roomId:${query.roomId}, peerId:${query.peerId}, address:${context.remoteAddress}, origin:${context.origin}]`
       this.log(info);
-      let room = await this.getOrCreateRoom(query.roomId, query.peerId);
-      context.send("ssss")
-    }else{
+      let room = await this.getOrCreateRoom(query.roomId);
+      let peer = await room.createPeer(query.peerId, context);
+      let message = {
+        query,
+        method: "handshake",
+        query,
+        roomid: room.id,
+        peerid: peer.id
+      };
+      return context.send(JSON.stringify(message));
+    } else {
       throw new nodefony.Error("Connection request without roomId and/or peerId", 5006)
     }
   }
 
-  handleMessageRealTime(message, context){
-    console.log(message)
+  handle(message, context) {
+    this.log(message);
+    if (!message.roomid && !message.peerid) {
+      throw new Error(`Message can be without roomid an/or peerid`);
+    }
+    /*if (!this.roomsService.hasRoom(message.roomid)) {
+      if (message.method !== "join") {
+        throw new Error(`No room : ${message.roomid} found `);
+      }
+    }*/
+    let room = this.roomsService.getRoom(message.roomid);
+    if (!room){
+      throw new Error(`Room not exit with id ${message.roomid} `)
+    }
+    let peer = room.getPeer(message.peerid);
+    if (!peer) {
+      throw new Error(`Peer not exit with id ${message.peerid} `)
+    }
+    return this.roomsService.handle(room, peer, message, context);
   }
 
   async runMediasoupWorkers() {
@@ -68,17 +91,18 @@ module.exports = class Mediasoup extends nodefony.Service {
       this.workers.push(worker);
       this.log(`run [pid:${worker.pid}] mediasoup Worker...`);
       // Log worker resource usage every X seconds.
-      setInterval(async () => {
-        const usage = await worker.getResourceUsage();
-        this.log(`mediasoup Worker resource usage [pid:${worker.pid}]:`);
-        this.log(usage);
-      }, 120000);
+      if (this.kernel.debug) {
+        setInterval(async () => {
+          const usage = await worker.getResourceUsage();
+          this.log(`mediasoup Worker resource usage [pid:${worker.pid}]:`, "DEBUG");
+          this.log(usage);
+        }, 120000);
+      }
     }
   }
 
   getMediasoupWorker() {
     const worker = this.workers[this.nextMediasoupWorkerIdx];
-
     if (++this.nextMediasoupWorkerIdx === this.workers.length) {
       this.nextMediasoupWorkerIdx = 0;
     }
@@ -92,12 +116,13 @@ module.exports = class Mediasoup extends nodefony.Service {
     // If the Room does not exist create a new one.
     if (!room) {
       this.log(`creating a new Room [roomId:${roomId}]`);
-      const mediasoupWorker = this.getMediasoupWorker();
+      const worker = this.getMediasoupWorker();
       room = await this.roomsService.create(
-        mediasoupWorker,
+        worker,
         roomId
       );
-      this.roomsService.setRoom(roomId, room);
+    }else{
+      this.log(`Connect Room  [roomId:${roomId}]`);
     }
     return room;
   }

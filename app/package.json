@@ -9,13 +9,15 @@
     "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/locales/**/*.json'"
   },
   "dependencies": {
+    "@mdi/js": "^5.4.55",
+    "bowser": "^2.10.0",
     "clean-webpack-plugin": "^3.0.0",
     "core-js": "^3.6.5",
     "mediasoup-client": "^3.6.12",
     "vue": "^2.6.11",
-    "vue-i18n": "^8.19.0",
-    "vue-router": "^3.2.0",
-    "vuetify": "^2.3.6",
+    "vue-i18n": "^8.20.0",
+    "vue-router": "^3.4.0",
+    "vuetify": "^2.3.7",
     "vuex": "^3.4.0"
   },
   "devDependencies": {
@@ -26,7 +28,7 @@
     "@vue/cli-plugin-vuex": "~4.4.0",
     "@vue/cli-service": "~4.4.0",
     "babel-eslint": "^10.1.0",
-    "eslint": "^7.5.0",
+    "eslint": "^7.6.0",
     "eslint-plugin-vue": "^6.2.2",
     "sass": "^1.19.0",
     "sass-loader": "^9.0.2",

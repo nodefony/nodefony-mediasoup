@@ -21,9 +21,11 @@ class wsController extends nodefony.Controller {
     switch (this.method) {
       case "WEBSOCKET":
       if (message){
-        this.mediasoup.handleMessageRealTime(message, this.context)
+        let info = `websocket message type :  ${message.type}`;
+        this.log(info, "DEBUG");
+        this.mediasoup.handle(JSON.parse(message.utf8Data), this.context)
       }else{
-        this.mediasoup.handShakeRealTime(this.query, this.context)
+        this.mediasoup.handShake(this.query, this.context)
       }
       break;
       default:

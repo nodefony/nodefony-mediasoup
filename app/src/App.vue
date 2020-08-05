@@ -2,7 +2,7 @@
 <v-app id="inspire">
 
   <v-main>
-    <v-container fluid>
+    <v-container fluid class="main">
       <router-view />
     </v-container>
   </v-main>
@@ -19,3 +19,10 @@ export default {
   }),
 };
 </script>
+<style>
+.main {
+  padding: 0px ! important;
+  margin: 0px;
+  height: 100%;
+}
+</style>

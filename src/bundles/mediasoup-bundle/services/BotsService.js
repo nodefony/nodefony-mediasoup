@@ -1,9 +1,9 @@
-const bot = require(path.resolve(__dirname, "..", "src", "bot.js"))
+const Bot = require(path.resolve(__dirname, "..", "src", "bot.js"))
 
-class Bot extends nodefony.Service {
+class Bots extends nodefony.Service {
 
   constructor(container) {
-    super("Bot", container);
+    super("Bots", container);
   }
 
   async create(router) {
@@ -17,8 +17,8 @@ class Bot extends nodefony.Service {
       label: this.name
     });
 
-    return new bot(transport, dataProducer, this.container);
+    return new Bot(transport, dataProducer, this.container);
   }
 };
 
-module.exports = Bot;
+module.exports = Bots;

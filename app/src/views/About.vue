@@ -71,8 +71,10 @@ export default {
     <v-chip class="ma-2" color="success" outlined>
       {{vuetifyVersion}}
     </v-chip>
+  </v-row>
 
-
+  <v-row align="center" justify="center">
+    <img style="" src="../assets/fsu.png" />
   </v-row>
 
   <v-row align="center" justify="center">
