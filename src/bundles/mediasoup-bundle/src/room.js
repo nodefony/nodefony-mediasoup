@@ -65,7 +65,7 @@ class Room extends nodefony.Service {
         for (const otherPeer of this.getJoinedPeers({
             excludePeer: peer
           })) {
-          otherPeer.notify("peerClosed", {
+          otherPeer.notify(this, "peerClosed", {
             peerId: peer.id
           });
         }
@@ -156,13 +156,8 @@ class Room extends nodefony.Service {
         displayName: joinedPeer.displayName,
         device: joinedPeer.device
       }));
-
     // Mark the new Peer as joined.
     peer.joined = true;
-    for (const joinedPeer of joinedPeers) {
-      // Create Consumers for existing Producers.
-      for (const producer of joinedPeer.producers.values()) {}
-    }
     return peerInfos;
   }
 
@@ -203,7 +198,7 @@ class Room extends nodefony.Service {
       transport.on('trace', (trace) => {
         this.log(`transport "trace" event [transportId:${transport.id}, trace.type:${trace.type} ]`, "DEBUG");
         this.log(trace, "DEBUG");
-        peer.notify('downlinkBwe', {
+        peer.notify(this, 'downlinkBwe', {
           desiredBitrate: trace.info.desiredBitrate,
           effectiveDesiredBitrate: trace.info.effectiveDesiredBitrate,
           availableBitrate: trace.info.availableBitrate
@@ -236,9 +231,10 @@ class Room extends nodefony.Service {
       if (!transport) {
         throw new Error(`transport with id "${transportId}" not found`);
       }
-      return await transport.connect({
+      await transport.connect({
         dtlsParameters
       });
+      return transport;
     } catch (e) {
       this.log(e, "ERROR");
       throw e
@@ -275,7 +271,7 @@ class Room extends nodefony.Service {
       // logger.debug(
       // 	'producer "score" event [producerId:%s, score:%o]',
       // 	producer.id, score);
-      peer.notify('producerScore', {
+      peer.notify(this, 'producerScore', {
         producerId: producer.id,
         score
       });
@@ -295,8 +291,124 @@ class Room extends nodefony.Service {
     return producer
   }
 
-  async createConsumer(consumerPeer, producerPeer, producer) {
+  async createConsumer({consumerPeer, producerPeer, producer}) {
+    // Optimization:
+    // - Create the server-side Consumer in paused mode.
+    // - Tell its Peer about it and wait for its response.
+    // - Upon receipt of the response, resume the server-side Consumer.
+    // - If video, this will mean a single key frame requested by the
+    //   server-side Consumer (when resuming it).
+    // - If audio (or video), it will avoid that RTP packets are received by the
+    //   remote endpoint *before* the Consumer is locally created in the endpoint
+    //   (and before the local SDP O/A procedure ends). If that happens (RTP
+    //   packets are received before the SDP O/A is done) the PeerConnection may
+    //   fail to associate the RTP stream.
 
+    // NOTE: Don't create the Consumer if the remote Peer cannot consume it.
+    let canConsume = this.router.canConsume({
+      producerId: producer.id,
+      rtpCapabilities: consumerPeer.rtpCapabilities
+    });
+    if ( !consumerPeer.rtpCapabilities || !canConsume){
+      this.log(`Peer : ${consumerPeer.id} canConsume :  ${canConsume} `,"WARNING")
+      this.log(`rtpCapabilities : ${consumerPeer.rtpCapabilities}`,"WARNING");
+      return;
+    }
+    // Must take the Transport the remote Peer is using for consuming.
+    const transport = Array.from(consumerPeer.transports.values())
+      .find((t) => t.appData.consuming);
+
+    // This should not happen.
+    if (!transport) {
+      this.log('createConsumer() | Transport for consuming not found', "WARNING");
+      return;
+    }
+    // Create the Consumer in paused mode.
+    let consumer;
+    try {
+      consumer = await transport.consume({
+        producerId: producer.id,
+        rtpCapabilities: consumerPeer.rtpCapabilities,
+        paused: true
+      });
+    } catch (error) {
+      this.log('_createConsumer() | transport.consume()', "ERROR");
+      this.log(error, 'ERROR');
+      return;
+    }
+    // Store the Consumer into the protoo consumerPeer data Object.
+    consumerPeer.consumers.set(consumer.id, consumer);
+    // Set Consumer events.
+    consumer.on('transportclose', () => {
+      // Remove from its map.
+      consumerPeer.consumers.delete(consumer.id);
+    });
+    consumer.on('producerclose', () => {
+      // Remove from its map.
+      consumerPeer.consumers.delete(consumer.id);
+      consumerPeer.notify(this, 'consumerClosed', {
+          consumerId: consumer.id
+        })
+    });
+    consumer.on('producerpause', () => {
+      consumerPeer.notify(this, 'consumerPaused', {
+          consumerId: consumer.id
+        })
+    });
+    consumer.on('producerresume', () => {
+      consumerPeer.notify(this, 'consumerResumed', {
+          consumerId: consumer.id
+        })
+    });
+    consumer.on('score', (score) => {
+      // logger.debug(
+      // 	'consumer "score" event [consumerId:%s, score:%o]',
+      // 	consumer.id, score);
+      consumerPeer.notify(this, 'consumerScore', {
+          consumerId: consumer.id,
+          score
+        })
+    });
+    consumer.on('layerschange', (layers) => {
+      consumerPeer.notify(this, 'consumerLayersChanged', {
+            consumerId: consumer.id,
+            spatialLayer: layers ? layers.spatialLayer : null,
+            temporalLayer: layers ? layers.temporalLayer : null
+          })
+    });
+    // NOTE: For testing.
+    // await consumer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
+    // await consumer.enableTraceEvent([ 'pli', 'fir' ]);
+    // await consumer.enableTraceEvent([ 'keyframe' ]);
+    consumer.on('trace', (trace) => {
+      this.log(`'consumer "trace" event [producerId:${consumer.id}, trace.type:${trace.type}]`, "DEBUG");
+      this.log(trace, "DEBUG");
+    });
+    // Send a protoo request to the remote Peer with Consumer parameters.
+    try {
+      consumerPeer.send(this, 'newConsumer', {
+        peerId: producerPeer.id,
+        producerId: producer.id,
+        id: consumer.id,
+        kind: consumer.kind,
+        rtpParameters: consumer.rtpParameters,
+        type: consumer.type,
+        appData: producer.appData,
+        producerPaused: consumer.producerPaused
+      });
+      // Now that we got the positive response from the remote endpoint, resume
+      // the Consumer so the remote endpoint will receive the a first RTP packet
+      // of this new stream once its PeerConnection is already ready to process
+      // and associate it.
+      await consumer.resume();
+      consumerPeer.notify(this, 'consumerScore', {
+          consumerId: consumer.id,
+          score: consumer.score
+        })
+    } catch (error) {
+      this.log('_createConsumer() | failed', "WARNING")
+      this.log(error, "ERROR");
+    }
   }
 
   async createDataConsumer(dataConsumerPeer, dataProducerPeer, dataProducer) {

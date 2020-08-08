@@ -100,13 +100,53 @@ class Rooms extends nodefony.Service {
       peer.send(room, "join", {
         peers: peerInfos
       });
+      for (const joinedPeer of room.getJoinedPeers({
+          //excludePeer: peer
+        })) {
+        // Create Consumers for existing Producers.
+        for (const producer of joinedPeer.producers.values()) {
+          room.createConsumer({
+            consumerPeer: peer,
+            producerPeer: joinedPeer,
+            producer
+          });
+        }
+        // Create DataConsumers for existing DataProducers.
+        for (const dataProducer of joinedPeer.dataProducers.values()) {
+          if (dataProducer.label === 'bot')
+            continue;
+
+          this.createDataConsumer({
+            dataConsumerPeer: peer,
+            dataProducerPeer: joinedPeer,
+            dataProducer
+          });
+        }
+      }
+      // Create DataConsumers for bot DataProducer.
+      room.createDataConsumer({
+        dataConsumerPeer: peer,
+        dataProducerPeer: null,
+        dataProducer: room.bot.dataProducer
+      });
+
+      // Notify the new Peer to all other Peers.
+      for (const otherPeer of room.getJoinedPeers({
+          excludePeer: peer
+        })) {
+        otherPeer.notify(room, 'newPeer', {
+            id: peer.id,
+            displayName: peer.displayName,
+            device: peer.device
+          });
+      }
       break;
     case "connectWebRtcTransport":
       try {
-        let res = await room.connecWebRtcTransport(peer, message.data);
+        let transport = await room.connecWebRtcTransport(peer, message.data);
         peer.send(room, "connectWebRtcTransport", {
-          type:message.data.type,
-          data: res
+          type: message.data.type,
+          id: transport.id
         });
       } catch (e) {
         this.log(e, "ERROR");
@@ -116,8 +156,9 @@ class Rooms extends nodefony.Service {
       }
       break;
     case "produce":
+      let producer = null;
       try {
-        let producer = await room.createProducer(peer, message.data);
+        producer = await room.createProducer(peer, message.data);
         peer.send(room, "produce", {
           id: producer.id
         });
@@ -127,30 +168,26 @@ class Rooms extends nodefony.Service {
           error: e
         });
       }
-      /*
-      // Optimization: Create a server-side Consumer for each Peer.
-  			for (const otherPeer of this._getJoinedPeers({ excludePeer: peer }))
-  			{
-  				this._createConsumer(
-  					{
-  						consumerPeer : otherPeer,
-  						producerPeer : peer,
-  						producer
-  					});
-  			}
-
-  			// Add into the audioLevelObserver.
-  			if (producer.kind === 'audio')
-  			{
-  				this._audioLevelObserver.addProducer({ producerId: producer.id })
-  					.catch(() => {});
-  			}
-      */
-
+      for (const otherPeer of room.getJoinedPeers({
+          excludePeer: peer
+        })) {
+        room.createConsumer({
+          consumerPeer: otherPeer,
+          producerPeer: peer,
+          producer
+        });
+      }
+      // Add into the audioLevelObserver.
+      if (producer.kind === 'audio') {
+        room.audioLevelObserver.addProducer({
+            producerId: producer.id
+          })
+          .catch(() => {});
+      }
       break;
-    case "restartIce":
     case "closeProducer":
     case "pauseProducer":
+    case "restartIce":
     case "resumeProducer":
     case "pauseConsumer":
     case "resumeConsumer":
@@ -159,6 +196,7 @@ class Rooms extends nodefony.Service {
     case "requestConsumerKeyFrame":
     case "produceData":
     case "changeDisplayName":
+      //stats
     case "getTransportStats":
     case "getProducerStats":
     case "getConsumerStats":

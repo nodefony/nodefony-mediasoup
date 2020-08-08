@@ -1,54 +1,51 @@
 <template>
-<v-row justify="center" class='home'>
-  <v-container fluid class='home'>
-    <video class="video" :stream="addStream" ref="video"></video>
-  </v-container>
+<v-container ref="room" class="home" fluid>
+
+  <Peer v-for=" (item, index) in peers" :ref="item.id" :room="room" :peer="item" :key="item.id" class="ma-3 pa-6">
+  </Peer>
+
+  <!--dashboard :id="'dashExample'">
+
+    <dash-layout ref="room" :key="'xl'" :breakpoint="'xl'" :numberOfCols="12">
+
+      <Peer v-for=" (item, index) in peers" :ref="item.id" :room="room" :peer="item" :key="item.id" class="ma-3 pa-6">
+     </Peer>
+
+    </dash-layout>
+  </dashboard-->
+
   <v-dialog v-model="dialog" persistent max-width="600">
-
-    <v-card flat elevation="0" class="mycard mycolor">
-      <v-row justify="center">
-        <v-avatar color="blue-grey" size="100">
-          <span class="white--text headline">{{peerid}}</span>
-        </v-avatar>
-      </v-row>
-      <v-card-title class="headline">Join to {{roomid}} Meeting ?</v-card-title>
-      <v-card-text class="mycolor">
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn outlined color="white" text @click="disagree">Disagree</v-btn>
-        <v-btn outlined color="white" text @click="agree">Agree</v-btn>
-      </v-card-actions>
-      <v-row justify="center">
-
-        <v-btn :loading="loadingVideo" :disabled="loadingVideo" color="blue-grey" class="ma-2 white--text" fab @click="videoButton">
-          <v-icon v-if="this.video">mdi-video-box</v-icon>
-          <v-icon v-else dark>mdi-video-box-off</v-icon>
-        </v-btn>
-
-        <v-btn :loading="loadingAudio" :disabled="loadingAudio" color="blue-grey" class="ma-2 white--text" fab @click="audioButton">
-          <v-icon v-if="this.audio">mdi-volume-high</v-icon>
-          <v-icon v-else dark>mdi-volume-off</v-icon>
-        </v-btn>
-
-        <v-btn :loading="loadingMonitor" :disabled="loadingMonitor" color="blue-grey" class="ma-2 white--text" fab @click="monitorButton">
-          <v-icon v-if="this.monitor">mdi-monitor-share</v-icon>
-          <v-icon v-else dark>mdi-monitor-off</v-icon>
-        </v-btn>
-
-      </v-row>
-    </v-card>
+    <v-row>
+      <v-col cols="12">
+        <v-row align="center" justify="center" class='home'>
+          <Peer join :ref="peerElement" v-if="peer" v-on:join="agree" :room="room" :peer="peer" :videoMediaStream="stream" />
+        </v-row>
+      </v-col>
+    </v-row>
   </v-dialog>
-</v-row>
+</v-container>
 </template>
 
 <script>
 // @ is an alias to /src
 //import HelloWorld from '@/components/HelloWorld.vue'
+//import nodefony from "nodefony";
+/*import {
+  Dashboard,
+  DashLayout,
+  DashItem
+} from "vue-responsive-dash";*/
+
+import Peer from "@/components/peer";
 
 export default {
   name: 'Home',
-  components: {},
+  components: {
+    Peer,
+    //Dashboard,
+    //DashLayout,
+    //DashItem
+  },
   props: {
     roomid: {
       type: String,
@@ -59,114 +56,166 @@ export default {
       default: "cci"
     }
   },
-  data() {
+  data(vm) {
     return {
-      loadingVideo: false,
-      loadingAudio: false,
-      loadingMonitor: false,
-      loader: null,
+      dlayouts: [{
+        breakpoint: "xl",
+        numberOfCols: 12,
+        items: [{
+          id: "1",
+          x: 0,
+          y: 0,
+          width: 1,
+          height: 1
+        }, {
+          id: "2",
+          x: 1,
+          y: 0,
+          width: 2,
+          height: 1
+        }, ]
+      }, {
+        breakpoint: "lg",
+        breakpointWidth: 1200,
+        numberOfCols: 10,
+        items: [{
+          id: "1",
+          x: 0,
+          y: 0,
+          width: 1,
+          height: 1
+        }, {
+          id: "2",
+          x: 1,
+          y: 0,
+          width: 2,
+          height: 1
+        }]
+      }, {
+        breakpoint: "md",
+        breakpointWidth: 996,
+        numberOfCols: 8,
+        items: [{
+          id: "1",
+          x: 0,
+          y: 0,
+          width: 1,
+          height: 1
+        }, {
+          id: "2",
+          x: 1,
+          y: 0,
+          width: 2,
+          height: 1
+        }, ]
+      }, {
+        breakpoint: "sm",
+        breakpointWidth: 768,
+        numberOfCols: 4,
+        items: [{
+          id: "1",
+          x: 0,
+          y: 0,
+          width: 1,
+          height: 1
+        }, {
+          id: "2",
+          x: 1,
+          y: 0,
+          width: 2,
+          height: 1
+        }, ]
+      }, {
+        breakpoint: "xs",
+        breakpointWidth: 480,
+        numberOfCols: 2,
+        items: [{
+          id: "1",
+          x: 0,
+          y: 0,
+          width: 1,
+          height: 1
+        }, {
+          id: "2",
+          x: 1,
+          y: 0,
+          width: 1,
+          height: 1
+        }, ]
+      }, {
+        breakpoint: "xxs",
+        breakpointWidth: 0,
+        numberOfCols: 1,
+        items: [{
+          id: "1",
+          x: 0,
+          y: 0,
+          width: 1,
+          height: 1
+        }, {
+          id: "2",
+          x: 0,
+          y: 1,
+          width: 1,
+          height: 1
+        }]
+      }],
+      peers: [],
       dialog: false,
       stream: null,
-      audio: true,
-      video: true,
-      monitor: false,
       room: null,
-      peer: null
+      peer: null,
+      peerElement: "me"
     }
   },
   computed: {},
-  watch: {
-    video() {
-      if (this.monitor) {
-        return;
-      }
-      if (this.video === false && this.audio === false) {
-        return this.audio = true;
-      }
-      this.room.getUserMedia({
-          audio: this.audio,
-          video: this.video
-        }, this.$refs["video"])
-        .then((stream) => {
-          this.stream = stream;
-          this.loader = null;
-        })
-        .catch(() => {
-          this.stream = null;
-          this.loader = null;
-        });
-    },
-    audio() {
-      if (this.video === false && this.audio === false) {
-        return this.video = true;
-      }
-      this.room.getUserMedia({
-          audio: this.audio,
-          video: this.video
-        }, this.$refs["video"])
-        .then((stream) => {
-          this.stream = stream;
-          this.loader = null;
-        })
-        .catch(() => {
-          this.stream = null;
-          this.loader = null;
-        });
-    },
-    monitor() {
-      this.video = false;
-      this.room.getUserScreen({}, this.$refs["video"])
-        .then((stream) => {
-          this.stream = stream;
-          this.loader = null;
-        })
-        .catch(() => {
-          this.stream = null;
-          this.loader = null;
-        });
-    }
-  },
+  /*mounted() {
+    console.log("mounted  ")
+    console.log(this.peer, this.room)
+    console.log(this.peer.videoElement)
+    this.room.mediaStream.mediaElement = this.peer.videoElement;
+  },*/
   async mounted() {
-    await this.$mediasoup.connect(this.roomid, this.peerid)
+    return await this.$mediasoup.connect(this.roomid, this.peerid)
       .then(({
         room,
         peer
       }) => {
         this.dialog = true;
-        this.room = room;
         this.peer = peer;
-        let settings = {
-          audio: this.audio,
-          video: this.video
-        };
-        this.room.getUserMedia(settings, this.$refs["video"])
-          .then(async (stream) => {
-            this.stream = stream;
-          });
+        this.peerElement = this.peer.id;
+        this.room = room;
+        //this.peers = this.room.peers;
+        this.room.on("joined", (peer) => {
+          this.$refs["room"].prepend(this.$refs[this.peerElement].$el);
+        });
+        this.room.on("newPeer", (peer) => {
+          this.peers.push(peer);
+        });
+        this.room.on("addProducer", (producer) => {
+          this.peer.addProducer(producer);
+          this.$refs[this.peer.id].addProducer(producer);
+        });
+        this.room.on("consume", (consumer, peer) => {
+          peer.addConsumer(consumer);
+          this.$refs[peer.id][0].addConsumer(consumer);
+        });
       })
       .catch((e) => {
         this.log(e);
       });
   },
-  async created() {
+  /*async created() {
 
-  },
+  },*/
   methods: {
-    videoButton() {
-      this.video = !this.video;
-    },
-    audioButton() {
-      this.audio = !this.audio;
-    },
-    monitorButton() {
-      this.monitor = !this.monitor;
-    },
-    agree() {
-      this.dialog = false;
-      this.log("agree");
-      this.$mediasoup.join();
-    },
-    disagree() {
+    async agree(response) {
+      if (response) {
+        this.log("agree", "DEBUG");
+        await this.room.join()
+        this.dialog = false;
+        return;
+      }
       this.dialog = false;
       this.log("disagree")
     },
@@ -189,9 +238,21 @@ export default {
   margin: 0px;
 }
 
+.content {
+  height: 100%;
+  width: 100%;
+  border: 2px solid #42b983;
+  border-radius: 5px;
+}
+
 .video {
   width: 100%;
   height: 100%;
+}
+
+.video {
+  width: 300px;
+  height: 300px;
 }
 
 .mycard {
@@ -200,40 +261,5 @@ export default {
 
 .mycolor {
   color: rgb(120, 255, 255, 1) !important;
-}
-
-.custom-loader {
-  animation: loader 1s infinite;
-  display: flex;
-}
-
-@-moz-keyframes loader {
-  from {
-    transform: rotate(0);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@-webkit-keyframes loader {
-  from {
-    transform: rotate(0);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@-o-keyframes loader {
-  from {
-    transform: rotate(0);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

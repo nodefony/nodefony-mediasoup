@@ -8,7 +8,8 @@ const defaultOptions = {
   forceTcp: false,
   forceH264: false,
   forceVP9: false,
-  useSimulcast: false
+  useSimulcast: false,
+  externalVideo: false
 };
 const VIDEO_CONSTRAINS = {
   qvga: {
@@ -82,19 +83,19 @@ const SCREEN_SHARING_SVC_ENCODINGS = [
 ];
 
 class Room extends nodefony.Service {
-  constructor(id, mediasoup, options, container) {
+  constructor(id, options, mediasoup) {
     let defaultOpt = nodefony.extend({}, defaultOptions);
-    super("Room", container, null, nodefony.extend({}, defaultOpt, options));
+    super("Room", mediasoup.container, null, nodefony.extend({}, defaultOpt, options));
     this.id = id;
     this.mediasoup = mediasoup;
     this.handlerName = mediasoupClient.detectDevice();
-    this.closed = false;
+    //this.closed = false;
     this.displayName = this.options.displayName || id;
 
     this.consumers = null;
     this.dataConsumers = null;
     this.webcams = null;
-
+    this.externalVideo = this.options.externalVideo;
     this.useDataChannel = this.options.useDataChannel;
     this.forceTcp = this.options.forceTcp;
     this.useSimulcast = this.options.useSimulcast;
@@ -105,12 +106,17 @@ class Room extends nodefony.Service {
       WEBCAM_KSVC_ENCODINGS[0].scalabilityMode = `${this.options.svc}_KEY`;
       SCREEN_SHARING_SVC_ENCODINGS[0].scalabilityMode = this.options.svc;
     }
-    this.mediaStream = new nodefony.medias.MediaStream(null, {}, this.container);
+
     this.listenMediaSoupEvents();
   }
 
-  init() {
+  init(peer) {
     this.log(`Initialize room ${this.id}`, "DEBUG");
+    //this.mediaStream = new nodefony.medias.MediaStream(null, {}, this.container);
+    //peer.mediaStream = this.mediaStream;
+    this.connected = false;
+    this.closed = false;
+    this.peers = new Map();
     this.webcam = {
       device: null,
       resolution: 'hd'
@@ -127,20 +133,30 @@ class Room extends nodefony.Service {
 
     this.micProducer = null;
     this.webcamProducer = null;
-    this.externalVideo = null;
-    this.externalVideoStream = null;
+    if (this.externalVideo) {
+      this.externalVideo = document.createElement('video');
 
-    this.callbackTransportConnect = null;
-    this.errbackTransportConnect = null;
-    this.callbackTransportProcude = null;
-    this.errbackTransportProcude = null;
-    this.callbackTransportProcudeData = null;
-    this.errbackTransportProcudeData = null;
-    this.callbackTransportConsume = null;
-    this.errbackTransportConsume = null;
+      this.externalVideo.controls = true;
+      this.externalVideo.muted = true;
+      this.externalVideo.loop = true;
+      this.externalVideo.setAttribute('playsinline', '');
+      //this.externalVideo.src = EXTERNAL_VIDEO_SRC;
+
+      this.externalVideo.play()
+        .catch((error) => {
+          this.log('externalVideo.play() failed')
+          this.log(error, "ERROR")
+        });
+    }
+    this.externalVideoStream = null;
   }
 
   listenMediaSoupEvents() {
+
+    this.mediasoup.on("closeSock", ()=>{
+      this.connected = false;
+      this.closed = false;
+    });
     this.mediasoup.on("routerRtpCapabilities", async (message) => {
       this.log(`Event : routerRtpCapabilities `, "DEBUG");
       this.setRouterRtpCapabilities(message);
@@ -160,6 +176,18 @@ class Room extends nodefony.Service {
     });
     this.mediasoup.on("join", async (message) => {
       this.log(`Event : join `, "DEBUG");
+      this.connected = true;
+      const {
+        peers
+      } = message.data;
+      for (const peer of peers) {
+        let newPeer = this.mediasoup.createPeer(peer.id, { ...peer,
+          consumers: [],
+          dataConsumers: []
+        });
+        this.peers.set(peer.id, newPeer);
+        this.fire("newPeer", newPeer);
+      }
       // Enable mic/webcam.
       if (this.options.produce) {
         // Set our media capabilities.
@@ -171,6 +199,7 @@ class Room extends nodefony.Service {
           /*if (!devicesCookie || devicesCookie.webcamEnabled || this._externalVideo){
           }*/
           await this.enableWebcam();
+
         } catch (e) {
           this.log(e, "ERROR");
           throw e;
@@ -182,65 +211,164 @@ class Room extends nodefony.Service {
           }
         });
       }
+      this.fire("joined", this);
     });
     this.mediasoup.on("connectWebRtcTransport", async (message) => {
-      if (message.error) {
-        this.log(message.error, "ERROR");
-        if (message.data.type === "producing") {
-          this.errbackTransportConnect(message.error);
-        } else {
-          this.errbackTransportConsume(message.error);
-        }
-        return;
-      }
-      if (message.data.type === "producing") {
-        return this.callbackTransportConnect();
-      } else {
-        return this.callbackTransportConsume();
-      }
+      return this.fire("connectWebRtcTransport", message.data.id, message, this);
     });
     this.mediasoup.on("produce", async (message) => {
-      if (message.error) {
-        this.log(message.error, "ERROR");
-        this.errbackTransportProcude(message.error);
-        return;
-      }
-      return this.callbackTransportProcude(message.data.id)
+      return this.fire("produce", message.data.id, message, this);
     });
     this.mediasoup.on("producedata", async (message) => {
-      if (message.error) {
-        this.log(message.error, "ERROR");
-        this.callbackTransportProcudeData(message.error);
-        return;
-      }
-      return this.errbackTransportProcudeData(message.data.id)
+      return this.fire("producedata", message.data.id, message, this);
+    });
+    this.mediasoup.on("newConsumer", async (message) => {
+      await this.newConsumer(message.data)
+      return this.fire("newConsumer", message.data, message, this);
+    });
+    this.mediasoup.on("newDataConsumer", async (message) => {
+      await this.newDataConsumer(message.data)
+      return this.fire("newDataConsumer", message.data, message, this);
     });
     this.mediasoup.on("notify", async (message) => {
-      this.log(message.data, "INFO");
-    });
-  }
+      switch (message.data.event) {
+      case 'producerScore':
+        {
+          const {
+            producerId,
+            score
+          } = message.data.data;
+          this.fire("producerScore", producerId, score);
+          break;
+        }
+      case "newPeer":
+        {
+          const peer = message.data.data;
+          let newPeer = this.mediasoup.createPeer(peer.id, { ...peer,
+            consumers: [],
+            dataConsumers: []
+          });
+          this.peers.set(peer.id, newPeer);
+          this.fire("newPeer", newPeer);
+          break;
+        }
+      case 'peerClosed':
+        {
+          const {
+            peerId
+          } = message.data.data;
 
-  async initTransport() {
-    try {
-      this.mediasoupDevice = await this.createDevice();
-      this.log(`Device endpoint load routerRtpCapabilities `, "DEBUG");
-      // Create mediasoup Transport for sending (to produce)
-      if (this.options.produce) {
-        this.createWebRtcTransport(true, false)
+          this.fire("peerClosed", peerId);
+          this.peers.delete(peerId);
+          break;
+        }
+
+      case 'peerDisplayNameChanged':
+        {
+          const {
+            peerId,
+            displayName,
+            oldDisplayName
+          } = message.data.data;
+          this.fire("peerDisplayNameChanged", peerId, displayName, oldDisplayName);
+          break;
+        }
+      case 'downlinkBwe':
+        {
+          this.fire("downlinkBwe", message.data.data);
+          break;
+        }
+      case 'consumerClosed':
+        {
+          const {
+            consumerId
+          } = message.data.data;
+          const consumer = this.consumers.get(consumerId);
+          if (!consumer)
+            break;
+          this.consumers.delete(consumerId);
+          const {
+            peerId
+          } = consumer.appData;
+          this.fire("consumerClosed", consumerId, peerId);
+          break;
+        }
+      case 'consumerPaused':
+        {
+          const {
+            consumerId
+          } = message.data.data;
+          const consumer = this.consumers.get(consumerId);
+          if (!consumer)
+            break;
+          consumer.pause();
+          this.fire("consumerClosed", consumerId, "remote");
+          break;
+        }
+      case 'consumerResumed':
+        {
+          const {
+            consumerId
+          } = message.data.data;
+          const consumer = this.consumers.get(consumerId);
+          if (!consumer)
+            break;
+          consumer.resume();
+          this.fire("consumerResumed", consumerId, "remote");
+          break;
+        }
+      case 'consumerLayersChanged':
+        {
+          const {
+            consumerId,
+            spatialLayer,
+            temporalLayer
+          } = message.data.data;
+          const consumer = this.consumers.get(consumerId);
+          if (!consumer)
+            break;
+          this.fire("consumerLayersChanged", consumerId, spatialLayer, temporalLayer);
+          break;
+        }
+      case 'consumerScore':
+        {
+          const {
+            consumerId,
+            score
+          } = message.data.data;
+          this.fire("consumerScore", consumerId, score);
+          break;
+        }
+      case 'dataConsumerClosed':
+        {
+          const {
+            dataConsumerId
+          } = message.data.data;
+          const dataConsumer = this.dataConsumers.get(dataConsumerId);
+          if (!dataConsumer)
+            break;
+          dataConsumer.close();
+          this.dataConsumers.delete(dataConsumerId);
+          const {
+            peerId
+          } = dataConsumer.appData;
+          this.fire("dataConsumerClosed", dataConsumerId, peerId);
+          break;
+        }
+      case 'activeSpeaker':
+        {
+          const {
+            peerId
+          } = message.data.data;
+          this.fire("activeSpeaker", peerId);
+          break;
+        }
+      default:
+        this.log(message.data.event, "NOTICE");
+        this.log(message.data.data, "DEBUG");
+        this.fire("notify", message.data.event, message.data.data)
       }
-      // Create mediasoup Transport for sending (to consume).
-      if (this.options.consume) {
-        this.createWebRtcTransport(false, true)
-      }
-      return this.mediasoupDevice;
-    } catch (error) {
-      if (error.name === 'UnsupportedError') {
-        this.log('browser not supported', "ERROR");
-        throw error;
-      }
-      this.log(error, "ERROR");
-      throw error;
-    }
+    });
   }
 
   join() {
@@ -269,20 +397,7 @@ class Room extends nodefony.Service {
     this.init();
   }
 
-  // NOTE: Stuff to play remote audios due to browsers' new autoplay policy.
-  //
-  // Just get access to the mic and DO NOT close the mic track for a while.
-  // Super hack!
-  async hackAudio() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true
-    });
-    const audioTrack = stream.getAudioTracks()[0];
-    audioTrack.enabled = false;
-    setTimeout(() => audioTrack.stop(), 120000);
-    return stream;
-  }
-
+  // DEVICE
   async createDevice() {
     const device = new mediasoupClient.Device({
       handlerName: this.handlerName
@@ -291,6 +406,30 @@ class Room extends nodefony.Service {
       routerRtpCapabilities: this.routerRtpCapabilities
     });
     return device;
+  }
+
+  // TRANSPORT
+  async initTransport() {
+    try {
+      this.mediasoupDevice = await this.createDevice();
+      this.log(`Device endpoint load routerRtpCapabilities `, "DEBUG");
+      // Create mediasoup Transport for sending (to produce)
+      if (this.options.produce) {
+        this.createWebRtcTransport(true, false)
+      }
+      // Create mediasoup Transport for sending (to consume).
+      if (this.options.consume) {
+        this.createWebRtcTransport(false, true)
+      }
+      return this.mediasoupDevice;
+    } catch (error) {
+      if (error.name === 'UnsupportedError') {
+        this.log('browser not supported', "ERROR");
+        throw error;
+      }
+      this.log(error, "ERROR");
+      throw error;
+    }
   }
 
   createWebRtcTransport(produce, consume) {
@@ -307,69 +446,100 @@ class Room extends nodefony.Service {
     return this.mediasoup.send('createWebRtcTransport', data);
   }
 
-  async produce(transportInfo) {
+  // PRODUCER
+  produce(transportInfo) {
     return new Promise((resolve, reject) => {
-      this.log(`Create Transport Webrtc Producer `, "DEBUG");
-      // createWebRtcTransport
-      if (!transportInfo) {
-        throw new Error(`Bad transportInfo `);
-      }
-      delete transportInfo.type;
-      this.produceTransportInfo = transportInfo;
-      this.produceTransportInfo.iceServers = [];
-      this.produceTransportInfo.proprietaryConstraints = PC_PROPRIETARY_CONSTRAINTS;
-      const transport = this.mediasoupDevice.createSendTransport(transportInfo);
-      transport.on('connect', ({
-        dtlsParameters
-      }, callback, errback) => {
-        this.log(`Produce Webrtc Transport ${transport.id} : Event connect `, "DEBUG");
-        this.callbackTransportConnect = callback;
-        this.errbackTransportConnect = errback;
-        this.mediasoup.send('connectWebRtcTransport', {
-          type: "producing",
-          transportId: transport.id,
+      try {
+        this.log(`Create Transport Webrtc Producer `, "DEBUG");
+        // createWebRtcTransport
+        if (!transportInfo) {
+          throw new Error(`Bad transportInfo `);
+        }
+        delete transportInfo.type;
+        this.produceTransportInfo = transportInfo;
+        this.produceTransportInfo.iceServers = [];
+        this.produceTransportInfo.proprietaryConstraints = PC_PROPRIETARY_CONSTRAINTS;
+        const transport = this.mediasoupDevice.createSendTransport(transportInfo);
+        transport.on('connect', ({
           dtlsParameters
+        }, callback, errback) => {
+          this.on("connectWebRtcTransport", (id, message) => {
+            if (id === transport.id) {
+              if (message.error) {
+                this.log(message.error, "DEBUG");
+                return errback(message.error);
+              }
+              this.log(`Connect Transport : ${transport.id} `, "DEBUG", "EVENT connectWebRtcTransport");
+              return callback(message.data);
+            }
+          });
+          this.log(`Try Connect Produce Webrtc Transport ${transport.id} `, "DEBUG");
+          return this.mediasoup.send('connectWebRtcTransport', {
+            type: "producing",
+            transportId: transport.id,
+            dtlsParameters
+          });
         });
-      });
 
-      transport.on('produce', ({
-        kind,
-        rtpParameters,
-        appData
-      }, callback, errback) => {
-        this.log(`Produce Webrtc Transport ${transport.id} : Event pruduce `, "DEBUG");
-        this.callbackTransportProcude = callback;
-        this.errbackTransportProcude = errback;
-        return this.mediasoup.send('produce', {
-          transportId: transport.id,
+        transport.on('produce', ({
           kind,
           rtpParameters,
           appData
+        }, callback, errback) => {
+          this.on("produce", (id, message) => {
+            if (message.error) {
+              this.log(message.error, "DEBUG");
+              return errback(message.error);
+            }
+            this.log(`Produce ${kind}  id : ${id} `, "DEBUG", "EVENT produce");
+            /*this.log(` rtpParameters :
+                ${JSON.stringify(rtpParameters, null, " ")}`, "DEBUG");
+            this.log(` appData :
+                ${JSON.stringify(appData, null, " ")}`, "DEBUG");*/
+            return callback(id);
+          });
+          this.log(`Try Produce Webrtc ${kind}  Transport ${transport.id} : Event produce `, "DEBUG");
+          return this.mediasoup.send('produce', {
+            transportId: transport.id,
+            kind,
+            rtpParameters,
+            appData
+          });
         });
-      });
 
-      transport.on('producedata', ({
-        sctpStreamParameters,
-        label,
-        protocol,
-        appData
-      }, callback, errback) => {
-        this.log(`"producedata" event: [sctpStreamParameters:${sctpStreamParameters}, appData:${appData}]`, "DEBUG");
-        // eslint-disable-next-line no-shadow
-        this.callbackTransportProcudeData = callback;
-        this.errbackTransportProcudeData = errback;
-        return this.mediasoup.send('producedata', {
-          transportId: transport.id,
+        transport.on('producedata', ({
           sctpStreamParameters,
           label,
           protocol,
           appData
+        }, callback, errback) => {
+          // eslint-disable-next-line no-shadow
+          this.on("producedata", (id, message) => {
+            if (message.error) {
+              this.log(message.error, "DEBUG");
+              return errback(message.error);
+            }
+            this.log(`Produce Data Webrtc Transport : ${transport.id} id : ${id}`, "DEBUG", "EVENT producedata");
+            return callback(id);
+          });
+          this.log(`Try "producedata" event: [sctpStreamParameters:${sctpStreamParameters}, appData:${appData}]`, "DEBUG");
+          return this.mediasoup.send('producedata', {
+            transportId: transport.id,
+            sctpStreamParameters,
+            label,
+            protocol,
+            appData
+          });
         });
-      });
-      return resolve(transport);
+        return resolve(transport);
+      } catch (e) {
+        this.log(e, "ERROR");
+        return reject(e);
+      }
     });
   }
 
+  // CONSUMER
   async consume(transportInfo) {
     this.log(`Create Transport Webrtc Consumer `, "DEBUG");
     // createWebRtcTransport
@@ -384,8 +554,16 @@ class Room extends nodefony.Service {
       dtlsParameters
     }, callback, errback) => {
       this.log(`Consume Webrtc Transport ${transport.id} : connect`, "DEBUG");
-      this.callbackTransportConsume = callback;
-      this.errbackTransportConsume = errback;
+      this.on("connectWebRtcTransport", (id, message) => {
+        if (id === transport.id) {
+          if (message.error) {
+            this.log(message.error, "DEBUG");
+            return errback(message.error);
+          }
+          this.log(`Consume Connect Transport : ${transport.id} `, "DEBUG", "EVENT connectWebRtcTransport");
+          return callback();
+        }
+      });
       return this.mediasoup.send('connectWebRtcTransport', {
         type: "consoming",
         transportId: transport.id,
@@ -393,6 +571,100 @@ class Room extends nodefony.Service {
       });
     });
     return transport;
+  }
+
+  async newConsumer(data) {
+    if (!this.consume) {
+      const error = new Error(`I do not want to consume`);
+      this.mediasoup.send('newConsumer', {
+        code: 403,
+        error: 'I do not want to consume'
+      });
+      throw error;
+    }
+    const {
+      peerId,
+      producerId,
+      id,
+      kind,
+      rtpParameters,
+      type,
+      appData,
+      producerPaused
+    } = data;
+    console.log(peerId, producerId);
+    try {
+      const consumer = await this.recvTransport.consume({
+        id,
+        producerId,
+        kind,
+        rtpParameters,
+        appData: { ...appData,
+          peerId
+        } // Trick.
+      });
+      // Store in the map.
+      this.consumers.set(consumer.id, consumer);
+      consumer.on('transportclose', () => {
+        this.consumers.delete(consumer.id);
+      });
+
+      const {
+        spatialLayers,
+        temporalLayers
+      } =
+      mediasoupClient.parseScalabilityMode(
+        consumer.rtpParameters.encodings[0].scalabilityMode);
+
+      // If audio-only mode is enabled, pause it.
+      if (consumer.kind === 'video' /*&& store.getState().me.audioOnly*/ ) {
+        //this.pauseConsumer(consumer);
+      }
+      let peer = this.peers.get(consumer._appData.peerId);
+      this.fire("consume", consumer, peer, spatialLayers, temporalLayers);
+      return consumer;
+    } catch (error) {
+      this.log(`New consumer : `, "ERROR");
+      this.log(error, "ERROR");
+      throw error;
+    }
+  }
+
+  async pauseConsumer(consumer) {
+    if (consumer.paused) {
+      return;
+    }
+    try {
+      return this.mediasoup.send('pauseConsumer', {
+        consumerId: consumer.id
+      });
+      //consumer.pause();
+      //store.dispatch(
+      //	stateActions.setConsumerPaused(consumer.id, 'local'));
+    } catch (error) {
+      this.log('_pauseConsumer() | failed', "ERROR")
+      this.log(error, "ERROR")
+    }
+  }
+
+  async resumeConsumer(consumer) {
+    if (!consumer.paused)
+      return;
+    try {
+      return this.mediasoup.send('resumeConsumer', {
+        consumerId: consumer.id
+      });
+      //consumer.resume();
+      //store.dispatch(
+      //	stateActions.setConsumerResumed(consumer.id, 'local'));
+    } catch (error) {
+      this.log('resumeConsumer() | failed', "ERROR")
+      this.log(error, "ERROR")
+    }
+  }
+
+  newDataConsumer() {
+
   }
 
   setRouterRtpCapabilities(message) {
@@ -405,8 +677,8 @@ class Room extends nodefony.Service {
       if (element) {
         this.mediaStream.mediaElement = element
       }
-      this.externalVideo = this.mediaStream.mediaElement;
-      this.externalVideoStream = this.mediaStream.stream;
+      //this.externalVideo = this.mediaStream.mediaElement;
+      //this.externalVideoStream = this.mediaStream.stream;
       return this.mediaStream.getUserMedia(settings)
         .then(async (stream) => {
           await this.mediaStream.attachMediaStream()
@@ -424,8 +696,8 @@ class Room extends nodefony.Service {
       if (element) {
         this.mediaStream.mediaElement = element
       }
-      this.externalVideo = this.mediaStream.mediaElement;
-      this.externalVideoStream = this.mediaStream.stream;
+      //this.externalVideo = this.mediaStream.mediaElement;
+      //this.externalVideoStream = this.mediaStream.stream;
       return this.mediaStream.getUserScreen(settings)
         .then(async (stream) => {
           await this.mediaStream.attachMediaStream();
@@ -437,7 +709,21 @@ class Room extends nodefony.Service {
     });
   }
 
-  //audio
+  // audio
+  // NOTE: Stuff to play remote audios due to browsers' new autoplay policy.
+  //
+  // Just get access to the mic and DO NOT close the mic track for a while.
+  // Super hack!
+  async hackAudio() {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    });
+    const audioTrack = stream.getAudioTracks()[0];
+    audioTrack.enabled = false;
+    setTimeout(() => audioTrack.stop(), 120000);
+    return stream;
+  }
+
   async enableMic() {
     this.log('enableMic()', "DEBUG");
     if (this.micProducer)
@@ -449,11 +735,16 @@ class Room extends nodefony.Service {
     let track;
     try {
       if (!this.externalVideo) {
-        await this.getUserMedia({
+        this.log(`enableMic() | calling getUserMedia())`, "DEBUG")
+        const stream = await navigator.mediaDevices.getUserMedia({
           audio: true
         });
+        track = stream.getAudioTracks()[0];
+      } else {
+        const stream = await this.getExternalVideoStream();
+        track = stream.getAudioTracks()[0].clone();
       }
-      track = this.mediaStream.getAudioTracks()[0];
+      //track = this.mediaStream.getAudioTracks()[0];
       this.micProducer = await this.sendTransport.produce({
         track,
         codecOptions: {
@@ -470,6 +761,13 @@ class Room extends nodefony.Service {
       this.micProducer.on('trackended', () => {
         this.disableMic()
           .catch(() => {});
+      });
+      this.fire("addProducer", {
+        id: this.micProducer.id,
+        paused: this.micProducer.paused,
+        track: this.micProducer.track,
+        rtpParameters: this.micProducer.rtpParameters,
+        codec: this.micProducer.rtpParameters.codecs[0].mimeType.split('/')[1]
       });
       return this.micProducer;
     } catch (e) {
@@ -531,7 +829,7 @@ class Room extends nodefony.Service {
         if (!device) {
           throw new Error('no webcam devices');
         }
-        await this.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             deviceId: {
               ideal: device.deviceId
@@ -539,13 +837,13 @@ class Room extends nodefony.Service {
             ...VIDEO_CONSTRAINS[resolution]
           }
         });
-        track = this.mediaStream.getVideoTracks()[0];
+        track = stream.getVideoTracks()[0];
       } else {
         device = {
           label: 'external video'
         };
-        //const stream = await this.getExternalVideoStream();
-        track = this.mediaStream.getVideoTracks()[0].clone();
+        const stream = await this.getExternalVideoStream();
+        track = stream.getVideoTracks()[0].clone();
       }
       let encodings;
       let codec;
@@ -594,6 +892,15 @@ class Room extends nodefony.Service {
         this.disableWebcam()
           .catch(() => {});
       });
+      this.fire("addProducer", {
+        id: this.webcamProducer.id,
+        deviceLabel: device.label,
+        type: this.getWebcamType(device),
+        paused: this.webcamProducer.paused,
+        track: this.webcamProducer.track,
+        rtpParameters: this.webcamProducer.rtpParameters,
+        codec: this.webcamProducer.rtpParameters.codecs[0].mimeType.split('/')[1]
+      });
       return this.webcamProducer;
     } catch (e) {
       this.log(e, "ERROR");
@@ -601,11 +908,21 @@ class Room extends nodefony.Service {
         track.stop();
     }
   }
+
+  getWebcamType(device) {
+    if (/(back|rear)/i.test(device.label)) {
+      this.log(`getWebcamType() | it seems to be a back camera`, "DEBUG")
+      return 'back';
+    } else {
+      this.log(`getWebcamType() | it seems to be a front camera`, "DEBUG")
+      return 'front';
+    }
+  }
   async updateWebcams() {
     this.log('updateWebcams()', "DEBUG");
     // Reset the list.
     this.webcams = new Map();
-    this.log('_updateWebcams() | calling enumerateDevices()', "DEBUG");
+    //this.log('updateWebcams() | calling enumerateDevices()', "DEBUG");
     const devices = await navigator.mediaDevices.enumerateDevices();
 
     for (const device of devices) {
@@ -617,8 +934,8 @@ class Room extends nodefony.Service {
     const len = array.length;
     const currentWebcamId =
       this.webcam.device ? this.webcam.device.deviceId : null;
-    this.log('updateWebcams()', "DEBUG");
-    this.log(array, "DEBUG")
+    //this.log('updateWebcams()', "DEBUG");
+    //this.log(array, "DEBUG")
     if (len === 0)
       this.webcam.device = null;
     else if (!this.webcams.has(currentWebcamId))

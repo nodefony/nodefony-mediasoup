@@ -49,9 +49,9 @@ class Peer extends nodefony.Service {
     return this.transport.send(JSON.stringify(message));
   }
 
-  notify(event, data) {
-    return this.send({
-      method: "nofity",
+  notify(room, event, data) {
+    this.log( event ,"NOTICE");
+    return this.send(room, "notify", {
       event: event,
       data: data
     });
