@@ -14,11 +14,16 @@ class Mediasoup extends nodefony.Service {
     this.room = null;
     this.peer = null;
     this.sock = null;
+    this.domain = "localhost";
     this.deviceInfo = deviceInfo();
     this.on("connect", (room, peer) => {
       room.init(peer);
     });
-    this.domain = "192.168.0.51" || "localhost";
+  }
+
+  async getWssServer(){
+    let result = await this.store.dispatch('API_REQUEST', "/mediasoup/api/servers" );
+    return result.result.config.webRtcTransportOptions.listenIps[0].ip ;
   }
 
   // hooy plugins vue
@@ -44,7 +49,8 @@ class Mediasoup extends nodefony.Service {
   }
 
   connect(roomid = "test", peerid = "cci") {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+      this.domain = await this.getWssServer();
       let url = `wss://${this.domain}:5152/mediasoup/ws?roomId=${roomid}&peerId=${peerid}`;
       this.sock = new WebSocket(url);
       this.sock.onopen = (event) => {

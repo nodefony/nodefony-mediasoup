@@ -19,8 +19,24 @@
  *    }
  **/
 
+ const cors = {
+   "allow-origin": "*",
+   "Access-Control": {
+     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+     "Access-Control-Allow-Headers": "nodefony_csrf, jwt, Authorization, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date",
+     "Access-Control-Allow-Credentials": true,
+     "Access-Control-Expose-Headers": "WWW-Authenticate ,X-Json, nodefony_csrf, jwt",
+     "Access-Control-Max-Age": 10
+   }
+ };
+
 module.exports = {
   security:{
-    firewalls   :   {}
+    firewalls   :   {
+      wss_area: {
+        pattern: /^\/mediasoup\/ws$/,
+        crossDomain: cors
+      }
+    }
   }
 };

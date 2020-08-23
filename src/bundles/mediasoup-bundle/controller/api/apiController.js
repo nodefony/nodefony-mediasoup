@@ -1,4 +1,28 @@
 const mediasoup = require('mediasoup');
+const {
+  networkInterfaces
+} = require('os');
+
+
+const getLocalExternalIP = () => [].concat(...Object.values(networkInterfaces()))
+  .find((details) => details.family === 'IPv4' && !details.internal);
+
+
+const getDevice = () => {
+  const nets = networkInterfaces();
+  const devices = Object.create(null); // or just '{}', an empty object
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (!devices[name]) {
+        devices[name] = [];
+        devices[name].push(net);
+      } else {
+        devices[name].push(net);
+      }
+    }
+  }
+  return devices;
+};
 /**
  *	@class apiController
  *	@constructor
@@ -21,7 +45,21 @@ class apiController extends nodefony.Controller {
     }, this.context);
   }
 
-  getRoom(roomId){
+
+  /**
+   *  API GET resource that returns the mediasoup Router RTP capabilities of the room
+   *    @Route ("/servers",
+   *      name="route-mediasoup-servers")
+   */
+  getServerAction() {
+    return this.api.render({
+      external: getLocalExternalIP(),
+      devices: getDevice(),
+      config: this.bundle.settings.mediasoup
+    });
+  }
+
+  getRoom(roomId) {
     return this.roomsService.getRoom(roomId);
   }
 
@@ -32,13 +70,13 @@ class apiController extends nodefony.Controller {
    */
   async roomsAction(roomId) {
     const room = this.getRoom(roomId);
-    let status = null ;
-    if (room){
+    let status = null;
+    if (room) {
       status = await room.logStatus();
     }
     return this.api.render({
-      roomid:roomId,
-      status:status
+      roomid: roomId,
+      status: status
     });
   }
 
@@ -59,105 +97,105 @@ class apiController extends nodefony.Controller {
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}",
    *      name="route-mediasoup-rooms-broadcasters-delete")
    */
-   roomsBroadcastersDeleteAction(roomId, broadcasterId) {
-     return this.api.render({
-       roomId,
-       broadcasterId
-     });
-   }
+  roomsBroadcastersDeleteAction(roomId, broadcasterId) {
+    return this.api.render({
+      roomId,
+      broadcasterId
+    });
+  }
 
-   /**
-	 * POST API to create a mediasoup Transport associated to a Broadcaster.
-	 * It can be a PlainTransport or a WebRtcTransport depending on the
-	 * type parameters in the body. There are also additional parameters for
-	 * PlainTransport.
+  /**
+   * POST API to create a mediasoup Transport associated to a Broadcaster.
+   * It can be a PlainTransport or a WebRtcTransport depending on the
+   * type parameters in the body. There are also additional parameters for
+   * PlainTransport.
    *
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports",
    *    name="route-mediasoup-rooms-broadcasters-transport")
-	 */
-   roomsBroadcastersTransportAction(roomId, broadcasterId) {
-     return this.api.render({
-       roomId,
-       broadcasterId
-     });
-   }
+   */
+  roomsBroadcastersTransportAction(roomId, broadcasterId) {
+    return this.api.render({
+      roomId,
+      broadcasterId
+    });
+  }
 
-   /**
-	 * POST API to connect a Transport belonging to a Broadcaster. Not needed
-	 * for PlainTransport if it was created with comedia option set to true.
+  /**
+   * POST API to connect a Transport belonging to a Broadcaster. Not needed
+   * for PlainTransport if it was created with comedia option set to true.
    *
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports/{transportId}/connect",
    *    name="route-mediasoup-rooms-broadcasters-transport-connect")
-	 */
-   roomsBroadcastersTransportConnectAction(roomId, broadcasterId, transportId) {
-     return this.api.render({
-       roomId,
-       broadcasterId,
-       transportId
-     });
-   }
+   */
+  roomsBroadcastersTransportConnectAction(roomId, broadcasterId, transportId) {
+    return this.api.render({
+      roomId,
+      broadcasterId,
+      transportId
+    });
+  }
 
-   /**
-	 * POST API to create a mediasoup Producer associated to a Broadcaster.
-	 * The exact Transport in which the Producer must be created is signaled in
-	 * the URL path. Body parameters include kind and rtpParameters of the
-	 * Producer.
+  /**
+   * POST API to create a mediasoup Producer associated to a Broadcaster.
+   * The exact Transport in which the Producer must be created is signaled in
+   * the URL path. Body parameters include kind and rtpParameters of the
+   * Producer.
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports/{transportId}/producers",
    *    name="route-mediasoup-rooms-broadcasters-transport-producers")
-	 */
-   roomsBroadcastersTransportProducerAction(roomId, broadcasterId, transportId) {
-     return this.api.render({
-       roomId,
-       broadcasterId,
-       transportId
-     });
-   }
+   */
+  roomsBroadcastersTransportProducerAction(roomId, broadcasterId, transportId) {
+    return this.api.render({
+      roomId,
+      broadcasterId,
+      transportId
+    });
+  }
 
-   /**
-	 * POST API to create a mediasoup Consumer associated to a Broadcaster.
-	 * The exact Transport in which the Consumer must be created is signaled in
-	 * the URL path. Query parameters must include the desired producerId to
-	 * consume.
+  /**
+   * POST API to create a mediasoup Consumer associated to a Broadcaster.
+   * The exact Transport in which the Consumer must be created is signaled in
+   * the URL path. Query parameters must include the desired producerId to
+   * consume.
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports/{transportId}/consume",
    *    name="route-mediasoup-rooms-broadcasters-transport-consume")
-	 */
-   roomsBroadcastersTransportConsumeAction(roomId, broadcasterId, transportId) {
-     return this.api.render({
-       roomId,
-       broadcasterId,
-       transportId
-     });
-   }
+   */
+  roomsBroadcastersTransportConsumeAction(roomId, broadcasterId, transportId) {
+    return this.api.render({
+      roomId,
+      broadcasterId,
+      transportId
+    });
+  }
 
-   /**
-	 * POST API to create a mediasoup DataConsumer associated to a Broadcaster.
-	 * The exact Transport in which the DataConsumer must be created is signaled in
-	 * the URL path. Query body must include the desired producerId to
-	 * consume.
+  /**
+   * POST API to create a mediasoup DataConsumer associated to a Broadcaster.
+   * The exact Transport in which the DataConsumer must be created is signaled in
+   * the URL path. Query body must include the desired producerId to
+   * consume.
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports/{transportId}/consume/data",
    *    name="route-mediasoup-rooms-broadcasters-transport-consume-data")
-	 */
-   roomsBroadcastersTransportConsumeDataAction(roomId, broadcasterId, transportId) {
-     return this.api.render({
-       roomId,
-       broadcasterId,
-       transportId
-     });
-   }
+   */
+  roomsBroadcastersTransportConsumeDataAction(roomId, broadcasterId, transportId) {
+    return this.api.render({
+      roomId,
+      broadcasterId,
+      transportId
+    });
+  }
 
-   /**
-	 * POST API to create a mediasoup DataProducer associated to a Broadcaster.
-	 * The exact Transport in which the DataProducer must be created is signaled in
+  /**
+   * POST API to create a mediasoup DataProducer associated to a Broadcaster.
+   * The exact Transport in which the DataProducer must be created is signaled in
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports/{transportId}/produce/data",
    *    name="route-mediasoup-rooms-broadcasters-transport-produce-data")
-	 */
-   roomsBroadcastersTransportProduceDataAction(roomId, broadcasterId, transportId) {
-     return this.api.render({
-       roomId,
-       broadcasterId,
-       transportId
-     });
-   }
+   */
+  roomsBroadcastersTransportProduceDataAction(roomId, broadcasterId, transportId) {
+    return this.api.render({
+      roomId,
+      broadcasterId,
+      transportId
+    });
+  }
 }
 
 module.exports = apiController;

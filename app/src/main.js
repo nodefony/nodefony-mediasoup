@@ -23,6 +23,10 @@ Vue.use(mediasoup, {
   nodefony
 });
 
+import Grid from 'vue-js-grid'
+
+Vue.use(Grid)
+
 new Vue({
   router,
   store,
