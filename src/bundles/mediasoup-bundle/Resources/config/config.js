@@ -14,7 +14,8 @@
 
 const os = require('os');
 //const ip = kernel.settings.system.domain; //'192.168.99.151'
-const ip = '192.168.0.5';
+//const ip = '192.168.0.5';
+const ip = '192.168.99.151';
 module.exports = {
   type: "sandbox",
   locale: "en_en",

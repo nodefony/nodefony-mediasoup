@@ -19,6 +19,54 @@ class Peer extends nodefony.Service {
     this.dataConsumers = new Map();
   }
 
+  hasConsumer(consumerId) {
+    return this.consumers.has(consumerId);
+  }
+
+  getConsumer(consumerId) {
+    return this.consumers.get(consumerId);
+  }
+
+  setConsumer(consumerId, consumer) {
+    return this.consumers.set(consumerId, consumer);
+  }
+
+  deleteConsumer(consumerId) {
+    return this.consumers.delete(consumerId);
+  }
+
+  hasProducer(producerId) {
+    return this.producers.has(producerId);
+  }
+
+  getProducer(producerId) {
+    return this.producers.get(producerId);
+  }
+
+  setProducer(producerId, producer) {
+    return this.producers.set(producerId, producer);
+  }
+
+  deleteProducer(producerId) {
+    return this.producers.delete(producerId);
+  }
+
+  hasTransport(transportId) {
+    return this.transports.has(transportId);
+  }
+
+  getTransport(transportId) {
+    return this.transports.get(transportId);
+  }
+
+  setTransport(transportId, transport) {
+    return this.transports.set(transportId, transport);
+  }
+
+  deleteTransport(transportId) {
+    return this.transports.delete(transportId);
+  }
+
   close(closeTransport = true) {
     try {
       if (closeTransport){
@@ -34,7 +82,7 @@ class Peer extends nodefony.Service {
     for (const transport of this.transports.values()) {
       transport.close();
     }
-    this.fire("close", this)
+    this.fire("close", this);
     this.log(`Close Peer : ${this.id}`);
     return this;
   }
@@ -45,7 +93,7 @@ class Peer extends nodefony.Service {
       peerid : this.id,
       roomid:room.id,
       data:data
-    }
+    };
     return this.transport.send(JSON.stringify(message));
   }
 
@@ -55,6 +103,42 @@ class Peer extends nodefony.Service {
       event: event,
       data: data
     });
+  }
+
+  async pauseProducer(producerId){
+    if (!this.hasProducer(producerId)){
+      throw new Error(`producer with id "${producerId}" not found`);
+    }
+    let producer = this.getProducer(producerId);
+    await producer.pause();
+    return producer;
+  }
+
+  async resumeProducer(producerId){
+    if (!this.hasProducer(producerId)){
+      throw new Error(`producer with id "${producerId}" not found`);
+    }
+    let producer = this.getProducer(producerId);
+    await producer.resume();
+    return producer;
+  }
+
+  async pauseConsumer(consumerId){
+    if (!this.hasProducer(consumerId)){
+      throw new Error(`Consumer with id "${consumerId}" not found`);
+    }
+    let consumer = this.getConsumer(consumerId);
+    await consumer.pause();
+    return consumer;
+  }
+
+  async resumeConsumer(consumerId){
+    if (!this.hasProducer(consumerId)){
+      throw new Error(`Consumer with id "${consumerId}" not found`);
+    }
+    let consumer = this.getConsumer(consumerId);
+    await consumer.resume();
+    return consumer;
   }
 
 }

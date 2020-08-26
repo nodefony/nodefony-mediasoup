@@ -16,7 +16,7 @@ module.exports = class Mediasoup extends nodefony.Service {
         this.runMediasoupWorkers();
       });
       this.kernel.once("onTerminate", () => {
-        this.closeWorkers()
+        this.closeWorkers();
       });
     } else {
       this.roomsService = this.get("Rooms");
@@ -27,20 +27,19 @@ module.exports = class Mediasoup extends nodefony.Service {
   async handShake(query, context) {
     if (query.roomId && query.peerId) {
       let info = `websocket handshake connection :
-      [roomId:${query.roomId}, peerId:${query.peerId}, address:${context.remoteAddress}, origin:${context.origin}]`
+      [roomId:${query.roomId}, peerId:${query.peerId}, address:${context.remoteAddress}, origin:${context.origin}]`;
       this.log(info);
       let room = await this.getOrCreateRoom(query.roomId);
       let peer = await room.createPeer(query.peerId, context);
       let message = {
         query,
         method: "handshake",
-        query,
         roomid: room.id,
         peerid: peer.id
       };
       return context.send(JSON.stringify(message));
     } else {
-      throw new nodefony.Error("Connection request without roomId and/or peerId", 5006)
+      throw new nodefony.Error("Connection request without roomId and/or peerId", 5006);
     }
   }
 
@@ -55,12 +54,12 @@ module.exports = class Mediasoup extends nodefony.Service {
       }
     }*/
     let room = this.roomsService.getRoom(message.roomid);
-    if (!room){
-      throw new Error(`Room not exit with id ${message.roomid} `)
+    if (!room) {
+      throw new Error(`Room not exit with id ${message.roomid} `);
     }
     let peer = room.getPeer(message.peerid);
     if (!peer) {
-      throw new Error(`Peer not exit with id ${message.peerid} `)
+      throw new Error(`Peer not exit with id ${message.peerid} `);
     }
     return this.roomsService.handle(room, peer, message, context);
   }
@@ -121,7 +120,7 @@ module.exports = class Mediasoup extends nodefony.Service {
         worker,
         roomId
       );
-    }else{
+    } else {
       this.log(`Connect Room  [roomId:${roomId}]`);
     }
     return room;

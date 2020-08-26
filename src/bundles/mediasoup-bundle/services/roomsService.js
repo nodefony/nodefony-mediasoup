@@ -18,28 +18,22 @@ class Rooms extends nodefony.Service {
       this.botService = this.get("Bot");
       this.log(this.mediaRouterOptions, "DEBUG");
     }
-    this.AudioLevelOptions = {
-      maxEntries: 1,
-      threshold: -80,
-      interval: 800
-    }
+
   }
 
-  create(worker, roomid, mediaCodecs = this.mediaRouterOptions.mediaCodecs, audioLevelOptions = this.AudioLevelOptions) {
+  create(worker, roomid, mediaCodecs = this.mediaRouterOptions.mediaCodecs) {
     return new Promise(async (resolve, reject) => {
       try {
         // Create a mediasoup Router.
-        console.log({
+        this.log({
           mediaCodecs
-        })
+        });
         const router = await worker.createRouter({
           mediaCodecs
         });
-        // Create a mediasoup AudioLevelObserver.
-        const audioLevelObserver = await router.createAudioLevelObserver(audioLevelOptions);
         // bot data
         const bot = await this.botService.create(router);
-        const room = new Room(roomid, worker, router, audioLevelObserver, bot, this.container);
+        const room = new Room(roomid, worker, router, bot, this.container);
         this.setRoom(room.id, room);
         router.once("workerclose", async () => {
           return await this.closeRoom(roomid);
@@ -49,7 +43,7 @@ class Rooms extends nodefony.Service {
         });
         return resolve(room);
       } catch (e) {
-        return reject(e)
+        return reject(e);
       }
     });
   }
@@ -58,154 +52,238 @@ class Rooms extends nodefony.Service {
     let transport = null;
     let transportId = null;
     let type = null;
+    let producerId = null;
+    let consumerId = null;
     switch (message.method) {
-    case "getRouterRtpCapabilities":
-      let messageToSend = {
-        method: message.method,
-        router: {
-          rtpCapabilities: room.getRouterRtpCapabilities()
-        },
-        roomid: message.roomid,
-        peerid: message.peerid
-      }
-      return context.send(JSON.stringify(messageToSend));
-    case "createWebRtcTransport":
-      type = null;
-      try {
-        if (message.data.producing) {
-          type = "producing";
-        }
-        if (message.data.consuming) {
-          type = "consuming";
-        }
-        let transport = await room.createWebRtcTransport(peer, message);
-        peer.send(this, "createWebRtcTransport", {
-          type: type,
-          id: transport.id,
-          iceParameters: transport.iceParameters,
-          iceCandidates: transport.iceCandidates,
-          dtlsParameters: transport.dtlsParameters,
-          sctpParameters: transport.sctpParameters
-        });
-      } catch (e) {
-        this.log(e, "ERROR");
-        peer.send(this, "createWebRtcTransport", {
-          type: type,
-          error: e
-        });
-      }
-      break;
-    case "join":
-      let peerInfos = await room.join(peer, message);
-      peer.send(room, "join", {
-        peers: peerInfos
-      });
-      for (const joinedPeer of room.getJoinedPeers({
-          //excludePeer: peer
-        })) {
-        // Create Consumers for existing Producers.
-        for (const producer of joinedPeer.producers.values()) {
-          room.createConsumer({
-            consumerPeer: peer,
-            producerPeer: joinedPeer,
-            producer
+      case "getRouterRtpCapabilities":
+        let messageToSend = {
+          method: message.method,
+          router: {
+            rtpCapabilities: room.getRouterRtpCapabilities()
+          },
+          roomid: message.roomid,
+          peerid: message.peerid
+        };
+        return context.send(JSON.stringify(messageToSend));
+      case "createWebRtcTransport":
+        type = null;
+        try {
+          if (message.data.producing) {
+            type = "producing";
+          }
+          if (message.data.consuming) {
+            type = "consuming";
+          }
+          transport = await room.createWebRtcTransport(peer, message);
+          peer.send(this, "createWebRtcTransport", {
+            type: type,
+            id: transport.id,
+            iceParameters: transport.iceParameters,
+            iceCandidates: transport.iceCandidates,
+            dtlsParameters: transport.dtlsParameters,
+            sctpParameters: transport.sctpParameters
+          });
+        } catch (e) {
+          this.log(e, "ERROR");
+          peer.send(this, "createWebRtcTransport", {
+            type: type,
+            error: e
           });
         }
-        // Create DataConsumers for existing DataProducers.
-        for (const dataProducer of joinedPeer.dataProducers.values()) {
-          if (dataProducer.label === 'bot')
-            continue;
-
-          this.createDataConsumer({
-            dataConsumerPeer: peer,
-            dataProducerPeer: joinedPeer,
-            dataProducer
-          });
+        break;
+      case "join":
+        let peerInfos = await room.join(peer, message);
+        peer.send(room, "join", {
+          peers: peerInfos
+        });
+        for (const joinedPeer of room.getJoinedPeers({
+            //excludePeer: peer
+          })) {
+          // Create Consumers for existing Producers.
+          for (const producer of joinedPeer.producers.values()) {
+            room.createConsumer({
+              consumerPeer: peer,
+              producerPeer: joinedPeer,
+              producer
+            });
+          }
+          // Create DataConsumers for existing DataProducers.
+          for (const dataProducer of joinedPeer.dataProducers.values()) {
+            if (dataProducer.label === 'bot') {
+              continue;
+            }
+            this.createDataConsumer({
+              dataConsumerPeer: peer,
+              dataProducerPeer: joinedPeer,
+              dataProducer
+            });
+          }
         }
-      }
-      // Create DataConsumers for bot DataProducer.
-      room.createDataConsumer({
-        dataConsumerPeer: peer,
-        dataProducerPeer: null,
-        dataProducer: room.bot.dataProducer
-      });
+        // Create DataConsumers for bot DataProducer.
+        room.createDataConsumer({
+          dataConsumerPeer: peer,
+          dataProducerPeer: null,
+          dataProducer: room.bot.dataProducer
+        });
 
-      // Notify the new Peer to all other Peers.
-      for (const otherPeer of room.getJoinedPeers({
-          excludePeer: peer
-        })) {
-        otherPeer.notify(room, 'newPeer', {
+        // Notify the new Peer to all other Peers.
+        for (const otherPeer of room.getJoinedPeers({
+            excludePeer: peer
+          })) {
+          otherPeer.notify(room, 'newPeer', {
             id: peer.id,
             displayName: peer.displayName,
             device: peer.device
           });
-      }
-      break;
-    case "connectWebRtcTransport":
-      try {
-        let transport = await room.connecWebRtcTransport(peer, message.data);
-        peer.send(room, "connectWebRtcTransport", {
-          type: message.data.type,
-          id: transport.id
+        }
+        break;
+      case "connectWebRtcTransport":
+        try {
+          let transport = await room.connecWebRtcTransport(peer, message.data);
+          peer.send(room, "connectWebRtcTransport", {
+            type: message.data.type,
+            id: transport.id
+          });
+        } catch (e) {
+          this.log(e, "ERROR");
+          peer.send(room, "connectWebRtcTransport", {
+            error: e
+          });
+        }
+        break;
+      case "produce":
+        let producer = null;
+        try {
+          producer = await room.createProducer(peer, message.data);
+          peer.send(room, "produce", {
+            id: producer.id
+          });
+        } catch (e) {
+          this.log(e, "ERROR");
+          peer.send(room, "produce", {
+            error: e
+          });
+        }
+        for (const otherPeer of room.getJoinedPeers({
+            excludePeer: peer
+          })) {
+          room.createConsumer({
+            consumerPeer: otherPeer,
+            producerPeer: peer,
+            producer
+          });
+        }
+        // Add into the audioLevelObserver.
+        if (producer.kind === 'audio') {
+          room.audioLevelObserver.addProducer({
+              producerId: producer.id
+            })
+            .catch(() => {});
+        }
+        break;
+      case "closeProducer":
+        // Ensure the Peer is joined.
+        if (!peer.joined) {
+          throw new Error('Peer not yet joined');
+        }
+        producerId = message.data.producerId;
+        await peer.closeProducer(producerId);
+        peer.send(room, "closeProducer", {
+          producerId: producerId
         });
-      } catch (e) {
-        this.log(e, "ERROR");
-        peer.send(room, "connectWebRtcTransport", {
-          error: e
+        break;
+      case "pauseProducer":
+        // Ensure the Peer is joined.
+        if (!peer.joined) {
+          throw new Error('Peer not yet joined');
+        }
+        producerId = message.data.producerId;
+        await peer.pauseProducer(producerId);
+        peer.send(room, "pauseProducer", {
+          producerId: producerId
         });
-      }
-      break;
-    case "produce":
-      let producer = null;
-      try {
-        producer = await room.createProducer(peer, message.data);
-        peer.send(room, "produce", {
-          id: producer.id
+        break;
+      case "resumeProducer":
+        // Ensure the Peer is joined.
+        if (!peer.joined) {
+          throw new Error('Peer not yet joined');
+        }
+        producerId = message.data.producerId;
+        await peer.resumeProducer(producerId);
+        peer.send(room, "resumeProducer", {
+          producerId: producerId
         });
-      } catch (e) {
-        this.log(e, "ERROR");
-        peer.send(room, "produce", {
-          error: e
+        break;
+      case "pauseConsumer":
+        // Ensure the Peer is joined.
+        if (!peer.joined) {
+          throw new Error('Peer not yet joined');
+        }
+        consumerId = message.data.consumerId;
+        await peer.pauseConsumer(producerId);
+        peer.send(room, "pauseConsumer", {
+          consumerId: consumerId
         });
-      }
-      for (const otherPeer of room.getJoinedPeers({
+        break;
+      case "resumeConsumer":
+        // Ensure the Peer is joined.
+        if (!peer.joined) {
+          throw new Error('Peer not yet joined');
+        }
+        consumerId = message.data.consumerId;
+        await peer.resumeConsumer(producerId);
+        peer.send(room, "resumeConsumer", {
+          consumerId: consumerId
+        });
+        break;
+
+      case "setConsumerPreferredLayers":
+      case "setConsumerPriority":
+      case "requestConsumerKeyFrame":
+      case "produceData":
+        break;
+        //tools
+      case "restartIce":
+        transportId = message.data.transportId;
+        transport = peer.getTransport(transportId);
+        if (!transport) {
+          throw new Error(`transport with id "${transportId}" not found`);
+        }
+        const iceParameters = await transport.restartIce();
+        peer.send(room, "restartIce", {
+          iceParameters: iceParameters
+        });
+        break;
+      case "changeDisplayName":
+        // Ensure the Peer is joined.
+        if (!peer.joined) {
+          throw new Error('Peer not yet joined');
+        }
+        const {
+          displayName
+        } = message.data;
+        const oldDisplayName = peer.displayName;
+        // Store the display name
+        // Peer.
+        peer.displayName = displayName;
+        room.notifyAllPeers("peerDisplayNameChanged", {
+          peerId: peer.id,
+          displayName,
+          oldDisplayName
+        }, {
           excludePeer: peer
-        })) {
-        room.createConsumer({
-          consumerPeer: otherPeer,
-          producerPeer: peer,
-          producer
         });
-      }
-      // Add into the audioLevelObserver.
-      if (producer.kind === 'audio') {
-        room.audioLevelObserver.addProducer({
-            producerId: producer.id
-          })
-          .catch(() => {});
-      }
-      break;
-    case "closeProducer":
-    case "pauseProducer":
-    case "restartIce":
-    case "resumeProducer":
-    case "pauseConsumer":
-    case "resumeConsumer":
-    case "setConsumerPreferredLayers":
-    case "setConsumerPriority":
-    case "requestConsumerKeyFrame":
-    case "produceData":
-    case "changeDisplayName":
-      //stats
-    case "getTransportStats":
-    case "getProducerStats":
-    case "getConsumerStats":
-    case "getDataProducerStats":
-    case "getDataConsumerStats":
-      console.log(`Event ${message.method}`);
-      break;
-    default:
-      throw new Error("bad message");
+        break;
+        //stats
+      case "getTransportStats":
+      case "getProducerStats":
+      case "getConsumerStats":
+      case "getDataProducerStats":
+      case "getDataConsumerStats":
+        console.log(`Event ${message.method}`);
+        break;
+      default:
+        throw new Error("bad message");
     }
     return;
   }
@@ -219,15 +297,15 @@ class Rooms extends nodefony.Service {
   }
 
   hasRoom(roomId) {
-    return this.rooms.has(roomId)
+    return this.rooms.has(roomId);
   }
 
   getRoom(roomId) {
-    return this.rooms.get(roomId)
+    return this.rooms.get(roomId);
   }
 
   deleteRoom(roomId) {
-    return this.rooms.delete(roomId)
+    return this.rooms.delete(roomId);
   }
 
   setRoom(roomid, room) {
@@ -235,6 +313,6 @@ class Rooms extends nodefony.Service {
     room.on('close', () => this.rooms.delete(roomid));
   }
 
-};
+}
 
 module.exports = Rooms;

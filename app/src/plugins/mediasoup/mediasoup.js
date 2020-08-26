@@ -55,14 +55,14 @@ class Mediasoup extends nodefony.Service {
       this.sock = new WebSocket(url);
       this.sock.onopen = (event) => {
         this.log(`Mediasoup Websocket Connect peer ${peerid} room : ${roomid}`);
-      }
+      };
       this.sock.onmessage = (event) => {
         let message = null ;
         try{
           message = JSON.parse(event.data);
         }catch(e){
           this.log(event.data, "ERROR");
-          throw new Error(`Bad Json Message`)
+          throw new Error(`Bad Json Message`);
         }
         let sendMessage = null;
         //this.log(message,"INFO", 'WebSocket message')
@@ -80,7 +80,7 @@ class Mediasoup extends nodefony.Service {
             roomid: message.roomid,
             peerid: message.peerid,
             method: "getRouterRtpCapabilities"
-          }
+          };
           this.sock.send(JSON.stringify(sendMessage));
           return resolve({
             room: this.room,
@@ -111,15 +111,15 @@ class Mediasoup extends nodefony.Service {
           this.fire("message", message, this);
           return;
         }
-      }
+      };
       this.sock.onerror = (error) => {
         this.log(error, "ERROR");
         this.fire("errorSock", error, this);
         return reject(error);
-      }
+      };
       this.sock.onclose = () => {
         this.fire("closeSock", this);
-      }
+      };
     });
   }
 

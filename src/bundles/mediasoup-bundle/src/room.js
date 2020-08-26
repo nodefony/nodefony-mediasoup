@@ -1,18 +1,23 @@
 class Room extends nodefony.Service {
-  constructor(roomid, worker, router, audioLevelObserver, bot, container) {
+  constructor(roomid, worker, router, bot, container) {
     super(`Room ${roomid}`, container, null);
     this.id = roomid;
+    this.peersService = this.get("Peers");
+    this.mediasoupService = this.get("Mediasoup");
     this.closed = false;
     this.worker = worker;
     this.router = router;
     this.bot = bot;
-    this.audioLevelObserver = audioLevelObserver;
-    this.peersService = this.get("Peers");
     this.peers = new Map();
     this.broadcasters = new Map();
+    this.webRtcTransportOptions = this.mediasoupService.config.webRtcTransportOptions;
+    // Create a mediasoup AudioLevelObserver.
+    this.AudioLevelOptions = {
+      maxEntries: 1,
+      threshold: -80,
+      interval: 800
+    };
     this.handleAudioLevelObserver();
-    this.mediasoupService = this.get("Mediasoup");
-    this.webRtcTransportOptions = this.mediasoupService.config.webRtcTransportOptions
   }
 
   async logStatus() {
@@ -31,19 +36,29 @@ class Room extends nodefony.Service {
         capabilities: this.getRouterRtpCapabilities()
       },
       broadcasters: this.broadcasters.size
-    }
+    };
   }
 
   getJoinedPeers({
-    excludePeer = undefined
+    excludePeer = null
   } = {}) {
     let tab = [];
-    this.peers.forEach((peer, i) => {
+    this.peers.forEach((peer) => {
       if (peer.joined && peer !== excludePeer) {
-        tab.push(peer)
+        tab.push(peer);
       }
     });
     return tab;
+  }
+
+  notifyAllPeers(event, data, {
+    excludePeer = null
+  } = {}) {
+    this.peers.forEach((peer) => {
+      if (peer.joined && peer !== excludePeer) {
+        peer.notify(this, event, data);
+      }
+    });
   }
 
   async createPeer(peerid, transport) {
@@ -82,11 +97,11 @@ class Room extends nodefony.Service {
   }
 
   hasPeer(peerid) {
-    return this.peers.has(peerid)
+    return this.peers.has(peerid);
   }
 
   getPeer(peerid) {
-    return this.peers.get(peerid)
+    return this.peers.get(peerid);
   }
 
   setPeer(peerid, peer) {
@@ -97,20 +112,31 @@ class Room extends nodefony.Service {
     this.peers.delete(peerid);
   }
 
-  handleAudioLevelObserver() {
+  async handleAudioLevelObserver() {
+    // Create a mediasoup AudioLevelObserver.
+    this.audioLevelObserver = await this.router.createAudioLevelObserver(this.AudioLevelOptions);
     this.audioLevelObserver.on('volumes', (volumes) => {
-
+      const {
+        producer,
+        volume
+      } = volumes[0];
+      this.log(`audioLevelObserver : volumes event  [producerId : ${producer.id}, volume : ${volume}]`, "DEBUG");
+      this.notifyAllPeers('activeSpeaker', {
+        peerId: producer.appData.peerId,
+        volume: volume
+      });
     });
     this.audioLevelObserver.on('silence', () => {
-
+      this.log(`audioLevelObserver : silence event`, "DEBUG");
+      this.notifyAllPeers('activeSpeaker', {
+        peerId: null
+      });
     });
   }
 
   getRouterRtpCapabilities() {
     return this.router.rtpCapabilities;
   }
-
-
 
   async close() {
     if (this.router) {
@@ -120,9 +146,9 @@ class Room extends nodefony.Service {
       await this.bot.close();
     }
     if (this.peers.size) {
-      this.peers.forEach((peer, key, map) => {
+      this.peers.forEach((peer) => {
         return peer.close();
-      })
+      });
     }
     this.closed = true;
     return this.fire("close", this);
@@ -145,9 +171,9 @@ class Room extends nodefony.Service {
     peer.rtpCapabilities = rtpCapabilities;
     peer.sctpCapabilities = sctpCapabilities;
     const joinedPeers = [
-			...this.getJoinedPeers(),
-			...this.broadcasters.values()
-		];
+      ...this.getJoinedPeers(),
+      ...this.broadcasters.values()
+    ];
     // Reply now the request with the list of joined peers (all but the new one).
     const peerInfos = joinedPeers
       .filter((joinedPeer) => joinedPeer.id !== peer.id)
@@ -204,7 +230,7 @@ class Room extends nodefony.Service {
           availableBitrate: trace.info.availableBitrate
         });
       });
-      peer.transports.set(transport.id, transport);
+      peer.setTransport(transport.id, transport);
       const {
         maxIncomingBitrate
       } = this.webRtcTransportOptions;
@@ -237,13 +263,14 @@ class Room extends nodefony.Service {
       return transport;
     } catch (e) {
       this.log(e, "ERROR");
-      throw e
+      throw e;
     }
   }
 
   async createProducer(peer, data) {
-    if (!peer.joined)
+    if (!peer.joined) {
       throw new Error('Peer not yet joined');
+    }
     const {
       transportId,
       kind,
@@ -277,7 +304,7 @@ class Room extends nodefony.Service {
       });
     });
     producer.on('videoorientationchange', (videoOrientation) => {
-      this.log(`producer "videoorientationchange" event [producerId:${producerId}] `, "DEBUG");
+      this.log(`producer "videoorientationchange" event [producerId:${producer.id}] `, "DEBUG");
       this.log(videoOrientation, "DEBUG");
     });
     // NOTE: For testing.
@@ -286,12 +313,16 @@ class Room extends nodefony.Service {
     // await producer.enableTraceEvent([ 'keyframe' ]);
     producer.on('trace', (trace) => {
       this.log(`producer "trace" event [producerId:${producer.id}, trace.type:${trace.type}`, "DEBUG");
-      this.log(trace, "DEBUG")
+      this.log(trace, "DEBUG");
     });
-    return producer
+    return producer;
   }
 
-  async createConsumer({consumerPeer, producerPeer, producer}) {
+  async createConsumer({
+    consumerPeer,
+    producerPeer,
+    producer
+  }) {
     // Optimization:
     // - Create the server-side Consumer in paused mode.
     // - Tell its Peer about it and wait for its response.
@@ -309,9 +340,9 @@ class Room extends nodefony.Service {
       producerId: producer.id,
       rtpCapabilities: consumerPeer.rtpCapabilities
     });
-    if ( !consumerPeer.rtpCapabilities || !canConsume){
-      this.log(`Peer : ${consumerPeer.id} canConsume :  ${canConsume} `,"WARNING")
-      this.log(`rtpCapabilities : ${consumerPeer.rtpCapabilities}`,"WARNING");
+    if (!consumerPeer.rtpCapabilities || !canConsume) {
+      this.log(`Peer : ${consumerPeer.id} canConsume :  ${canConsume} `, "WARNING");
+      this.log(`rtpCapabilities : ${consumerPeer.rtpCapabilities}`, "WARNING");
       return;
     }
     // Must take the Transport the remote Peer is using for consuming.
@@ -336,45 +367,46 @@ class Room extends nodefony.Service {
       this.log(error, 'ERROR');
       return;
     }
-    // Store the Consumer into the protoo consumerPeer data Object.
-    consumerPeer.consumers.set(consumer.id, consumer);
+    // Store the Consumer in peer .
+    //consumerPeer.consumers.set(consumer.id, consumer);
+    consumerPeer.setConsumer(consumer.id, consumer);
     // Set Consumer events.
     consumer.on('transportclose', () => {
       // Remove from its map.
-      consumerPeer.consumers.delete(consumer.id);
+      consumerPeer.deleteConsumer(consumer.id);
     });
     consumer.on('producerclose', () => {
       // Remove from its map.
-      consumerPeer.consumers.delete(consumer.id);
+      consumerPeer.deleteConsumer(consumer.id);
       consumerPeer.notify(this, 'consumerClosed', {
-          consumerId: consumer.id
-        })
+        consumerId: consumer.id
+      });
     });
     consumer.on('producerpause', () => {
       consumerPeer.notify(this, 'consumerPaused', {
-          consumerId: consumer.id
-        })
+        consumerId: consumer.id
+      });
     });
     consumer.on('producerresume', () => {
       consumerPeer.notify(this, 'consumerResumed', {
-          consumerId: consumer.id
-        })
+        consumerId: consumer.id
+      });
     });
     consumer.on('score', (score) => {
       // logger.debug(
       // 	'consumer "score" event [consumerId:%s, score:%o]',
       // 	consumer.id, score);
       consumerPeer.notify(this, 'consumerScore', {
-          consumerId: consumer.id,
-          score
-        })
+        consumerId: consumer.id,
+        score
+      });
     });
     consumer.on('layerschange', (layers) => {
       consumerPeer.notify(this, 'consumerLayersChanged', {
-            consumerId: consumer.id,
-            spatialLayer: layers ? layers.spatialLayer : null,
-            temporalLayer: layers ? layers.temporalLayer : null
-          })
+        consumerId: consumer.id,
+        spatialLayer: layers ? layers.spatialLayer : null,
+        temporalLayer: layers ? layers.temporalLayer : null
+      });
     });
     // NOTE: For testing.
     // await consumer.enableTraceEvent([ 'rtp', 'keyframe', 'nack', 'pli', 'fir' ]);
@@ -402,11 +434,12 @@ class Room extends nodefony.Service {
       // and associate it.
       await consumer.resume();
       consumerPeer.notify(this, 'consumerScore', {
-          consumerId: consumer.id,
-          score: consumer.score
-        })
+        consumerId: consumer.id,
+        score: consumer.score
+      });
+      return consumer;
     } catch (error) {
-      this.log('_createConsumer() | failed', "WARNING")
+      this.log('_createConsumer() | failed', "WARNING");
       this.log(error, "ERROR");
     }
   }
@@ -414,8 +447,6 @@ class Room extends nodefony.Service {
   async createDataConsumer(dataConsumerPeer, dataProducerPeer, dataProducer) {
 
   }
-
-
 
 }
 

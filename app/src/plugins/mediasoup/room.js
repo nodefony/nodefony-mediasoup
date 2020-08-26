@@ -43,8 +43,7 @@ const PC_PROPRIETARY_CONSTRAINTS = {
   }]
 };
 // Used for simulcast webcam video.
-const WEBCAM_SIMULCAST_ENCODINGS = [
-  {
+const WEBCAM_SIMULCAST_ENCODINGS = [{
     scaleResolutionDownBy: 4,
     maxBitrate: 500000
   },
@@ -58,14 +57,11 @@ const WEBCAM_SIMULCAST_ENCODINGS = [
   }
 ];
 // Used for VP9 webcam video.
-const WEBCAM_KSVC_ENCODINGS = [
-  {
-    scalabilityMode: 'S3T3_KEY'
-  }
-];
+const WEBCAM_KSVC_ENCODINGS = [{
+  scalabilityMode: 'S3T3_KEY'
+}];
 // Used for simulcast screen sharing.
-const SCREEN_SHARING_SIMULCAST_ENCODINGS = [
-  {
+const SCREEN_SHARING_SIMULCAST_ENCODINGS = [{
     dtx: true,
     maxBitrate: 1500000
   },
@@ -75,12 +71,10 @@ const SCREEN_SHARING_SIMULCAST_ENCODINGS = [
   }
 ];
 // Used for VP9 screen sharing.
-const SCREEN_SHARING_SVC_ENCODINGS = [
-  {
-    scalabilityMode: 'S3T3',
-    dtx: true
-  }
-];
+const SCREEN_SHARING_SVC_ENCODINGS = [{
+  scalabilityMode: 'S3T3',
+  dtx: true
+}];
 
 class Room extends nodefony.Service {
   constructor(id, options, mediasoup) {
@@ -144,8 +138,8 @@ class Room extends nodefony.Service {
 
       this.externalVideo.play()
         .catch((error) => {
-          this.log('externalVideo.play() failed')
-          this.log(error, "ERROR")
+          this.log('externalVideo.play() failed');
+          this.log(error, "ERROR");
         });
     }
     this.externalVideoStream = null;
@@ -153,7 +147,7 @@ class Room extends nodefony.Service {
 
   listenMediaSoupEvents() {
 
-    this.mediasoup.on("closeSock", ()=>{
+    this.mediasoup.on("closeSock", () => {
       this.connected = false;
       this.closed = false;
     });
@@ -223,150 +217,155 @@ class Room extends nodefony.Service {
       return this.fire("producedata", message.data.id, message, this);
     });
     this.mediasoup.on("newConsumer", async (message) => {
-      await this.newConsumer(message.data)
+      await this.newConsumer(message.data);
       return this.fire("newConsumer", message.data, message, this);
     });
     this.mediasoup.on("newDataConsumer", async (message) => {
-      await this.newDataConsumer(message.data)
+      await this.newDataConsumer(message.data);
       return this.fire("newDataConsumer", message.data, message, this);
     });
     this.mediasoup.on("notify", async (message) => {
       switch (message.data.event) {
-      case 'producerScore':
-        {
-          const {
-            producerId,
-            score
-          } = message.data.data;
-          this.fire("producerScore", producerId, score);
-          break;
-        }
-      case "newPeer":
-        {
-          const peer = message.data.data;
-          let newPeer = this.mediasoup.createPeer(peer.id, { ...peer,
-            consumers: [],
-            dataConsumers: []
-          });
-          this.peers.set(peer.id, newPeer);
-          this.fire("newPeer", newPeer);
-          break;
-        }
-      case 'peerClosed':
-        {
-          const {
-            peerId
-          } = message.data.data;
+        case 'producerScore':
+          {
+            const {
+              producerId,
+              score
+            } = message.data.data;
+            this.fire("producerScore", producerId, score);
+            break;
+          }
+        case "newPeer":
+          {
+            const peer = message.data.data;
+            let newPeer = this.mediasoup.createPeer(peer.id, { ...peer,
+              consumers: [],
+              dataConsumers: []
+            });
+            this.peers.set(peer.id, newPeer);
+            this.fire("newPeer", newPeer);
+            break;
+          }
+        case 'peerClosed':
+          {
+            const {
+              peerId
+            } = message.data.data;
 
-          this.fire("peerClosed", peerId);
-          this.peers.delete(peerId);
-          break;
-        }
+            this.fire("peerClosed", peerId);
+            this.peers.delete(peerId);
+            break;
+          }
 
-      case 'peerDisplayNameChanged':
-        {
-          const {
-            peerId,
-            displayName,
-            oldDisplayName
-          } = message.data.data;
-          this.fire("peerDisplayNameChanged", peerId, displayName, oldDisplayName);
-          break;
-        }
-      case 'downlinkBwe':
-        {
-          this.fire("downlinkBwe", message.data.data);
-          break;
-        }
-      case 'consumerClosed':
-        {
-          const {
-            consumerId
-          } = message.data.data;
-          const consumer = this.consumers.get(consumerId);
-          if (!consumer)
+        case 'peerDisplayNameChanged':
+          {
+            const {
+              peerId,
+              displayName,
+              oldDisplayName
+            } = message.data.data;
+            this.fire("peerDisplayNameChanged", peerId, displayName, oldDisplayName);
             break;
-          this.consumers.delete(consumerId);
-          const {
-            peerId
-          } = consumer.appData;
-          this.fire("consumerClosed", consumerId, peerId);
-          break;
-        }
-      case 'consumerPaused':
-        {
-          const {
-            consumerId
-          } = message.data.data;
-          const consumer = this.consumers.get(consumerId);
-          if (!consumer)
+          }
+        case 'downlinkBwe':
+          {
+            this.fire("downlinkBwe", message.data.data);
             break;
-          consumer.pause();
-          this.fire("consumerClosed", consumerId, "remote");
-          break;
-        }
-      case 'consumerResumed':
-        {
-          const {
-            consumerId
-          } = message.data.data;
-          const consumer = this.consumers.get(consumerId);
-          if (!consumer)
+          }
+        case 'consumerClosed':
+          {
+            const {
+              consumerId
+            } = message.data.data;
+            const consumer = this.consumers.get(consumerId);
+            if (!consumer) {
+              break;
+            }
+            this.consumers.delete(consumerId);
+            const {
+              peerId
+            } = consumer.appData;
+            this.fire("consumerClosed", consumerId, peerId);
             break;
-          consumer.resume();
-          this.fire("consumerResumed", consumerId, "remote");
-          break;
-        }
-      case 'consumerLayersChanged':
-        {
-          const {
-            consumerId,
-            spatialLayer,
-            temporalLayer
-          } = message.data.data;
-          const consumer = this.consumers.get(consumerId);
-          if (!consumer)
+          }
+        case 'consumerPaused':
+          {
+            const {
+              consumerId
+            } = message.data.data;
+            const consumer = this.consumers.get(consumerId);
+            if (!consumer) {
+              break;
+            }
+            consumer.pause();
+            this.fire("consumerClosed", consumerId, "remote");
             break;
-          this.fire("consumerLayersChanged", consumerId, spatialLayer, temporalLayer);
-          break;
-        }
-      case 'consumerScore':
-        {
-          const {
-            consumerId,
-            score
-          } = message.data.data;
-          this.fire("consumerScore", consumerId, score);
-          break;
-        }
-      case 'dataConsumerClosed':
-        {
-          const {
-            dataConsumerId
-          } = message.data.data;
-          const dataConsumer = this.dataConsumers.get(dataConsumerId);
-          if (!dataConsumer)
+          }
+        case 'consumerResumed':
+          {
+            const {
+              consumerId
+            } = message.data.data;
+            const consumer = this.consumers.get(consumerId);
+            if (!consumer) {
+              break;
+            }
+            consumer.resume();
+            this.fire("consumerResumed", consumerId, "remote");
             break;
-          dataConsumer.close();
-          this.dataConsumers.delete(dataConsumerId);
-          const {
-            peerId
-          } = dataConsumer.appData;
-          this.fire("dataConsumerClosed", dataConsumerId, peerId);
-          break;
-        }
-      case 'activeSpeaker':
-        {
-          const {
-            peerId
-          } = message.data.data;
-          this.fire("activeSpeaker", peerId);
-          break;
-        }
-      default:
-        this.log(message.data.event, "NOTICE");
-        this.log(message.data.data, "DEBUG");
-        this.fire("notify", message.data.event, message.data.data)
+          }
+        case 'consumerLayersChanged':
+          {
+            const {
+              consumerId,
+              spatialLayer,
+              temporalLayer
+            } = message.data.data;
+            const consumer = this.consumers.get(consumerId);
+            if (!consumer) {
+              break;
+            }
+            this.fire("consumerLayersChanged", consumerId, spatialLayer, temporalLayer);
+            break;
+          }
+        case 'consumerScore':
+          {
+            const {
+              consumerId,
+              score
+            } = message.data.data;
+            this.fire("consumerScore", consumerId, score);
+            break;
+          }
+        case 'dataConsumerClosed':
+          {
+            const {
+              dataConsumerId
+            } = message.data.data;
+            const dataConsumer = this.dataConsumers.get(dataConsumerId);
+            if (!dataConsumer) {
+              break;
+            }
+            dataConsumer.close();
+            this.dataConsumers.delete(dataConsumerId);
+            const {
+              peerId
+            } = dataConsumer.appData;
+            this.fire("dataConsumerClosed", dataConsumerId, peerId);
+            break;
+          }
+        case 'activeSpeaker':
+          {
+            const {
+              peerId
+            } = message.data.data;
+            this.fire("activeSpeaker", peerId);
+            break;
+          }
+        default:
+          this.log(message.data.event, "NOTICE");
+          this.log(message.data.data, "DEBUG");
+          this.fire("notify", message.data.event, message.data.data);
       }
     });
   }
@@ -415,11 +414,11 @@ class Room extends nodefony.Service {
       this.log(`Device endpoint load routerRtpCapabilities `, "DEBUG");
       // Create mediasoup Transport for sending (to produce)
       if (this.options.produce) {
-        this.createWebRtcTransport(true, false)
+        this.createWebRtcTransport(true, false);
       }
       // Create mediasoup Transport for sending (to consume).
       if (this.options.consume) {
-        this.createWebRtcTransport(false, true)
+        this.createWebRtcTransport(false, true);
       }
       return this.mediasoupDevice;
     } catch (error) {
@@ -442,7 +441,7 @@ class Room extends nodefony.Service {
       producing: produce,
       consuming: consume,
       sctpCapabilities: sctpCapabilities
-    }
+    };
     return this.mediasoup.send('createWebRtcTransport', data);
   }
 
@@ -642,14 +641,15 @@ class Room extends nodefony.Service {
       //store.dispatch(
       //	stateActions.setConsumerPaused(consumer.id, 'local'));
     } catch (error) {
-      this.log('_pauseConsumer() | failed', "ERROR")
-      this.log(error, "ERROR")
+      this.log('_pauseConsumer() | failed', "ERROR");
+      this.log(error, "ERROR");
     }
   }
 
   async resumeConsumer(consumer) {
-    if (!consumer.paused)
+    if (!consumer.paused) {
       return;
+    }
     try {
       return this.mediasoup.send('resumeConsumer', {
         consumerId: consumer.id
@@ -658,8 +658,8 @@ class Room extends nodefony.Service {
       //store.dispatch(
       //	stateActions.setConsumerResumed(consumer.id, 'local'));
     } catch (error) {
-      this.log('resumeConsumer() | failed', "ERROR")
-      this.log(error, "ERROR")
+      this.log('resumeConsumer() | failed', "ERROR");
+      this.log(error, "ERROR");
     }
   }
 
@@ -675,18 +675,18 @@ class Room extends nodefony.Service {
   getUserMedia(settings = {}, element = null) {
     return new Promise((resolve, reject) => {
       if (element) {
-        this.mediaStream.mediaElement = element
+        this.mediaStream.mediaElement = element;
       }
       //this.externalVideo = this.mediaStream.mediaElement;
       //this.externalVideoStream = this.mediaStream.stream;
       return this.mediaStream.getUserMedia(settings)
         .then(async (stream) => {
-          await this.mediaStream.attachMediaStream()
+          await this.mediaStream.attachMediaStream();
           this.log(`getUserMedia video : ${settings.video} audio : ${settings.audio}`, "DEBUG");
-          return resolve(stream)
+          return resolve(stream);
         })
         .catch((e) => {
-          return reject(e)
+          return reject(e);
         });
     });
   }
@@ -694,17 +694,17 @@ class Room extends nodefony.Service {
   getUserScreen(settings = {}, element = null) {
     return new Promise((resolve, reject) => {
       if (element) {
-        this.mediaStream.mediaElement = element
+        this.mediaStream.mediaElement = element;
       }
       //this.externalVideo = this.mediaStream.mediaElement;
       //this.externalVideoStream = this.mediaStream.stream;
       return this.mediaStream.getUserScreen(settings)
         .then(async (stream) => {
           await this.mediaStream.attachMediaStream();
-          return resolve(stream)
+          return resolve(stream);
         })
         .catch((e) => {
-          return reject(e)
+          return reject(e);
         });
     });
   }
@@ -726,8 +726,9 @@ class Room extends nodefony.Service {
 
   async enableMic() {
     this.log('enableMic()', "DEBUG");
-    if (this.micProducer)
+    if (this.micProducer) {
       return this.micProducer;
+    }
     if (!this.mediasoupDevice.canProduce('audio')) {
       this.log('enableMic() | cannot produce audio', "ERROR");
       return;
@@ -735,7 +736,7 @@ class Room extends nodefony.Service {
     let track;
     try {
       if (!this.externalVideo) {
-        this.log(`enableMic() | calling getUserMedia())`, "DEBUG")
+        this.log(`enableMic() | calling getUserMedia())`, "DEBUG");
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true
         });
@@ -797,8 +798,22 @@ class Room extends nodefony.Service {
       throw e;
     }
   }
-  async muteMic() {}
-  async unmuteMic() {}
+  async muteMic() {
+    this.log('muteMic()', "DEBUG");
+    try{
+        this.micProducer.pause();
+        this.mediasoup.send('pauseProducer', {
+          producerId: this.micProducer.id
+        });
+		}
+		catch (error){
+      this.log(error, "ERROR");
+			throw error;
+		}
+  }
+  async unmuteMic() {
+    this.log('unmuteMic()', "DEBUG");
+  }
   async enableAudioOnly() {}
   async disableAudioOnly() {}
   async muteAudio() {}
@@ -904,17 +919,18 @@ class Room extends nodefony.Service {
       return this.webcamProducer;
     } catch (e) {
       this.log(e, "ERROR");
-      if (track)
+      if (track) {
         track.stop();
+      }
     }
   }
 
   getWebcamType(device) {
     if (/(back|rear)/i.test(device.label)) {
-      this.log(`getWebcamType() | it seems to be a back camera`, "DEBUG")
+      this.log(`getWebcamType() | it seems to be a back camera`, "DEBUG");
       return 'back';
     } else {
-      this.log(`getWebcamType() | it seems to be a front camera`, "DEBUG")
+      this.log(`getWebcamType() | it seems to be a front camera`, "DEBUG");
       return 'front';
     }
   }
@@ -926,8 +942,9 @@ class Room extends nodefony.Service {
     const devices = await navigator.mediaDevices.enumerateDevices();
 
     for (const device of devices) {
-      if (device.kind !== 'videoinput')
+      if (device.kind !== 'videoinput') {
         continue;
+      }
       this.webcams.set(device.deviceId, device);
     }
     const array = Array.from(this.webcams.values());
@@ -936,10 +953,11 @@ class Room extends nodefony.Service {
       this.webcam.device ? this.webcam.device.deviceId : null;
     //this.log('updateWebcams()', "DEBUG");
     //this.log(array, "DEBUG")
-    if (len === 0)
+    if (len === 0) {
       this.webcam.device = null;
-    else if (!this.webcams.has(currentWebcamId))
+    } else if (!this.webcams.has(currentWebcamId)) {
       this.webcam.device = array[0];
+    }
     return this.webcam;
   }
 
