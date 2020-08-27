@@ -12,16 +12,17 @@ class broadcastTask extends nodefony.Task {
     super.showHelp();
   }
 
-  file(args = null)) {
+  file(args = null) {
     return new Promise(async (resolve, reject) => {
       try {
+        this.log(args);
         return resolve(true);
-      } catch (e) {
+      } catch (error) {
         this.logger(error, "ERROR");
+        return reject(error);
       }
     });
   }
-
 }
 
 module.exports = broadcastTask;

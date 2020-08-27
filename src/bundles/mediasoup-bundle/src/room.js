@@ -1,3 +1,5 @@
+const Broadcaster = require(path.resolve(__dirname, "broadcaster.js"));
+
 class Room extends nodefony.Service {
   constructor(roomid, worker, router, bot, container) {
     super(`Room ${roomid}`, container, null);
@@ -11,6 +13,7 @@ class Room extends nodefony.Service {
     this.peers = new Map();
     this.broadcasters = new Map();
     this.webRtcTransportOptions = this.mediasoupService.config.webRtcTransportOptions;
+    this.plainTransportOptions = this.mediasoupService.config.plainTransportOptions;
     // Create a mediasoup AudioLevelObserver.
     this.AudioLevelOptions = {
       maxEntries: 1,
@@ -447,6 +450,160 @@ class Room extends nodefony.Service {
   async createDataConsumer(dataConsumerPeer, dataProducerPeer, dataProducer) {
 
   }
+
+
+  async createBroadcaster(id, displayName, device = {}, rtpCapabilities = null) {
+    if (typeof id !== 'string' || !id) {
+      throw new TypeError('missing query.id');
+    } else if (typeof displayName !== 'string' || !displayName) {
+      throw new TypeError('missing query.displayName');
+    } else if (typeof device.name !== 'string' || !device.name) {
+      throw new TypeError('missing query.device.name');
+    } else if (rtpCapabilities && typeof rtpCapabilities !== 'object') {
+      throw new TypeError('wrong query.rtpCapabilities');
+    }
+    if (this.broadcasters.has(id)) {
+      throw new Error(`broadcaster with id "${id}" already exists`);
+    }
+    const broadcaster = new Broadcaster(id, displayName, device, rtpCapabilities, this.container);
+    this.broadcasters.set(broadcaster.id, broadcaster);
+    this.notifyAllPeers("newPeer", {
+      id: broadcaster.id,
+      displayName: broadcaster.displayName,
+      device: broadcaster.device
+    });
+    let peers = this.getJoinedPeers();
+    if (rtpCapabilities) {
+      for (const joinedPeer of peers) {
+        const peerInfo = {
+          id: joinedPeer.id,
+          displayName: joinedPeer.displayName,
+          device: joinedPeer.device,
+          producers: []
+        };
+        for (const producer of joinedPeer.producers.values()) {
+          // Ignore Producers that the Broadcaster cannot consume.
+          if (!this.router.canConsume({
+              producerId: producer.id,
+              rtpCapabilities
+            })) {
+            continue;
+          }
+          peerInfo.producers.push({
+            id: producer.id,
+            kind: producer.kind
+          });
+        }
+        broadcaster.peerInfos.push(peerInfo);
+      }
+    }
+    return broadcaster;
+  }
+
+  async createBroadcasterTransport(broadcasterId, type, rtcpMux = false, comedia = true, sctpCapabilities = null) {
+    const broadcaster = this.broadcasters.get(broadcasterId);
+    switch (type) {
+      case 'webrtc':
+        {
+          const webRtcTransportOptions = {
+            ...this.webRtcTransportOptions,
+            enableSctp: Boolean(sctpCapabilities),
+            numSctpStreams: (sctpCapabilities || {}).numStreams
+          };
+
+          const transport = await this.router.createWebRtcTransport(
+            webRtcTransportOptions);
+          // Store it.
+          broadcaster.transports.set(transport.id, transport);
+
+          return {
+            id: transport.id,
+            iceParameters: transport.iceParameters,
+            iceCandidates: transport.iceCandidates,
+            dtlsParameters: transport.dtlsParameters,
+            sctpParameters: transport.sctpParameters
+          };
+        }
+      case 'plain':
+        {
+          const plainTransportOptions = {
+            ...this.plainTransportOptions,
+            rtcpMux: rtcpMux,
+            comedia: comedia
+          };
+          const transport = await this.router.createPlainTransport(
+            plainTransportOptions);
+          // Store it.
+          broadcaster.transports.set(transport.id, transport);
+          return {
+            id: transport.id,
+            ip: transport.tuple.localIp,
+            port: transport.tuple.localPort,
+            rtcpPort: transport.rtcpTuple ? transport.rtcpTuple.localPort : undefined
+          };
+        }
+      default:
+        {
+          throw new TypeError('invalid type');
+        }
+    }
+  }
+
+  async createBroadcasterProducer( broadcasterId, transportId, kind, rtpParameters){
+    const broadcaster = this.broadcasters.get(broadcasterId);
+		if (!broadcaster){
+      throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
+    }
+    const transport = broadcaster.transports.get(transportId);
+    if (!transport){
+      throw new Error(`transport with id "${transportId}" does not exist`);
+    }
+    const producer =
+			await transport.produce({ kind, rtpParameters });
+      // Store it.
+		broadcaster.producers.set(producer.id, producer);
+    // Set Producer events.
+   // producer.on('score', (score) =>
+   // {
+   // 	logger.debug(
+   // 		'broadcaster producer "score" event [producerId:%s, score:%o]',
+   // 		producer.id, score);
+   // });
+   producer.on('videoorientationchange', (videoOrientation) =>{
+     this.log( `broadcaster producer "videoorientationchange" event [producerId:${producer.id}, videoOrientation:${videoOrientation}]`,"DEBUG");
+   });
+
+   // Optimization: Create a server-side Consumer for each Peer.
+   for (const peer of this.getJoinedPeers()){
+     this.createConsumer({
+         consumerPeer : peer,
+         producerPeer : broadcaster,
+         producer
+       });
+   }
+
+   // Add into the audioLevelObserver.
+   if (producer.kind === 'audio'){
+     this.audioLevelObserver.addProducer({ producerId: producer.id })
+       .catch(() => {});
+   }
+   return producer;
+  }
+
+  deleteBroadcaster( broadcasterId ) {
+		const broadcaster = this.broadcasters.get(broadcasterId);
+		if (!broadcaster){
+      throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
+    }
+		for (const transport of broadcaster.transports.values()){
+			transport.close();
+		}
+		this.broadcasters.delete(broadcasterId);
+    this.notifyAllPeers("peerClosed", {
+      peerId: broadcasterId
+    });
+		return broadcasterId;
+	}
 
 }
 

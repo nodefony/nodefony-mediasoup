@@ -64,9 +64,32 @@ class apiController extends nodefony.Controller {
   }
 
   /**
+   *  API GET resource that returns all rooms
+   *    @Route ("/rooms",
+   *      name="route-mediasoup-rooms-all")
+   */
+  async allRoomsAction() {
+    try {
+      const rooms = [];
+      this.roomsService.rooms.
+      forEach((value, key) => {
+        rooms.push(key);
+      });
+      return this.api.render({
+        rooms: rooms
+      });
+    } catch (e) {
+      this.log(e, "ERROR");
+      return this.api.render(e);
+    }
+
+  }
+
+  /**
    *  API GET resource that returns the mediasoup Router RTP capabilities of the room
    *    @Route ("/rooms/{roomId}",
    *      name="route-mediasoup-rooms")
+   *    @Method ({"GET"})
    */
   async roomsAction(roomId) {
     const room = this.getRoom(roomId);
@@ -76,7 +99,8 @@ class apiController extends nodefony.Controller {
     }
     return this.api.render({
       roomid: roomId,
-      status: status
+      status: status,
+      routerRtpCapabilities: room.getRouterRtpCapabilities()
     });
   }
 
@@ -84,24 +108,58 @@ class apiController extends nodefony.Controller {
    *    POST API to create a Broadcaster.
    *    @Route ("/rooms/{roomId}/broadcasters",
    *      name="route-mediasoup-rooms-broadcasters")
+   *    @Method ({"POST"})
    */
-  roomsBroadcastersAction(roomId) {
-    return this.api.render({
-      roomId,
-      broadcasters: "true"
-    });
+  async roomsBroadcastersAction(roomId) {
+    const room = this.getRoom(roomId);
+    if (!room) {
+      throw new Error(`Room ${roomId} not found`);
+    }
+    const {
+      id,
+      displayName,
+      device,
+      rtpCapabilities
+    } = this.query;
+    try {
+      const broadcaster = await room.createBroadcaster(
+        id,
+        displayName,
+        device,
+        rtpCapabilities
+      );
+      return this.api.render({
+        roomId,
+        broadcasters: broadcaster.peerInfos
+      });
+    } catch (error) {
+      this.log(error, "ERROR");
+      return this.api.render(error);
+    }
   }
 
   /**
    *    DELETE API to delete a Broadcaster.
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}",
    *      name="route-mediasoup-rooms-broadcasters-delete")
+   *    @Method ({"DELETE"})
    */
-  roomsBroadcastersDeleteAction(roomId, broadcasterId) {
-    return this.api.render({
-      roomId,
-      broadcasterId
-    });
+  async roomsBroadcastersDeleteAction(roomId, broadcasterId) {
+    const room = this.getRoom(roomId);
+    if (!room) {
+      throw new Error(`Room ${roomId} not found`);
+    }
+    try{
+      let res = await room.deleteBroadcaster(broadcasterId);
+      return this.api.render({
+        roomId,
+        broadcasterId,
+        delete: res
+      });
+    }catch(error){
+      this.log(error, "ERROR");
+      return this.api.render(error);
+    }
   }
 
   /**
@@ -112,12 +170,36 @@ class apiController extends nodefony.Controller {
    *
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports",
    *    name="route-mediasoup-rooms-broadcasters-transport")
+   *    @Method ({"POST"})
    */
-  roomsBroadcastersTransportAction(roomId, broadcasterId) {
-    return this.api.render({
-      roomId,
-      broadcasterId
-    });
+  async roomsBroadcastersTransportAction(roomId, broadcasterId) {
+    const {
+      type,
+      rtcpMux,
+      comedia,
+      sctpCapabilities
+    } = this.query;
+    const room = this.getRoom(roomId);
+    if (!room) {
+      throw new Error(`Room ${roomId} not found`);
+    }
+    try {
+      const data = await room.createBroadcasterTransport(
+        broadcasterId,
+        type,
+        rtcpMux,
+        comedia,
+        sctpCapabilities
+      );
+      return this.api.render({
+        roomId,
+        broadcasterId,
+        transport: data
+      });
+    } catch (error) {
+      this.log(error, "ERROR");
+      return this.api.render(error);
+    }
   }
 
   /**
@@ -126,6 +208,7 @@ class apiController extends nodefony.Controller {
    *
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports/{transportId}/connect",
    *    name="route-mediasoup-rooms-broadcasters-transport-connect")
+   *    @Method ({"POST"})
    */
   roomsBroadcastersTransportConnectAction(roomId, broadcasterId, transportId) {
     return this.api.render({
@@ -142,13 +225,33 @@ class apiController extends nodefony.Controller {
    * Producer.
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports/{transportId}/producers",
    *    name="route-mediasoup-rooms-broadcasters-transport-producers")
+   *    @Method ({"POST"})
    */
-  roomsBroadcastersTransportProducerAction(roomId, broadcasterId, transportId) {
-    return this.api.render({
-      roomId,
-      broadcasterId,
-      transportId
-    });
+  async roomsBroadcastersTransportProducerAction(roomId, broadcasterId, transportId) {
+    const room = this.getRoom(roomId);
+    if (!room) {
+      throw new Error(`Room ${roomId} not found`);
+    }
+			const { kind, rtpParameters } = this.query;
+      try {
+				const producer = await room.createBroadcasterProducer(
+						broadcasterId,
+						transportId,
+						kind,
+						rtpParameters
+					);
+          return this.api.render({
+            roomId,
+            broadcasterId,
+            transportId,
+            producer:producer.id
+          });
+			}
+			catch (error){
+        this.log(error, "ERROR");
+        return this.api.render(error);
+			}
+
   }
 
   /**
@@ -158,6 +261,7 @@ class apiController extends nodefony.Controller {
    * consume.
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports/{transportId}/consume",
    *    name="route-mediasoup-rooms-broadcasters-transport-consume")
+   *    @Method ({"POST"})
    */
   roomsBroadcastersTransportConsumeAction(roomId, broadcasterId, transportId) {
     return this.api.render({
@@ -174,6 +278,7 @@ class apiController extends nodefony.Controller {
    * consume.
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports/{transportId}/consume/data",
    *    name="route-mediasoup-rooms-broadcasters-transport-consume-data")
+   *    @Method ({"POST"})
    */
   roomsBroadcastersTransportConsumeDataAction(roomId, broadcasterId, transportId) {
     return this.api.render({
@@ -188,6 +293,7 @@ class apiController extends nodefony.Controller {
    * The exact Transport in which the DataProducer must be created is signaled in
    *    @Route ("/rooms/{roomId}/broadcasters/{broadcasterId}/transports/{transportId}/produce/data",
    *    name="route-mediasoup-rooms-broadcasters-transport-produce-data")
+   *    @Method ({"POST"})
    */
   roomsBroadcastersTransportProduceDataAction(roomId, broadcasterId, transportId) {
     return this.api.render({

@@ -3,9 +3,11 @@ class Peer extends nodefony.Service {
     super(`Peer`, container);
     this.id = peerid;
     this.transport = transport;
-    this.transport.once("onClose", () => {
-      this.close(false);
-    });
+    if( this.transport){
+      this.transport.once("onClose", () => {
+        this.close(false);
+      });
+    }
     this.consume = null;
     this.joined = false;
     this.displayName = null;

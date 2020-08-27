@@ -96,9 +96,12 @@ class Rooms extends nodefony.Service {
         peer.send(room, "join", {
           peers: peerInfos
         });
-        for (const joinedPeer of room.getJoinedPeers({
-            //excludePeer: peer
-          })) {
+        const joinedPeers =
+				[
+					...room.getJoinedPeers(),
+					...room.broadcasters.values()
+				];
+        for (const joinedPeer of joinedPeers ) {
           // Create Consumers for existing Producers.
           for (const producer of joinedPeer.producers.values()) {
             room.createConsumer({
