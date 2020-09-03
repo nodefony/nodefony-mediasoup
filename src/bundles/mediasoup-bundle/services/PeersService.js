@@ -11,6 +11,10 @@ class Peers extends nodefony.Service {
     this.log(`Create New Peer : ${peer.id}`);
     return peer ;
   }
+
+  startRecord(peer){
+    return peer.startRecord();
+  }
 };
 
 module.exports = Peers;

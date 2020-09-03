@@ -1,34 +1,5 @@
-
-<script>
-// @ is an alias to /src
-const version = process.env.VUE_APP_VERSION;
-export default {
-  name: 'About',
-  data(vm) {
-    return {
-      version: version,
-      vueVersion: this.$nodefony.vueVersion,
-      vuetifyVersion: this.$nodefony.vuetifyVersion,
-      mediasoupVersion: this.$mediasoup.version
-    };
-  },
-  components: {},
-  methods: {},
-  mounted() {
-    this.$mediasoup.connect();
-  },
-  created() {},
-  watch: {},
-  beforeUpdate() {},
-  beforeDestroy() {
-
-  }
-}
-</script>
-
 <template>
 <v-container>
-
 
   <v-row justify="center" align="center">
     <p class="text-center display-2">
@@ -83,6 +54,31 @@ export default {
 
 </v-container>
 </template>
+
+<script>
+// @ is an alias to /src
+const version = process.env.VUE_APP_VERSION;
+export default {
+  name: 'About',
+  data(vm) {
+    return {
+      version: version,
+      vueVersion: this.$nodefony.vueVersion,
+      vuetifyVersion: this.$nodefony.vuetifyVersion,
+      mediasoupVersion: this.$mediasoup.version
+    };
+  },
+  components: {},
+  methods: {},
+  mounted() {
+    //this.$mediasoup.connect();
+  },
+  created() {},
+  watch: {},
+  beforeUpdate() {},
+  beforeDestroy() {}
+}
+</script>
 
 <style scoped lang="scss">
 body h1 span.highlight {

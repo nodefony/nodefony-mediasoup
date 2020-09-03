@@ -3,7 +3,7 @@ class Peer extends nodefony.Service {
     super(`Peer`, container);
     this.id = peerid;
     this.transport = transport;
-    if( this.transport){
+    if (this.transport) {
       this.transport.once("onClose", () => {
         this.close(false);
       });
@@ -19,6 +19,9 @@ class Peer extends nodefony.Service {
     this.consumers = new Map();
     this.dataProducers = new Map();
     this.dataConsumers = new Map();
+    // record
+    this.process = null;
+    this.remotePorts = [];
   }
 
   hasConsumer(consumerId) {
@@ -49,6 +52,14 @@ class Peer extends nodefony.Service {
     return this.producers.set(producerId, producer);
   }
 
+  getProducersByKind(kind) {
+    return this.producers.filter((producer => producer.kind === kind));
+  }
+
+  getConsumersByKind(kind) {
+    return this.consumers.filter((consumer => consumer.kind === kind));
+  }
+
   deleteProducer(producerId) {
     return this.producers.delete(producerId);
   }
@@ -70,19 +81,19 @@ class Peer extends nodefony.Service {
   }
 
   close(closeTransport = true) {
-    try {
-      if (closeTransport){
+    if (closeTransport) {
+      if (this.transport) {
         this.transport.close();
       }
     }
-    catch(e) {
-      this.log(e, "WARNING");
-    }
-
     // Iterate and close all mediasoup Transport associated to this Peer, so all
     // its Producers and Consumers will also be closed.
     for (const transport of this.transports.values()) {
-      transport.close();
+      try {
+        transport.close();
+      } catch (e) {
+        this.log(e, "WARNING");
+      }
     }
     this.fire("close", this);
     this.log(`Close Peer : ${this.id}`);
@@ -91,24 +102,24 @@ class Peer extends nodefony.Service {
 
   send(room, method, data) {
     let message = {
-      method:method,
-      peerid : this.id,
-      roomid:room.id,
-      data:data
+      method: method,
+      peerid: this.id,
+      roomid: room.id,
+      data: data
     };
     return this.transport.send(JSON.stringify(message));
   }
 
   notify(room, event, data) {
-    this.log( event ,"NOTICE");
+    this.log(event, "NOTICE");
     return this.send(room, "notify", {
       event: event,
       data: data
     });
   }
 
-  async pauseProducer(producerId){
-    if (!this.hasProducer(producerId)){
+  async pauseProducer(producerId) {
+    if (!this.hasProducer(producerId)) {
       throw new Error(`producer with id "${producerId}" not found`);
     }
     let producer = this.getProducer(producerId);
@@ -116,8 +127,8 @@ class Peer extends nodefony.Service {
     return producer;
   }
 
-  async resumeProducer(producerId){
-    if (!this.hasProducer(producerId)){
+  async resumeProducer(producerId) {
+    if (!this.hasProducer(producerId)) {
       throw new Error(`producer with id "${producerId}" not found`);
     }
     let producer = this.getProducer(producerId);
@@ -125,8 +136,8 @@ class Peer extends nodefony.Service {
     return producer;
   }
 
-  async pauseConsumer(consumerId){
-    if (!this.hasProducer(consumerId)){
+  async pauseConsumer(consumerId) {
+    if (!this.hasProducer(consumerId)) {
       throw new Error(`Consumer with id "${consumerId}" not found`);
     }
     let consumer = this.getConsumer(consumerId);
@@ -134,8 +145,8 @@ class Peer extends nodefony.Service {
     return consumer;
   }
 
-  async resumeConsumer(consumerId){
-    if (!this.hasProducer(consumerId)){
+  async resumeConsumer(consumerId) {
+    if (!this.hasProducer(consumerId)) {
       throw new Error(`Consumer with id "${consumerId}" not found`);
     }
     let consumer = this.getConsumer(consumerId);

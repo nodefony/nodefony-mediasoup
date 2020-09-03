@@ -13,6 +13,25 @@ import room from '../plugins/mediasoup/store/modules/room'
 
 
 export default new Vuex.Store({
+  state:{
+    drawer: true
+  },
+  getters:{
+    getDrawer(state){
+      return state.drawer;
+    }
+  },
+  mutations: {
+   toogleDrawer (state) {
+     state.drawer = ! state.drawer;
+   },
+   openDrawer(state){
+     state.drawer =true;
+   },
+   closeDrawer(state){
+     state.drawer =false;
+   }
+ },
   modules: {
     user,
     auth,

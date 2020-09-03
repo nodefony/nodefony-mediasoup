@@ -1,55 +1,78 @@
 <template>
-<!--dash-item v-bind.sync="item" :key="`item-${name}`"-->
-<v-card flat elevation="0" class="mycard mycolor">
-  <v-row>
-    <video class="video" :srcObject="videoStream" :stream="videoStream" :ref="getRef('video')">
-    </video>
-    <audio :srcObject="audioStream" :stream="audioStream" :ref="getRef('audio')">
-    </audio>
-    <v-avatar color="blue-grey" size="100">
-      <span class="white--text headline">{{peer.id}}</span>
-    </v-avatar>
-  </v-row>
-  <v-card-title v-if="join" class="headline">Join to {{room.id}} Meeting ?</v-card-title>
-  <v-card-text class="mycolor">
-  </v-card-text>
-  <v-card-actions>
+<v-card class="peer " :max-width="'max-width'" :max-height="'max-height'">
+  <v-system-bar color="indigo darken-2" dark>
     <v-spacer></v-spacer>
-    <v-row v-if="join" justify="center">
-      <v-btn id="desagree" class="ma-3" outlined color="white" @click="agree">Disagree</v-btn>
-      <v-btn id="agree" class="ma-3" outlined color="white" @click="agree">Agree</v-btn>
-    </v-row>
-    <v-row justify="center">
-      <v-btn :loading="loadingVideo" :disabled="loadingVideo" color="blue-grey" class="ma-2 white--text" fab @click="videoButton">
-        <v-icon v-if="this.video">mdi-video-box</v-icon>
-        <v-icon v-else dark>mdi-video-box-off</v-icon>
-      </v-btn>
 
-      <v-btn :loading="loadingAudio" :disabled="loadingAudio" color="blue-grey" class="ma-2 white--text" fab @click="audioButton">
-        <v-icon v-if="this.audio">mdi-volume-high</v-icon>
-        <v-icon v-else dark>mdi-volume-off</v-icon>
-      </v-btn>
+    <v-icon>mdi-window-minimize</v-icon>
 
-      <v-btn :loading="loadingMonitor" :disabled="loadingMonitor" color="blue-grey" class="ma-2 white--text" fab @click="monitorButton">
-        <v-icon v-if="this.monitor">mdi-monitor-share</v-icon>
-        <v-icon v-else dark>mdi-monitor-off</v-icon>
-      </v-btn>
+    <v-icon>mdi-window-maximize</v-icon>
+
+    <v-icon @click="agree"> mdi-close</v-icon>
+  </v-system-bar>
+  <v-container v-if="room.connected" fluid>
+    <v-responsive :aspect-ratio="16/9">
+      <video muted autoPlay :controls="false" class="video" :srcObject="videoStream" :stream="videoStream" :ref="getRef('video')">
+      </video>
+      <audio style="display:none" :muted="isMe" :controls="false" :srcObject="audioStream" :stream="audioStream" :ref="getRef('audio')">
+      </audio>
+    </v-responsive>
+  </v-container>
+  <v-container class="fill-height" v-if="! room.connected" fluid>
+    <v-row align="center" justify="center">
+      <v-col cols="12" sm="8" md="4">
+        <v-avatar color="blue-grey" size="125">
+          <span class="white--text headline">{{peer.id}}</span>
+        </v-avatar>
+      </v-col>
     </v-row>
+  </v-container>
+  <v-card-title v-if="! room.connected" class="headline">
+    Join to {{room.id}} Meeting ?
+  </v-card-title>
+  <v-card-subtitle>
+    Peer : {{peer.id}}
+  </v-card-subtitle>
+  <v-card-actions>
+    <v-btn small v-if="! room.connected" id="desagree" class="ma-3" @click="agree">Disagree</v-btn>
+    <v-btn small v-if="! room.connected" id="agree" class="ma-3" outlined @click="agree">Agree</v-btn>
+
+    <v-btn v-if="room.connected" small :loading="loadingVideo" :disabled="loadingVideo" color="blue-grey" class="ma-2 white--text" fab @click="videoButton">
+      <v-icon v-if="this.video">mdi-video-box</v-icon>
+      <v-icon v-else dark>mdi-video-box-off</v-icon>
+    </v-btn>
+
+    <v-btn v-if="room.connected" small :loading="loadingAudio" :disabled="loadingAudio" color="blue-grey" class="ma-2 white--text" fab @click="audioButton">
+      <v-icon v-if="this.audio">mdi-volume-high</v-icon>
+      <v-icon v-else dark>mdi-volume-off</v-icon>
+    </v-btn>
+
+    <v-btn v-if="room.connected" small :loading="loadingMonitor" :disabled="loadingMonitor" color="blue-grey" class="ma-2 white--text" fab @click="monitorButton">
+      <v-icon v-if="this.monitor">mdi-monitor-share</v-icon>
+      <v-icon v-else dark>mdi-monitor-off</v-icon>
+    </v-btn>
+
+    <v-spacer></v-spacer>
+    <v-btn v-if="room.connected" icon @click="show = !show">
+      <v-icon>{{ show ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+    </v-btn>
   </v-card-actions>
+
+  <v-expand-transition>
+    <div v-show="show">
+      <v-divider></v-divider>
+      <v-card-text>
+
+      </v-card-text>
+    </div>
+  </v-expand-transition>
 </v-card>
-<!--/dash-item-->
 </template>
 
-<script>
-import {
-  DashItem
-} from "vue-responsive-dash";
 
+<script>
 export default {
   name: 'Peer',
-  components: {
-    DashItem
-  },
+  components: {},
   props: {
     name: {
       type: String,
@@ -74,16 +97,22 @@ export default {
     audioMediaStream: {
       type: Object,
       default: null
+    },
+    isMe: {
+      type: Boolean,
+      default: false
+    },
+    "max-width": {
+      type: [String, Number],
+      default: 600
+    },
+    "max-height": {
+      type: [String, Number],
+      default: 300
     }
   },
   data: (vm) => ({
-    item: {
-      id: `item-${vm.name}`,
-      x: 0,
-      y: 0,
-      width: 1,
-      height: 1
-    },
+    show: false,
     refAudio: null,
     refVideo: null,
     videoStream: new MediaStream(),
@@ -117,6 +146,9 @@ export default {
               this.log('audio.play() failed')
               this.log(error, "ERROR")
             });
+          if (this.isMe) {
+            this.$refs[this.refAudio].muted = true;
+          }
           break;
         case "video":
           //this.videoStream = new MediaStream();
@@ -153,7 +185,14 @@ export default {
       this.monitor = !this.monitor;
     },
     agree(event) {
-      let response = event.currentTarget.id === "agree" ? true : false;
+      let response = null;
+      switch (event.currentTarget.id) {
+        case "agree":
+          response = true;
+          break;
+        default:
+          response = false;
+      }
       this.log(`response : ${response}`, "DEBUG");
       this.$emit('join', response);
     }
@@ -166,98 +205,31 @@ export default {
       if (this.video === false && this.audio === false) {
         return this.audio = true;
       }
-      this.room.getUserMedia({
-          audio: this.audio,
-          video: this.video
-        }, this.$refs[this.refVideo])
-        .then((stream) => {
-          this.stream = stream;
-          this.loader = null;
-        })
-        .catch(() => {
-          this.stream = null;
-          this.loader = null;
-        });
+
     },
     audio() {
       if (this.video === false && this.audio === false) {
         return this.video = true;
       }
-      this.room.getUserMedia({
-          audio: this.audio,
-          video: this.video
-        }, this.$refs[this.refAudio])
-        .then((stream) => {
-          this.stream = stream;
-          this.loader = null;
-        })
-        .catch(() => {
-          this.stream = null;
-          this.loader = null;
-        });
     },
     monitor() {
       this.video = false;
-      this.room.getUserScreen({}, this.$refs[this.peer.id])
-        .then((stream) => {
-          this.stream = stream;
-          this.loader = null;
-        })
-        .catch(() => {
-          this.stream = null;
-          this.loader = null;
-        });
+
     }
   },
 }
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.peer {
+  /*width: 400px;
+  height: 300px;*/
+}
+
 .video {
-  width: 100%;
-  height: 200px;
-}
-
-.mycard {
-  background-color: rgb(27, 38, 56, 0) !important;
-}
-
-.mycolor {
-  color: rgb(120, 255, 255, 1) !important;
-}
-
-.custom-loader {
-  animation: loader 1s infinite;
-  display: flex;
-}
-
-@-moz-keyframes loader {
-  from {
-    transform: rotate(0);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@-webkit-keyframes loader {
-  from {
-    transform: rotate(0);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@-o-keyframes loader {
-  from {
-    transform: rotate(0);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+  /*width: 100%;
+  height: 100%;*/
+  width: 300px !important;
+  height: auto !important;
 }
 </style>

@@ -1,4 +1,3 @@
-
 import nodefony from 'nodefony';
 
 const defaultOptions = {
@@ -7,23 +6,23 @@ const defaultOptions = {
 
 class Peer {
   constructor(id, options, mediasoup) {
-    let opt = nodefony.extend( {}, defaultOptions);
+    let opt = nodefony.extend({}, defaultOptions);
     this.options = nodefony.extend(opt, options);
     //super("Peer", mediasoup.container, null, nodefony.extend({}, defaultOpt, options));
     this.id = id;
-    this.mediasoup = mediasoup ;
+    this.mediasoup = mediasoup;
     this.videoElement = null;
     this.audioElement = null;
-    this.consumers= [];
+    this.consumers = [];
     this.producers = [];
-    this.dataConsumers= [];
+    this.dataConsumers = [];
   }
 
-  addProducer(producer){
+  addProducer(producer) {
     this.producers.push(producer);
   }
 
-  addConsumer(consumer){
+  addConsumer(consumer) {
     this.consumers.push(consumer);
   }
 }

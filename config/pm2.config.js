@@ -18,7 +18,7 @@ module.exports = {
     //node_args           : "--expose-gc",
     watch: false,
     exec_mode: "cluster",
-    instances: cpu,
+    instances: 1,
     max_memory_restart: "1024M",
     autorestart: true,
     max_restarts: 10,

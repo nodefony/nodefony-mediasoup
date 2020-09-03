@@ -6,7 +6,7 @@ function show_usage()
   echo "USAGE"
   echo "-----"
   echo
-  echo "  SERVER_URL=https://my.mediasoup-demo.org:4443 ROOM_ID=test MEDIA_FILE=./test.mp4 ./ffmpeg.sh"
+  echo "  SERVER_URL=https://localhost:5152 ROOM_ID=test MEDIA_FILE=./test.mp4 ./ffmpeg.sh"
   echo
   echo "  where:"
   echo "  - SERVER_URL is the URL of the mediasoup-demo API server"
@@ -63,7 +63,7 @@ fi
 set -e
 
 BROADCASTER_ID=$(LC_CTYPE=C tr -dc A-Za-z0-9 < /dev/urandom | fold -w ${1:-32} | head -n 1)
-HTTPIE_COMMAND="http --check-status"
+HTTPIE_COMMAND="http --check-status --verify=no"
 AUDIO_SSRC=1111
 AUDIO_PT=100
 VIDEO_SSRC=2222

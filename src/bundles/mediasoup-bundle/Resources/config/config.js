@@ -13,9 +13,9 @@
  */
 
 const os = require('os');
-//const ip = kernel.settings.system.domain; //'192.168.99.151'
-//const ip = '192.168.0.51';
-const ip = '192.168.99.151';
+//const ip = kernel.settings.system.domain;
+const ip = '192.168.0.51';
+//const ip = '192.168.99.151';
 module.exports = {
   type: "sandbox",
   locale: "en_en",
@@ -158,6 +158,11 @@ module.exports = {
         announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP
       },
       maxSctpMessageSize: 262144
+    },
+    recordPlainTransportOptions:{
+      listenIp: '127.0.0.1',
+      rtcpMux: true,
+      comedia: false
     }
   }
 };

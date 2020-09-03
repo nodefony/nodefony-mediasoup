@@ -1,19 +1,24 @@
 <template>
-<v-app id="inspire">
-
+<v-app id="inspire" class="main">
   <v-main>
-    <v-container fluid class="main">
+    <v-container fluid>
+      <Bar />
+      <Navigation />
       <router-view />
     </v-container>
   </v-main>
-
 </v-app>
 </template>
 
 <script>
+import Navigation from "@/components/Navigation";
+import Bar from "@/components/Bar";
 export default {
   name: 'App',
-  components: {},
+  components: {
+    Bar,
+    Navigation
+  },
   data: () => ({
     //
   }),

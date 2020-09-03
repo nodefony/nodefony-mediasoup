@@ -14,6 +14,7 @@ class Room extends nodefony.Service {
     this.broadcasters = new Map();
     this.webRtcTransportOptions = this.mediasoupService.config.webRtcTransportOptions;
     this.plainTransportOptions = this.mediasoupService.config.plainTransportOptions;
+    this.recordPlainTransportOptions = this.mediasoupService.config.recordPlainTransportOptions;
     // Create a mediasoup AudioLevelObserver.
     this.AudioLevelOptions = {
       maxEntries: 1,
@@ -115,6 +116,22 @@ class Room extends nodefony.Service {
     this.peers.delete(peerid);
   }
 
+  hasBroadcaster(peerid) {
+    return this.broadcasters.has(peerid);
+  }
+
+  getBroadcaster(peerid) {
+    return this.broadcasters.get(peerid);
+  }
+
+  setBroadcaster(peerid, peer) {
+    this.broadcasters.set(peerid, peer);
+  }
+
+  deleteBroadcaster(peerid) {
+    this.broadcasters.delete(peerid);
+  }
+
   async handleAudioLevelObserver() {
     // Create a mediasoup AudioLevelObserver.
     this.audioLevelObserver = await this.router.createAudioLevelObserver(this.AudioLevelOptions);
@@ -190,13 +207,41 @@ class Room extends nodefony.Service {
     return peerInfos;
   }
 
-  async createWebRtcTransport(peer, message) {
+  async createTransport(transportType, config) {
+    switch (transportType) {
+    case 'webrtc':
+    case 'webRtc':
+      return await this.createWebRtcTransport(config);
+    case 'plain':
+      return await this.createPlainRtpTransport(config);
+    }
+  }
+  async connectTransport(transportType, transport, options) {
+    switch (transportType) {
+    case 'webRtc':
+    case 'webrtc':
+      return await this.connecWebRtcTransport(transport, options);
+    case 'plain':
+      return await this.connecPlainRtpTransport(transport, options);
+    }
+  }
+
+  async createPlainRtpTransport(config) {
+    const transport = await this.router.createPlainRtpTransport(config);
+    return transport;
+  }
+
+  async connecPlainRtpTransport(transport, options) {
+    return await transport.connect(options);
+  }
+
+  async createWebRtcTransport(config) {
     const {
       forceTcp,
       producing,
       consuming,
       sctpCapabilities
-    } = message.data;
+    } = config;
     const webRtcTransportOptions = {
       ...this.webRtcTransportOptions,
       enableSctp: Boolean(sctpCapabilities),
@@ -224,16 +269,6 @@ class Room extends nodefony.Service {
       // NOTE: For testing.
       // await transport.enableTraceEvent([ 'probation', 'bwe' ]);
       await transport.enableTraceEvent(['bwe']);
-      transport.on('trace', (trace) => {
-        this.log(`transport "trace" event [transportId:${transport.id}, trace.type:${trace.type} ]`, "DEBUG");
-        this.log(trace, "DEBUG");
-        peer.notify(this, 'downlinkBwe', {
-          desiredBitrate: trace.info.desiredBitrate,
-          effectiveDesiredBitrate: trace.info.effectiveDesiredBitrate,
-          availableBitrate: trace.info.availableBitrate
-        });
-      });
-      peer.setTransport(transport.id, transport);
       const {
         maxIncomingBitrate
       } = this.webRtcTransportOptions;
@@ -250,20 +285,14 @@ class Room extends nodefony.Service {
     }
   }
 
-  async connecWebRtcTransport(peer, data) {
-    const {
-      transportId,
-      dtlsParameters
-    } = data;
+  async connecWebRtcTransport(transport, dtlsParameters) {
     try {
-      const transport = peer.transports.get(transportId);
       if (!transport) {
-        throw new Error(`transport with id "${transportId}" not found`);
+        throw new Error(`no transport  found`);
       }
-      await transport.connect({
+      return await transport.connect({
         dtlsParameters
       });
-      return transport;
     } catch (e) {
       this.log(e, "ERROR");
       throw e;
@@ -451,7 +480,6 @@ class Room extends nodefony.Service {
 
   }
 
-
   async createBroadcaster(id, displayName, device = {}, rtpCapabilities = null) {
     if (typeof id !== 'string' || !id) {
       throw new TypeError('missing query.id');
@@ -503,108 +531,167 @@ class Room extends nodefony.Service {
   async createBroadcasterTransport(broadcasterId, type, rtcpMux = false, comedia = true, sctpCapabilities = null) {
     const broadcaster = this.broadcasters.get(broadcasterId);
     switch (type) {
-      case 'webrtc':
-        {
-          const webRtcTransportOptions = {
-            ...this.webRtcTransportOptions,
-            enableSctp: Boolean(sctpCapabilities),
-            numSctpStreams: (sctpCapabilities || {}).numStreams
-          };
+    case 'webrtc':
+      {
+        const webRtcTransportOptions = {
+          ...this.webRtcTransportOptions,
+          enableSctp: Boolean(sctpCapabilities),
+          numSctpStreams: (sctpCapabilities || {}).numStreams
+        };
 
-          const transport = await this.router.createWebRtcTransport(
-            webRtcTransportOptions);
-          // Store it.
-          broadcaster.transports.set(transport.id, transport);
+        const transport = await this.router.createWebRtcTransport(
+          webRtcTransportOptions);
+        // Store it.
+        broadcaster.transports.set(transport.id, transport);
 
-          return {
-            id: transport.id,
-            iceParameters: transport.iceParameters,
-            iceCandidates: transport.iceCandidates,
-            dtlsParameters: transport.dtlsParameters,
-            sctpParameters: transport.sctpParameters
-          };
-        }
-      case 'plain':
-        {
-          const plainTransportOptions = {
-            ...this.plainTransportOptions,
-            rtcpMux: rtcpMux,
-            comedia: comedia
-          };
-          const transport = await this.router.createPlainTransport(
-            plainTransportOptions);
-          // Store it.
-          broadcaster.transports.set(transport.id, transport);
-          return {
-            id: transport.id,
-            ip: transport.tuple.localIp,
-            port: transport.tuple.localPort,
-            rtcpPort: transport.rtcpTuple ? transport.rtcpTuple.localPort : undefined
-          };
-        }
-      default:
-        {
-          throw new TypeError('invalid type');
-        }
+        return {
+          id: transport.id,
+          iceParameters: transport.iceParameters,
+          iceCandidates: transport.iceCandidates,
+          dtlsParameters: transport.dtlsParameters,
+          sctpParameters: transport.sctpParameters
+        };
+      }
+    case 'plain':
+      {
+        const plainTransportOptions = {
+          ...this.plainTransportOptions,
+          rtcpMux: rtcpMux,
+          comedia: comedia
+        };
+        const transport = await this.router.createPlainTransport(
+          plainTransportOptions);
+        // Store it.
+        broadcaster.transports.set(transport.id, transport);
+        return {
+          id: transport.id,
+          ip: transport.tuple.localIp,
+          port: transport.tuple.localPort,
+          rtcpPort: transport.rtcpTuple ? transport.rtcpTuple.localPort : undefined
+        };
+      }
+    default:
+      {
+        throw new TypeError('invalid type');
+      }
     }
   }
 
-  async createBroadcasterProducer( broadcasterId, transportId, kind, rtpParameters){
+  async createBroadcasterProducer(broadcasterId, transportId, kind, rtpParameters) {
     const broadcaster = this.broadcasters.get(broadcasterId);
-		if (!broadcaster){
+    if (!broadcaster) {
       throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
     }
     const transport = broadcaster.transports.get(transportId);
-    if (!transport){
+    if (!transport) {
       throw new Error(`transport with id "${transportId}" does not exist`);
     }
     const producer =
-			await transport.produce({ kind, rtpParameters });
-      // Store it.
-		broadcaster.producers.set(producer.id, producer);
+      await transport.produce({
+        kind,
+        rtpParameters
+      });
+    // Store it.
+    broadcaster.producers.set(producer.id, producer);
     // Set Producer events.
-   // producer.on('score', (score) =>
-   // {
-   // 	logger.debug(
-   // 		'broadcaster producer "score" event [producerId:%s, score:%o]',
-   // 		producer.id, score);
-   // });
-   producer.on('videoorientationchange', (videoOrientation) =>{
-     this.log( `broadcaster producer "videoorientationchange" event [producerId:${producer.id}, videoOrientation:${videoOrientation}]`,"DEBUG");
-   });
+    // producer.on('score', (score) =>
+    // {
+    // 	logger.debug(
+    // 		'broadcaster producer "score" event [producerId:%s, score:%o]',
+    // 		producer.id, score);
+    // });
+    producer.on('videoorientationchange', (videoOrientation) => {
+      this.log(`broadcaster producer "videoorientationchange" event [producerId:${producer.id}, videoOrientation:${videoOrientation}]`, "DEBUG");
+    });
 
-   // Optimization: Create a server-side Consumer for each Peer.
-   for (const peer of this.getJoinedPeers()){
-     this.createConsumer({
-         consumerPeer : peer,
-         producerPeer : broadcaster,
-         producer
-       });
-   }
+    // Optimization: Create a server-side Consumer for each Peer.
+    for (const peer of this.getJoinedPeers()) {
+      this.createConsumer({
+        consumerPeer: peer,
+        producerPeer: broadcaster,
+        producer
+      });
+    }
 
-   // Add into the audioLevelObserver.
-   if (producer.kind === 'audio'){
-     this.audioLevelObserver.addProducer({ producerId: producer.id })
-       .catch(() => {});
-   }
-   return producer;
+    // Add into the audioLevelObserver.
+    if (producer.kind === 'audio') {
+      this.audioLevelObserver.addProducer({
+          producerId: producer.id
+        })
+        .catch(() => {});
+    }
+    return producer;
   }
 
-  deleteBroadcaster( broadcasterId ) {
-		const broadcaster = this.broadcasters.get(broadcasterId);
-		if (!broadcaster){
+  deleteBroadcaster(broadcasterId) {
+    const broadcaster = this.broadcasters.get(broadcasterId);
+    if (!broadcaster) {
       throw new Error(`broadcaster with id "${broadcasterId}" does not exist`);
     }
-		for (const transport of broadcaster.transports.values()){
-			transport.close();
-		}
-		this.broadcasters.delete(broadcasterId);
+    for (const transport of broadcaster.transports.values()) {
+      transport.close();
+    }
+    this.broadcasters.delete(broadcasterId);
     this.notifyAllPeers("peerClosed", {
       peerId: broadcasterId
     });
-		return broadcasterId;
-	}
+    return broadcasterId;
+  }
 
+  // record
+  async publishProducerRtpStream(peer, producer) {
+    const conf = {
+      ...this.recordPlainTransportOptions
+    }
+    const rtpTransport = await this.createTransport('plain', conf);
+    // Set the receiver RTP ports
+    const remoteRtpPort = await this.mediasoupService.getPort(conf.listenIp);
+    peer.remotePorts.push(remoteRtpPort);
+    let remoteRtcpPort;
+    // If rtpTransport rtcpMux is false also set the receiver RTCP ports
+    if (!conf.rtcpMux) {
+      remoteRtcpPort = await this.mediasoupService.getPort();
+      peer.remotePorts.push(remoteRtcpPort);
+    }
+    // Connect the mediasoup RTP transport to the ports used by GStreamer
+    await rtpTransport.connect({
+      ip: conf.listenIp,
+      port: remoteRtpPort,
+      rtcpPort: remoteRtcpPort
+    });
+    peer.setTransport(rtpTransport);
+    const codecs = [];
+    // Codec passed to the RTP Consumer must match the codec in the Mediasoup router rtpCapabilities
+    const routerCodec = this.router.rtpCapabilities.codecs.find(
+      codec => codec.kind === producer.kind
+    );
+    codecs.push(routerCodec);
+    const rtpCapabilities = {
+      codecs,
+      rtcpFeedback: []
+    };
+    // Start the consumer paused
+    // Once the gstreamer process is ready to consume resume and send a keyframe
+    const rtpConsumer = await rtpTransport.consume({
+      producerId: producer.id,
+      rtpCapabilities,
+      paused: true
+    });
+    peer.consumers.set(rtpConsumer.id, rtpConsumer);
+    const infos = {
+      remoteRtpPort,
+      remoteRtcpPort,
+      localRtcpPort: rtpTransport.rtcpTuple ? rtpTransport.rtcpTuple.localPort : undefined,
+      rtpCapabilities,
+      rtpParameters: rtpConsumer.rtpParameters
+    };
+    this.log(infos);
+    return {
+      infos,
+      rtpTransport,
+      rtpConsumer
+    };
+  }
 }
 
 module.exports = Room;

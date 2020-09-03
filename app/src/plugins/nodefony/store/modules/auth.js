@@ -50,7 +50,6 @@ const actions = {
         .then(async response => {
           commit(AUTH_SUCCESS, response.data.result)
           commit(USER_PROFILE, response.data.result.user)
-          // let profile = await dispatch(USER_REQUEST, `/api/users/${username}` )
           return resolve(response.data.result)
         })
         .catch(err => {
@@ -88,8 +87,8 @@ const mutations = {
     state.status = 'success'
     state.loading = false
     state.token = resp.token
-    localStorage.setItem('username', resp.user.username)
-    state.username = resp.username
+    localStorage.setItem('username', resp.decodedToken.data.user.username)
+    state.username = resp.decodedToken.data.user.username
     state.decodedToken = resp.decodedToken
   },
   [AUTH_ERROR]: (state) => {

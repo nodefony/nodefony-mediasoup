@@ -41,7 +41,15 @@ const getters = {
     }
     throw new Error('User profile not defined !')
   },
-  isProfileLoaded: state => state.status === 'success'
+  isProfileLoaded: state => state.status === 'success',
+  getTrigramme(state){
+    if (state.user){
+      let size = state.user.surname.length;
+      return `${state.user.name.substr(0, 1)}${state.user.surname.substr(0, 1)}${state.user.surname.substr(size-1,1)}`;
+    }
+    return "";
+  }
+
 }
 
 const actions = {
@@ -58,6 +66,7 @@ const actions = {
       })
       .catch(e => {
         commit(USER_ERROR, e)
+        throw e ;
       })
   }
 }

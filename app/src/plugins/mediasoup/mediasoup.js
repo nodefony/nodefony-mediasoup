@@ -17,7 +17,7 @@ class Mediasoup extends nodefony.Service {
     this.domain = "localhost";
     this.deviceInfo = deviceInfo();
     this.on("connect", (room, peer) => {
-      room.init(peer);
+      room.init();
     });
   }
 
@@ -34,7 +34,11 @@ class Mediasoup extends nodefony.Service {
     this.router = options.router;
     this.i18n = options.i18n;
     this.container = options.nodefony.container;
-    this.syslog = this.container.get("syslog");
+    this.syslog = this.get("syslog");
+    this.set("store", this.store );
+    this.set("router", this.router );
+    this.set("i18n", this.i18n );
+
     this.log(`Add Plugin mediasoup : ${this.version}`, "INFO");
   }
 
@@ -55,12 +59,14 @@ class Mediasoup extends nodefony.Service {
       this.sock = new WebSocket(url);
       this.sock.onopen = (event) => {
         this.log(`Mediasoup Websocket Connect peer ${peerid} room : ${roomid}`);
+        this.fire("openSock", event, this);
       };
       this.sock.onmessage = (event) => {
         let message = null ;
         try{
           message = JSON.parse(event.data);
         }catch(e){
+          this.log(e,"ERROR");
           this.log(event.data, "ERROR");
           throw new Error(`Bad Json Message`);
         }

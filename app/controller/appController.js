@@ -13,10 +13,10 @@ class appController extends nodefony.Controller {
   }
 
   /**
-   *    @Route ("/",
-   *      name="home")
+   *    @Route ("/app*",
+   *      name="App")
    */
-  indexAction() {
+  appAction() {
     return this.render("app::index.html.twig", {
       name: this.kernel.projectName,
       description: this.kernel.package.description

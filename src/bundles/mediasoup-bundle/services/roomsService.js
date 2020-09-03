@@ -18,7 +18,6 @@ class Rooms extends nodefony.Service {
       this.botService = this.get("Bot");
       this.log(this.mediaRouterOptions, "DEBUG");
     }
-
   }
 
   create(worker, roomid, mediaCodecs = this.mediaRouterOptions.mediaCodecs) {
@@ -74,7 +73,16 @@ class Rooms extends nodefony.Service {
           if (message.data.consuming) {
             type = "consuming";
           }
-          transport = await room.createWebRtcTransport(peer, message);
+          transport = await room.createTransport("webrtc", message.data);
+          transport.on('trace', (trace) => {
+            this.log(`transport "trace" event [transportId:${transport.id}, trace.type:${trace.type} ]`, "DEBUG");
+            this.log(trace, "DEBUG");
+            peer.notify(this, 'downlinkBwe', {
+              desiredBitrate: trace.info.desiredBitrate,
+              effectiveDesiredBitrate: trace.info.effectiveDesiredBitrate,
+              availableBitrate: trace.info.availableBitrate
+            });
+          });
           peer.send(this, "createWebRtcTransport", {
             type: type,
             id: transport.id,
@@ -83,6 +91,7 @@ class Rooms extends nodefony.Service {
             dtlsParameters: transport.dtlsParameters,
             sctpParameters: transport.sctpParameters
           });
+          peer.setTransport(transport.id, transport);
         } catch (e) {
           this.log(e, "ERROR");
           peer.send(this, "createWebRtcTransport", {
@@ -142,7 +151,15 @@ class Rooms extends nodefony.Service {
         break;
       case "connectWebRtcTransport":
         try {
-          let transport = await room.connecWebRtcTransport(peer, message.data);
+          const {
+            transportId,
+            dtlsParameters
+          } = message.data;
+          const transport = peer.transports.get(transportId);
+          if (!transport) {
+            throw new Error(`transport with id "${transportId}" not found`);
+          }
+          await room.connecWebRtcTransport(transport, dtlsParameters);
           peer.send(room, "connectWebRtcTransport", {
             type: message.data.type,
             id: transport.id
@@ -315,7 +332,6 @@ class Rooms extends nodefony.Service {
     this.rooms.set(roomid, room);
     room.on('close', () => this.rooms.delete(roomid));
   }
-
 }
 
 module.exports = Rooms;

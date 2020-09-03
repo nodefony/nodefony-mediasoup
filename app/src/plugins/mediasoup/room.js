@@ -80,12 +80,12 @@ class Room extends nodefony.Service {
   constructor(id, options, mediasoup) {
     let defaultOpt = nodefony.extend({}, defaultOptions);
     super("Room", mediasoup.container, null, nodefony.extend({}, defaultOpt, options));
+    this.store = this.get("store");
+    console.log(this.store.state)
     this.id = id;
     this.mediasoup = mediasoup;
     this.handlerName = mediasoupClient.detectDevice();
-    //this.closed = false;
     this.displayName = this.options.displayName || id;
-
     this.consumers = null;
     this.dataConsumers = null;
     this.webcams = null;
@@ -100,11 +100,10 @@ class Room extends nodefony.Service {
       WEBCAM_KSVC_ENCODINGS[0].scalabilityMode = `${this.options.svc}_KEY`;
       SCREEN_SHARING_SVC_ENCODINGS[0].scalabilityMode = this.options.svc;
     }
-
     this.listenMediaSoupEvents();
   }
 
-  init(peer) {
+  init() {
     this.log(`Initialize room ${this.id}`, "DEBUG");
     //this.mediaStream = new nodefony.medias.MediaStream(null, {}, this.container);
     //peer.mediaStream = this.mediaStream;
@@ -129,13 +128,11 @@ class Room extends nodefony.Service {
     this.webcamProducer = null;
     if (this.externalVideo) {
       this.externalVideo = document.createElement('video');
-
       this.externalVideo.controls = true;
       this.externalVideo.muted = true;
       this.externalVideo.loop = true;
       this.externalVideo.setAttribute('playsinline', '');
       //this.externalVideo.src = EXTERNAL_VIDEO_SRC;
-
       this.externalVideo.play()
         .catch((error) => {
           this.log('externalVideo.play() failed');
@@ -146,10 +143,9 @@ class Room extends nodefony.Service {
   }
 
   listenMediaSoupEvents() {
-
     this.mediasoup.on("closeSock", () => {
       this.connected = false;
-      this.closed = false;
+      this.closed = true;
     });
     this.mediasoup.on("routerRtpCapabilities", async (message) => {
       this.log(`Event : routerRtpCapabilities `, "DEBUG");
@@ -256,7 +252,6 @@ class Room extends nodefony.Service {
             this.peers.delete(peerId);
             break;
           }
-
         case 'peerDisplayNameChanged':
           {
             const {
@@ -827,7 +822,6 @@ class Room extends nodefony.Service {
     } else if (this.shareProducer) {
       await this.disableShare();
     }
-
     if (!this.mediasoupDevice.canProduce('video')) {
       this.log('enableWebcam() | cannot produce video', "ERROR");
       return;
@@ -884,7 +878,6 @@ class Room extends nodefony.Service {
           .rtpCapabilities
           .codecs
           .find((c) => c.kind === 'video');
-
         if ((this.forceVP9 && codec) ||
           firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
         ) {

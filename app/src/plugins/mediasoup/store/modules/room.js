@@ -1,4 +1,7 @@
-const state = {};
+const state = {
+  joined:false,
+  connected:false
+};
 
 const getters = {};
 

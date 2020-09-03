@@ -9,6 +9,10 @@ module.exports = class Mediasoup extends nodefony.Service {
     this.config = this.bundle.settings.mediasoup;
     this.workers = [];
     this.nextMediasoupWorkerIdx = 0;
+    this.MIN_PORT = 20000;
+    this.MAX_PORT = 30000;
+    this.TIMEOUT = 400;
+    this.takenPortSet = new Set();
     if (!kernel.ready) {
       this.kernel.once("onReady", () => {
         this.roomsService = this.get("Rooms");
@@ -132,4 +136,40 @@ module.exports = class Mediasoup extends nodefony.Service {
       this.workers[i].close();
     }
   }
+
+  // ports management
+  async getPort() {
+    let port = this.getRandomPort();
+    while (this.takenPortSet.has(port)) {
+      port = this.getRandomPort();
+      try {
+        // Check that the port is available to use
+        await this.isPortOpen(port);
+      } catch (error) {
+        console.error('getPort() port is taken [port:%d]', port);
+        this.takenPortSet.add(port);
+      }
+    }
+    this.takenPortSet.add(port);
+    return port;
+  }
+
+  releasePort(port) {
+    this.takenPortSet.delete(port);
+  }
+
+  getRandomPort() {
+    return Math.floor(Math.random() * (this.MAX_PORT - this.MIN_PORT + 1) + this.MIN_PORT)
+  }
+
+  isPortOpen(port, ip = "127.0.0.1") {
+    return new Promise((resolve, reject) => {
+      socket.once('connect', () => resolve);
+      socket.setTimeout(this.TIMEOUT);
+      socket.once('timeout', () => reject);
+      socket.once('error', (error) => reject());
+      socket.connect(port, ip);
+    });
+  }
+
 };

@@ -22,7 +22,6 @@ class defaultController extends nodefony.Controller {
       name: this.bundle.name,
       description: this.bundle.package.description
     });
-
   }
 
 }
