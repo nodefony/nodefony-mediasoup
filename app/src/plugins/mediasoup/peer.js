@@ -25,6 +25,18 @@ class Peer {
   addConsumer(consumer) {
     this.consumers.push(consumer);
   }
+
+  close(){
+    this.videoElement.pause();
+    this.videoElement.removeAttribute('src');
+    this.videoElement.remove();
+    this.audioElement.pause();
+    this.audioElement.removeAttribute('src');
+    this.audioElement.remove();
+    this.consumers.length = 0;
+    this.producers.length = 0;
+    this.dataConsumers.length = 0;
+  }
 }
 
 export default Peer;

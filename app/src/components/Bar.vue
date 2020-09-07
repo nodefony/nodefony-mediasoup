@@ -2,10 +2,18 @@
 <v-app-bar :clipped-left="$vuetify.breakpoint.lgAndUp" app color="" dark>
   <v-app-bar-nav-icon @click.stop="toogleDrawer"></v-app-bar-nav-icon>
   <v-toolbar-title style="width: 300px" class="ml-0 pl-4">
-    <span class="hidden-sm-and-down">Nodefony Mediasoup FSU</span>
+    <router-link :to="{ name: 'About'}" tag="div">
+      <v-btn text>
+        <span class="hidden-sm-and-down">Nodefony Mediasoup FSU</span>
+      </v-btn>
+    </router-link>
   </v-toolbar-title>
 
   <v-spacer></v-spacer>
+  <v-chip class="ma-2" color="success" outlined>
+    <v-icon left>mdi-server-plus</v-icon>
+    Server Status
+  </v-chip>
   <v-btn icon>
     <v-icon>mdi-apps</v-icon>
   </v-btn>

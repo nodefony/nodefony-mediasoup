@@ -81,7 +81,6 @@ class Room extends nodefony.Service {
     let defaultOpt = nodefony.extend({}, defaultOptions);
     super("Room", mediasoup.container, null, nodefony.extend({}, defaultOpt, options));
     this.store = this.get("store");
-    console.log(this.store.state)
     this.id = id;
     this.mediasoup = mediasoup;
     this.handlerName = mediasoupClient.detectDevice();
@@ -378,14 +377,14 @@ class Room extends nodefony.Service {
     });
   }
 
-  close() {
+  async close() {
     this.log(`Closing room `);
     // Close mediasoup Transports.
     if (this.sendTransport) {
-      this.sendTransport.close();
+      await this.sendTransport.close();
     }
     if (this.recvTransport) {
-      this.recvTransport.close();
+      await this.recvTransport.close();
     }
     this.closed = true;
     this.init();
@@ -586,7 +585,7 @@ class Room extends nodefony.Service {
       appData,
       producerPaused
     } = data;
-    console.log(peerId, producerId);
+    //console.log(peerId, producerId);
     try {
       const consumer = await this.recvTransport.consume({
         id,

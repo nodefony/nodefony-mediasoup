@@ -63,7 +63,7 @@ fi
 set -e
 
 BROADCASTER_ID=$(LC_CTYPE=C tr -dc A-Za-z0-9 < /dev/urandom | fold -w ${1:-32} | head -n 1)
-HTTPIE_COMMAND="http --check-status"
+HTTPIE_COMMAND="http --check-status --verify=no"
 AUDIO_SSRC=1111
 AUDIO_PT=100
 VIDEO_SSRC=2222

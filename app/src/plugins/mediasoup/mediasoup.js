@@ -21,9 +21,9 @@ class Mediasoup extends nodefony.Service {
     });
   }
 
-  async getWssServer(){
-    let result = await this.store.dispatch('API_REQUEST', "/mediasoup/api/servers" );
-    return result.result.config.webRtcTransportOptions.listenIps[0].ip ;
+  async getWssServer() {
+    let result = await this.store.dispatch('API_REQUEST', "/mediasoup/api/servers");
+    return result.result.config.webRtcTransportOptions.listenIps[0].ip;
   }
 
   // hooy plugins vue
@@ -35,10 +35,9 @@ class Mediasoup extends nodefony.Service {
     this.i18n = options.i18n;
     this.container = options.nodefony.container;
     this.syslog = this.get("syslog");
-    this.set("store", this.store );
-    this.set("router", this.router );
-    this.set("i18n", this.i18n );
-
+    this.set("store", this.store);
+    this.set("router", this.router);
+    this.set("i18n", this.i18n);
     this.log(`Add Plugin mediasoup : ${this.version}`, "INFO");
   }
 
@@ -62,11 +61,11 @@ class Mediasoup extends nodefony.Service {
         this.fire("openSock", event, this);
       };
       this.sock.onmessage = (event) => {
-        let message = null ;
-        try{
+        let message = null;
+        try {
           message = JSON.parse(event.data);
-        }catch(e){
-          this.log(e,"ERROR");
+        } catch (e) {
+          this.log(e, "ERROR");
           this.log(event.data, "ERROR");
           throw new Error(`Bad Json Message`);
         }
@@ -110,7 +109,7 @@ class Mediasoup extends nodefony.Service {
         case "producedata":
           this.fire("producedata", message, this);
           break;
-        case "newConsumer" :
+        case "newConsumer":
           this.fire("newConsumer", message, this);
           break;
         default:
@@ -129,12 +128,29 @@ class Mediasoup extends nodefony.Service {
     });
   }
 
-  createPeer(peerid, options ={}){
-    return  new Peer(peerid, options, this);
+  createPeer(peerid, options = {}) {
+    return new Peer(peerid, options, this);
   }
 
-  createRoom(roomid, options ={}){
-    return  new Room(roomid, options, this);
+  createRoom(roomid, options = {}) {
+    return new Room(roomid, options, this);
+  }
+
+  async leaveRoom() {
+    try {
+      if( this.sock){
+        this.sock.close();
+      }
+      if( this.peer){
+        this.peer.close();
+      }
+      if( this.room){
+        await this.room.close();
+      }
+      return this;
+    } catch (e) {
+      this.log(e, "ERROR");
+    }
   }
 
   async join() {

@@ -2,7 +2,12 @@
 <v-container fluid>
   <v-dialog v-model="dialog" persistent max-width="600">
     <v-row align="center" justify="center" class="">
-      <v-card width="600" class="elevation-12">
+      <v-card width="600" class=" pa-5">
+        <v-row align="center" justify="center">
+          <v-col cols="12" sm="8" md="4">
+            <v-img src="/app/images/app-logo.png" aspect-ratio="1"></v-img>
+          </v-col>
+        </v-row>
         <v-card-title>Nodefony {{ $t('signin') }} {{select}} </v-card-title>
         <v-card-subtitle class="pb-0">
           <v-text-field v-if="isLoading" color="success" loading disabled>
