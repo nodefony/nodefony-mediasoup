@@ -27,6 +27,7 @@ class Peer {
   }
 
   close(){
+    console.log("close")
     this.videoElement.pause();
     this.videoElement.removeAttribute('src');
     this.videoElement.remove();

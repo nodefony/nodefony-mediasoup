@@ -11,7 +11,7 @@
           <!--router-link :to="{ name: 'MettingAuth' ,params: { roomid: 'test'}}" tag="div"-->
           <v-list-item-content>
             <v-list-item-title>
-              <a :href="$router.resolve({ name: 'MettingAuth' ,params: { roomid: 'test'}}).href">Rooms Test</a>
+              <a :href="$router.resolve({ name: 'Rooms' }).href">Rooms</a>
             </v-list-item-title>
           </v-list-item-content>
           <!--/router-link-->

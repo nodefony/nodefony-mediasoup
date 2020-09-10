@@ -8,6 +8,7 @@ import auth from '../plugins/nodefony/store/modules/auth'
 import api from '../plugins/nodefony/store/modules/api'
 
 
+import mediasoup from '../plugins/mediasoup/store/modules/mediasoup'
 import peer from '../plugins/mediasoup/store/modules/peer'
 import room from '../plugins/mediasoup/store/modules/room'
 
@@ -36,7 +37,8 @@ export default new Vuex.Store({
     user,
     auth,
     api,
+    mediasoup,
     peer,
     room
   }
-})
+});

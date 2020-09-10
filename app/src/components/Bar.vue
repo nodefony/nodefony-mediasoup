@@ -10,9 +10,13 @@
   </v-toolbar-title>
 
   <v-spacer></v-spacer>
-  <v-chip class="ma-2" color="success" outlined>
+  <v-chip class="ma-2" color="error" outlined>
     <v-icon left>mdi-server-plus</v-icon>
-    Server Status
+    SIP Status
+  </v-chip>
+  <v-chip class="ma-2" :color="getColorStatus" outlined>
+    <v-icon left>mdi-server-plus</v-icon>
+    Mediasoup Status
   </v-chip>
   <v-btn icon>
     <v-icon>mdi-apps</v-icon>
@@ -51,12 +55,22 @@ export default {
       'isAuthenticated',
       'getUser',
       'getProfile',
-      'getTrigramme'
-    ])
+      'getTrigramme',
+      'getMediasoupStatus'
+    ]),
+    getColorStatus(){
+      if( this.getMediasoupStatus){
+        return "success";
+      }else{
+        return "error";
+      }
+    }
   },
   async beforeMount() {
     if (!this.getProfile) {
-      return await this.getUserProfile(`/api/users/${this.getUser}`)
+      if (this.getUser){
+        return await this.getUserProfile(`/api/users/${this.getUser}`)
+      }
     }
   },
   methods: {
@@ -64,6 +78,7 @@ export default {
       getUserProfile: 'USER_REQUEST'
     }),
     ...mapMutations(['toogleDrawer'])
+
   }
 }
 </script>

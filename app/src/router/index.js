@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Store from '../store';
 import Rooms from '../views/Rooms.vue'
+import Room from '../views/Room.vue'
 import About from '../views/About.vue'
 import Login from '../views/Login.vue'
 
@@ -21,10 +22,6 @@ const routes = [{
     name: 'Login',
     component: Login
   }, {
-    path: '/home',
-    name: 'Home',
-    component: Rooms
-  }, {
     path: '/',
     name: 'About',
     //route level code-splitting
@@ -33,24 +30,29 @@ const routes = [{
     component: () =>
       import( /* webpackChunkName: "about" */ '../views/About.vue')
  }, {
-    path: '/meeting/:roomid/:peerid/',
+    path: '/Rooms',
+    name: 'Rooms',
+    component: Rooms,
+    beforeEnter: ifAuthenticated
+  },  {
+    path: '/rooms/:roomid',
+    name: 'MettingRoom',
+    props: true,
+    component: Room,
+    beforeEnter: ifAuthenticated
+  }, {
+    path: '/rooms/:roomid/:peerid',
     name: 'Metting',
     props: true,
-    component: Rooms,
+    component: Room,
     beforeEnter: ifAuthenticated
- }, {
-    path: '/meeting/:roomid',
-    name: 'MettingAuth',
-    props: true,
-    component: Rooms,
-    beforeEnter: ifAuthenticated
-  }
-]
+ }
+];
 const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
   //base: '/mediasoup/',
   routes
-})
+});
 
-export default router
+export default router;

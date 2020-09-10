@@ -1,17 +1,18 @@
 const state = {
-  joined:false,
-  connected:false
+  joined:false
 };
 
 const getters = {};
 
 const actions = {};
 
-const mutations = {};
+const mutations = {
+
+};
 
 export default {
   state,
   getters,
   actions,
   mutations
-}
+};

@@ -51,7 +51,7 @@ class Mediasoup extends nodefony.Service {
     return this.sock.send(message);
   }
 
-  connect(roomid = "test", peerid = "cci") {
+  connect(roomid = "test", peerid = "cci", options = {}) {
     return new Promise(async (resolve, reject) => {
       this.domain = await this.getWssServer();
       let url = `wss://${this.domain}:5152/mediasoup/ws?roomId=${roomid}&peerId=${peerid}`;
@@ -59,6 +59,7 @@ class Mediasoup extends nodefony.Service {
       this.sock.onopen = (event) => {
         this.log(`Mediasoup Websocket Connect peer ${peerid} room : ${roomid}`);
         this.fire("openSock", event, this);
+        this.store.commit('setConnected', true);
       };
       this.sock.onmessage = (event) => {
         let message = null;
@@ -76,8 +77,8 @@ class Mediasoup extends nodefony.Service {
           this.fire("notify", message, this);
           break;
         case "handshake":
-          this.room = this.createRoom(message.roomid);
-          this.peer = this.createPeer(message.peerid);
+          this.room = this.createRoom(message.roomid, options);
+          this.peer = this.createPeer(message.peerid, options);
           //this.log(this.room, "DEBUG");
           //this.log(this.peer, "DEBUG");
           this.fire("connect", this.room, this.peer);
@@ -124,6 +125,7 @@ class Mediasoup extends nodefony.Service {
       };
       this.sock.onclose = () => {
         this.fire("closeSock", this);
+        this.store.commit('setConnected', false);
       };
     });
   }

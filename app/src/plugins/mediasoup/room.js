@@ -108,6 +108,7 @@ class Room extends nodefony.Service {
     //peer.mediaStream = this.mediaStream;
     this.connected = false;
     this.closed = false;
+    this.ready = false;
     this.peers = new Map();
     this.webcam = {
       device: null,
@@ -150,6 +151,7 @@ class Room extends nodefony.Service {
       this.log(`Event : routerRtpCapabilities `, "DEBUG");
       this.setRouterRtpCapabilities(message);
       await this.initTransport();
+
     });
     this.mediasoup.on("createWebRtcTransport", async (message) => {
       this.log(`Event : createWebRtcTransport `, "DEBUG");
@@ -158,9 +160,23 @@ class Room extends nodefony.Service {
           .catch((error) => {
             this.log(error, "ERROR");
           });
+          this.procudeTransportReady = true;
       }
       if (message.data.type === "consuming") {
-        this.recvTransport = await this.consume(message.data);
+        this.recvTransport = await this.consume(message.data)
+        .catch((error) => {
+          this.log(error, "ERROR");
+        });
+        this.consumeTransportReady = true;
+      }
+      if( this.options.produce  && this.options.consume){
+        if(this.consumeTransportReady && this.procudeTransportReady){
+          this.ready = true;
+          this.fire("ready", this);
+        }
+      }else{
+          this.ready = true;
+          this.fire("ready", this);
       }
     });
     this.mediasoup.on("join", async (message) => {
@@ -414,6 +430,10 @@ class Room extends nodefony.Service {
       if (this.options.consume) {
         this.createWebRtcTransport(false, true);
       }
+      if(!  this.options.produce && ! this.options.consume){
+        this.ready = true;
+        this.fire("ready", this);
+      }
       return this.mediasoupDevice;
     } catch (error) {
       if (error.name === 'UnsupportedError') {
@@ -664,43 +684,6 @@ class Room extends nodefony.Service {
   setRouterRtpCapabilities(message) {
     this.log("setRouterRtpCapabilities", "DEBUG");
     this.routerRtpCapabilities = message.router.rtpCapabilities;
-  }
-
-  getUserMedia(settings = {}, element = null) {
-    return new Promise((resolve, reject) => {
-      if (element) {
-        this.mediaStream.mediaElement = element;
-      }
-      //this.externalVideo = this.mediaStream.mediaElement;
-      //this.externalVideoStream = this.mediaStream.stream;
-      return this.mediaStream.getUserMedia(settings)
-        .then(async (stream) => {
-          await this.mediaStream.attachMediaStream();
-          this.log(`getUserMedia video : ${settings.video} audio : ${settings.audio}`, "DEBUG");
-          return resolve(stream);
-        })
-        .catch((e) => {
-          return reject(e);
-        });
-    });
-  }
-
-  getUserScreen(settings = {}, element = null) {
-    return new Promise((resolve, reject) => {
-      if (element) {
-        this.mediaStream.mediaElement = element;
-      }
-      //this.externalVideo = this.mediaStream.mediaElement;
-      //this.externalVideoStream = this.mediaStream.stream;
-      return this.mediaStream.getUserScreen(settings)
-        .then(async (stream) => {
-          await this.mediaStream.attachMediaStream();
-          return resolve(stream);
-        })
-        .catch((e) => {
-          return reject(e);
-        });
-    });
   }
 
   // audio
