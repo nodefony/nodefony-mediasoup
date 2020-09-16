@@ -16,9 +16,6 @@ class Mediasoup extends nodefony.Service {
     this.sock = null;
     this.domain = "localhost";
     this.deviceInfo = deviceInfo();
-    this.on("connect", (room, peer) => {
-      room.init();
-    });
   }
 
   async getWssServer() {
@@ -53,9 +50,13 @@ class Mediasoup extends nodefony.Service {
 
   connect(roomid = "test", peerid = "cci", options = {}) {
     return new Promise(async (resolve, reject) => {
+      this.on("connect", (room, peer) => {
+        room.init(peer);
+      });
       this.domain = await this.getWssServer();
       let url = `wss://${this.domain}:5152/mediasoup/ws?roomId=${roomid}&peerId=${peerid}`;
       this.sock = new WebSocket(url);
+
       this.sock.onopen = (event) => {
         this.log(`Mediasoup Websocket Connect peer ${peerid} room : ${roomid}`);
         this.fire("openSock", event, this);
@@ -63,6 +64,7 @@ class Mediasoup extends nodefony.Service {
       };
       this.sock.onmessage = (event) => {
         let message = null;
+        this.store.commit("mediasoupActivity");
         try {
           message = JSON.parse(event.data);
         } catch (e) {
@@ -126,6 +128,8 @@ class Mediasoup extends nodefony.Service {
       this.sock.onclose = () => {
         this.fire("closeSock", this);
         this.store.commit('setConnected', false);
+        this.sock = null ;
+        return this.leaveRoom();
       };
     });
   }
@@ -139,15 +143,20 @@ class Mediasoup extends nodefony.Service {
   }
 
   async leaveRoom() {
+    this.removeAllListeners();
     try {
-      if( this.sock){
-        this.sock.close();
-      }
       if( this.peer){
         this.peer.close();
       }
       if( this.room){
         await this.room.close();
+      }
+      delete this.room ;
+      delete this.peer ;
+      this.room = null;
+      this.peer = null;
+      if( this.sock){
+        this.sock.close();
       }
       return this;
     } catch (e) {

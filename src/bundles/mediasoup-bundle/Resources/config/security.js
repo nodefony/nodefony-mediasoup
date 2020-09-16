@@ -37,6 +37,12 @@ module.exports = {
         pattern: /^\/mediasoup\/ws$/,
         crossDomain: cors
       }
+    },
+    encoders: {
+      room: {
+        algorithm: "bcrypt",
+        saltRounds: 13
+      }
     }
   }
 };

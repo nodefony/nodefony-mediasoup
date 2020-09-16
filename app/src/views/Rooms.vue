@@ -26,14 +26,7 @@ export default {
   data(vm) {
     return {
       peerid: null,
-      rooms: [{
-        name: "webrtc",
-        displayName: "Webrtc Meeting"
-      }, {
-        name: "broadcast",
-        displayName: "Broadcaster Meeting",
-        secure: true
-      }],
+      rooms: []
     }
   },
 
@@ -41,6 +34,7 @@ export default {
     if (this.isAuthenticated) {
       this.peerid = this.getUser;
     }
+    return await this.getRoom();
   },
 
   destroyed() {
@@ -52,12 +46,31 @@ export default {
       'getUser'
     ])
   },
-
   /*async created() {},*/
   methods: {
     ...mapMutations(["setRoom", "setPeer"]),
+    ...mapActions(["API_REQUEST"]),
     connect(room, peer) {
-      return this.$router.push({ name: 'Metting' ,params:{roomid:room.id,peerid:peer.id}})
+      return this.$router.push({
+        name: 'Metting',
+        params: {
+          roomid: room.id,
+          peerid: peer.id
+        }
+      })
+    },
+    async getRoom() {
+      let res = await this.API_REQUEST("/room/api", "GET");
+      let rooms = res.result.rows;
+      rooms.forEach((item) => {
+        this.rooms.push(item);
+      });
+      return rooms;
+    }
+  },
+  watch: {
+    async $route(to, from) {
+      console.log("router watch")
     }
   }
 

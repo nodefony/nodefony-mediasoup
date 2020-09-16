@@ -10,17 +10,12 @@
   </v-toolbar-title>
 
   <v-spacer></v-spacer>
-  <v-chip class="ma-2" color="error" outlined>
-    <v-icon left>mdi-server-plus</v-icon>
-    SIP Status
-  </v-chip>
-  <v-chip class="ma-2" :color="getColorStatus" outlined>
-    <v-icon left>mdi-server-plus</v-icon>
-    Mediasoup Status
-  </v-chip>
-  <v-btn icon>
-    <v-icon>mdi-apps</v-icon>
-  </v-btn>
+
+  <router-link :to="{ name: 'Rooms'}" tag="div">
+    <v-btn icon>
+      <v-icon>mdi-apps</v-icon>
+    </v-btn>
+  </router-link>
   <v-btn icon>
     <v-icon>mdi-bell</v-icon>
   </v-btn>
@@ -29,6 +24,13 @@
       <span class="white--text">{{getTrigramme}}</span>
     </v-avatar>
   </v-btn>
+
+  <a v-else :href="$router.resolve({ name: 'Login' }).href">
+    <v-btn rounded color="primary" dark>
+      Login
+    </v-btn>
+  </a>
+
 </v-app-bar>
 </template>
 
@@ -55,20 +57,13 @@ export default {
       'isAuthenticated',
       'getUser',
       'getProfile',
-      'getTrigramme',
-      'getMediasoupStatus'
-    ]),
-    getColorStatus(){
-      if( this.getMediasoupStatus){
-        return "success";
-      }else{
-        return "error";
-      }
-    }
+      'getTrigramme'
+    ])
+
   },
   async beforeMount() {
     if (!this.getProfile) {
-      if (this.getUser){
+      if (this.getUser) {
         return await this.getUserProfile(`/api/users/${this.getUser}`)
       }
     }
@@ -78,7 +73,6 @@ export default {
       getUserProfile: 'USER_REQUEST'
     }),
     ...mapMutations(['toogleDrawer'])
-
   }
 }
 </script>

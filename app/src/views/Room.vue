@@ -1,18 +1,78 @@
 <template>
-<v-container fluid>
-  <v-row v-if="connected">
-    <v-col ref="room" class="d-flex flex-wrap">
-      <Media v-if="peer" class="ml-5 mb-5" :isMe="true" :ref="peer.id" :room="room" :peer="peer" :key="peer.id" />
-      <Media class="ml-5 mb-5" v-for=" (item) in peers" :ref="item.id" :room="room" :peer="item" :key="item.id">
-      </Media>
-    </v-col>
-  </v-row>
-  <v-row v-if="open">
-    <v-col class="d-flex flex-wrap">
-      <Room :join="open" :peerId="peerid" :isAuthenticated="isAuthenticated" class="ml-5 mb-5" v-for=" (item) in rooms" :ref="item.name" :room="item" :key="item.name" v-on:connect="connect">
-      </Room>
-    </v-col>
-  </v-row>
+<v-app id="room">
+  <v-main>
+    <v-container v-if="connected" class="fill-height" fluid>
+      <v-navigation-drawer :width="navigation.width" v-model="navigation.drawer" app clipped>
+        <v-tabs>
+          <v-tab key="user">
+            {{peer.id}}
+          </v-tab>
+          <v-tab key="message">
+            Messages
+          </v-tab>
+          <v-tab key="stats">
+            Stats
+          </v-tab>
+          <v-tab-item style="left:0px;top:5px" key="user">
+            <Media max-width="100%" v-show="peer && joined" :name="peer.id" class="mt-5" :isMe="true" :ref="peer.id" :room="room" :peer="peer" :key="peer.id" v-on:close="quit" />
+          </v-tab-item>
+          <v-tab-item key="message">
+            <v-card-text>Content for tab message would go here</v-card-text>
+            <Message />
+
+          </v-tab-item>
+          <v-tab-item key="stats">
+            <v-card-text>Content for tab stats would go here</v-card-text>
+          </v-tab-item>
+        </v-tabs>
+
+      </v-navigation-drawer>
+      <v-app-bar app clipped-left>
+        <v-app-bar-nav-icon @click.stop="navigation.drawer = !navigation.drawer">
+        </v-app-bar-nav-icon>
+        <router-link :to="{ name: 'MettingRoom'}" tag="div">
+          <v-toolbar-title>Room {{room.id}}</v-toolbar-title>
+        </router-link>
+        <v-btn class="ma-2" outlined color="indigo" @click="waitQuit">Quit</v-btn>
+        <v-spacer></v-spacer>
+        <div>
+          <v-chip class="ma-2" :color="getSpStatusColorStatus" outlined>
+            <v-icon :color="getSpColorActivity" left>mdi-server-plus</v-icon>
+            SIP Status
+          </v-chip>
+          <v-chip class="ma-2" :color="getMsStatusColorStatus" outlined>
+            <v-icon left :color="getMsColorActivity">mdi-server-plus</v-icon>
+            Mediasoup Status
+          </v-chip>
+        </div>
+        <router-link :to="{ name: 'Rooms'}" tag="div">
+          <v-btn icon>
+            <v-icon>mdi-apps</v-icon>
+          </v-btn>
+        </router-link>
+        <v-btn icon>
+          <v-icon>mdi-bell</v-icon>
+        </v-btn>
+      </v-app-bar>
+
+      <v-col cols="12">
+        <v-row v-show='! peers.length' style="height: 600px;" align="center" justify="center">
+          Waiting Meeting Participants
+        </v-row>
+        <v-row v-show="peers.length" ref="room" style="height: 600px;" align="start" justify="space-around">
+          <Media class="ml-5 mb-5" v-for=" (item) in peers" :ref="item.id" :room="room" :peer="item" :key="item.id" :name="item.id">
+          </Media>
+        </v-row>
+      </v-col>
+    </v-container>
+
+    <v-container v-else class="fill-height" fluid>
+      <v-col class="d-flex flex-wrap">
+        <Room :join="open" :peerId="peerid" :isAuthenticated="isAuthenticated" class="ml-5 mb-5" v-for=" (item) in rooms" :ref="item.name" :room="item" :key="item.name" v-on:connect="connect">
+        </Room>
+      </v-col>
+    </v-container>
+  </v-main>
   <v-dialog v-if="room" v-model="dialogQuit" persistent max-width="600">
     <v-row justify="center">
       <v-card min-width="600">
@@ -42,7 +102,7 @@
       </v-card>
     </v-row>
   </v-dialog>
-</v-container>
+</v-app>
 </template>
 
 <script>
@@ -53,12 +113,14 @@ import {
 } from 'vuex';
 import Media from "@/components/Media";
 import Room from "@/components/Room";
+import Message from "@/components/Message";
 
 export default {
   name: 'View-Room',
   components: {
     Media,
-    Room
+    Room,
+    Message
   },
   props: {
     roomid: {
@@ -66,14 +128,18 @@ export default {
       default: "test"
     },
     peerid: {
-      type: String,
-      default: "test"
+      type: String
     }
   },
   data(vm) {
     return {
+      navigation: {
+        drawer: true,
+        width: 400
+      },
       rooms: [],
-      open: false,
+      open: vm.peerid ? true : false,
+      joined: false,
       dialogQuit: false,
       room: null,
       peer: null,
@@ -81,28 +147,69 @@ export default {
       connected: vm.isMediasoupConnected()
     }
   },
+  watch: {
+    $route(to, from) {
+      this.log(`Watcher router`);
+      this.log(to)
+      this.log(from)
+      //this.leaveRoom();
+    }
+  },
   computed: {
     ...mapGetters([
       'isAuthenticated',
-      'getUser'
-    ])
+      'getUser',
+      'getMediasoupStatus',
+      'getMediasoupActivity',
+      'getSipStatus',
+      'getSipActivity'
+    ]),
+    getMsStatusColorStatus() {
+      if (this.getMediasoupStatus) {
+        return "success";
+      } else {
+        return "error";
+      }
+    },
+    getMsColorActivity() {
+      if (this.getMediasoupActivity) {
+        return "blue";
+      } else {
+        return "green";
+      }
+    },
+    getSpStatusColorStatus() {
+      if (this.getSipStatus) {
+        return "success";
+      } else {
+        return "error";
+      }
+    },
+    getSpColorActivity() {
+      if (this.getSipActivity) {
+        return "blue";
+      } else {
+        return "black";
+      }
+    }
   },
 
   async mounted() {
     this.closeDrawer();
-    if ( this.connected ) {
+    if (this.connected) {
+      this.open = false;
       this.log(`Mediasoup Server already connected ready = > ${this.$mediasoup.room.ready}`);
       return this.connect();
     } else {
-      this.log("Try Connect To mediasoup server");
-      await this.getRoom(this.roomid);
-      this.open = true;
+      this.log(`Try Connect To mediasoup server open dialog =>${this.open}`);
+      return await this.getRoom(this.roomid);
     }
   },
 
   async beforeRouteLeave(to, from, next) {
     return await this.waitQuit()
       .then(() => {
+        this.log(`Quit room ${to.name} => ${from.name}`);
         return next();
       })
       .catch(e => {
@@ -115,33 +222,39 @@ export default {
   },
   methods: {
     ...mapMutations(['closeDrawer']),
-    ...mapGetters([
-      'getMediasoupStatus'
-    ]),
+    ...mapActions(["API_REQUEST"]),
     async connect() {
       this.log("Connect Mediasoup Server");
       this.open = false;
       this.room = this.$mediasoup.room;
       this.peer = this.$mediasoup.peer;
       if (this.room.ready) {
-         return this.joinRoom();
-      }
-      this.room.on("ready", (room) => {
         return this.joinRoom();
-      })
+      }
+      return new Promise((resolve, reject) => {
+        this.room.on("ready", () => {
+          this.log(`Mediasoup room ${this.room.id} ready `);
+          try {
+            return resolve(this.joinRoom());
+          } catch (e) {
+            return reject(e);
+          }
+        });
+      });
     },
     async joinRoom() {
-      this.connected = this.getMediasoupStatus();
+      this.connected = this.getMediasoupStatus;
       this.listenRoomEvents();
-      await this.room.join();
+      return await this.room.join();
     },
     listenRoomEvents() {
-      this.room.on("joined", (peer) => {
-        this.log(`joined : ${peer.id}`)
-        this.peer = peer;
+      this.room.on("joined", (room) => {
+        this.log(`joined : ${room.id}`)
+        this.joined = true;
+        this.peer = room.peer;
       });
       this.room.on("newPeer", (peer) => {
-        console.log("newPeer")
+        this.log(`New Peer : ${peer.id}`)
         this.peers.push(peer);
       });
       this.room.on("peerClosed", (peerId) => {
@@ -155,59 +268,52 @@ export default {
         }
       });
       this.room.on("addProducer", (producer) => {
-        console.log(this.$refs)
         this.peer.addProducer(producer);
-        // media
-        if (this.$refs[this.peer.id][0]) {
-          return this.$refs[this.peer.id][0].addProducer(producer);
-        }
         return this.$refs[this.peer.id].addProducer(producer);
       });
       this.room.on("consume", (consumer, peer) => {
-        console.log(this.$refs)
+        this.log(`Consume event : ${peer.id}`);
         peer.addConsumer(consumer);
         // media
-        if (this.$refs[this.peer.id][0]) {
+        if (this.$refs[peer.id] && this.$refs[peer.id][0]) {
           return this.$refs[peer.id][0].addConsumer(consumer);
         }
-        return this.$refs[this.peer.id].addConsumer(consumer);
+        return this.$refs[peer.id].addConsumer(consumer);
       });
     },
     isMediasoupConnected() {
-      return this.getMediasoupStatus();
+      return this.getMediasoupStatus;
     },
-    getRoom(id) {
-      let rooms = [{
-        name: "webrtc",
-        displayName: "Webrtc Meeting"
-      }, {
-        name: "broadcast",
-        displayName: "Broadcaster Meeting",
-        secure: true
-      }];
-      let room = null;
-      rooms.forEach((item, i) => {
+    async getRoom(id) {
+      let res = await this.API_REQUEST("/room/api", "GET");
+      let rooms = res.result.rows;
+      rooms.forEach((item) => {
         if (item.name === id) {
           this.rooms.push(item);
         }
       });
+      return rooms;
     },
-
-    async waitQuit() {
+    async waitQuit(event) {
       return new Promise((resolve, reject) => {
         this.dialogQuit = true;
         this.$once("quit", async (res) => {
           if (res) {
-            await this.leaveRoom();
-            this.dialogQuit = false;
-            return resolve(res)
+            try {
+              await this.leaveRoom(event);
+              this.dialogQuit = false;
+              this.joined = false;
+              return resolve(event);
+            } catch (e) {
+              this.log(e, "ERROR");
+            }
           }
           this.dialogQuit = false;
           return reject(res)
         });
       })
     },
-    leave() {
+    leave(event) {
       let response = null;
       switch (event.currentTarget.id) {
         case "agree":
@@ -219,11 +325,34 @@ export default {
       this.log(`response : ${response}`, "DEBUG");
       this.$emit('quit', response);
     },
-    leaveRoom() {
-      return this.room.close();
+    async leaveRoom(event) {
+      this.peers.forEach((item) => {
+        item.close();
+      });
+      while (this.peers.length > 0) {
+        this.peers.pop();
+      }
+      return await this.$mediasoup.leaveRoom()
+        .then((ele) => {
+          this.connected = false; //this.isMediasoupConnected();
+          this.peer = null;
+          this.room = null;
+          this.peers = [];
+          return ele;
+        });
+
+      //return await this.room.close();
+    },
+    quit(event) {
+      return this.waitQuit(event)
+      /*return this.$router.push({
+        name: 'MettingRoom',
+        params: {
+          roomid: this.room.id
+        }
+      })*/
     }
   }
-
 }
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->

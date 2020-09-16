@@ -2,6 +2,7 @@
 <v-card class="peer" :max-width="maxWidth" :max-height="maxHeight" :min-width="minWidth" :min-height="minHeight">
 
   <v-system-bar color="indigo darken-2" dark>
+    <h5>{{this.name}}</h5>
     <v-spacer></v-spacer>
     <v-icon v-if="mdRoom && mdRoom.connected" @click="minimize">
       mdi-window-minimize
@@ -9,16 +10,21 @@
     <v-icon v-if="mdRoom && mdRoom.connected" @click="maximize">
       mdi-window-maximize
     </v-icon>
-    <v-icon name ="close" @click="close"> mdi-close</v-icon>
+    <v-icon name="close" @click="close"> mdi-close</v-icon>
   </v-system-bar>
 
   <v-expand-transition>
     <div v-show="!isMinimize">
       <v-container v-if="mdPeer" style="padding:0px;width:100%">
         <div class="media-content">
-          <video autoPlay muted playsinline :controls="false" :srcObject="videoStream" ref="video">
+          <video v-show="video" muted playsinline :controls="false" ref="video">
           </video>
-          <audio autoPlay playsinline :controls="false" style="display:none" :muted="isMe" :srcObject="audioStream" ref="audio">
+          <div v-show="!video" class="pa-4 text-center">
+            <v-avatar color="primary lighten-2" class="subheading white--text" size="100">
+              {{this.name}}
+            </v-avatar>
+          </div>
+          <audio playsinline :controls="false" style="display:none" :muted="isMe" ref="audio">
           </audio>
           <v-btn v-if="mdRoom && mdRoom.connected" small :loading="loadingAudio" :disabled="loadingAudio" color="blue-grey" class="ma-2 white--text buttons" fab @click="audioButton">
             <v-icon v-if="this.audio">mdi-volume-high</v-icon>
@@ -37,7 +43,7 @@
           <v-icon v-else dark>mdi-volume-off</v-icon>
         </v-btn>
         <v-btn v-if="mdRoom && mdRoom.connected" small :loading="loadingMonitor" :disabled="loadingMonitor" color="blue-grey" class="ma-2 white--text" fab @click="monitorButton">
-          <v-icon v-if="this.monitor">mdi-monitor-share</v-icon>
+          <v-icon v-if="screen">mdi-monitor-share</v-icon>
           <v-icon v-else dark>mdi-monitor-off</v-icon>
         </v-btn>
         <v-spacer></v-spacer>
@@ -139,8 +145,8 @@ export default {
     showExpend: false,
     isMinimize: false,
     isMaximize: false,
-    refAudio: null,
-    refVideo: null,
+    refAudio: vm.$refs["audio"],
+    refVideo: vm.$refs["video"],
     videoStream: new window.MediaStream(),
     audioStream: new window.MediaStream(),
     loadingVideo: false,
@@ -148,10 +154,17 @@ export default {
     loadingMonitor: false,
     audio: true,
     video: true,
-    monitor: false
+    screen: false,
+    closed: false
   }),
   mounted() {},
   computed: {},
+  destroyed() {
+    this.mdRoom = null;
+    this.mdPeer = null;
+    this.stopAudioStream();
+    this.stopVideoStream();
+  },
   methods: {
     addProducer(producer) {
       return this.addTracks(producer.track);
@@ -159,21 +172,62 @@ export default {
     addConsumer(consumer) {
       return this.addTracks(consumer.track);
     },
+    addAudioTrack(track) {
+      let tag = this.$refs["audio"];
+      tag.srcObject = this.audioStream;
+      this.audioStream.addTrack(track);
+      if (this.isMe) {
+        this.muteTag();
+      }
+      return tag;
+    },
+    addVideoTrack(track) {
+      let tag = this.$refs["video"];
+      this.videoStream.addTrack(track);
+      tag.srcObject = this.videoStream;
+      return tag;
+    },
+    playVideoTag() {
+      let tag = this.$refs["video"];
+      this.log(`Try Play video User : ${this.name}`)
+      tag.srcObject = this.videoStream;
+      return tag.play()
+        .then(() => {
+          this.log(`play video tag User : ${this.name}`)
+          this.video = true;
+          //this.demuteTag();
+        })
+        .catch(e => {
+          this.log(`Play video tag User : ${this.name}`, "ERROR");
+          this.log(e, "ERROR", "PLAY VIDEO ");
+        })
+    },
+    pauseVideoTag() {
+      try {
+        let tag = this.$refs["video"];
+        this.log(`pause video tag ${this.name}`)
+        tag.pause();
+        this.video = false;
+        //this.muteTag();
+      } catch (e) {
+        this.log(e, "ERROR", "PAUSE VIDEO");
+      }
+    },
     addTracks(track) {
-      console.log( this.$refs["audio"] )
-      console.log( this.$refs["video"])
       switch (track.kind) {
         case "audio":
           {
-            let tag = this.$refs["audio"] ;
-            this.audioStream.addTrack(track);
+            let tag = this.addAudioTrack(track)
+            this.log(`${this.name} Add audio track ${track.id}`)
             if (this.isMe) {
-              this.muteTag();
+              return;
             }
-            tag.srcObject = this.audioStream;
-            //this.$refs[this.refAudio].stream = this.audioStream;
             return tag
               .play()
+              .then(() => {
+                this.audio = true;
+                this.log(`Play audio tag`);
+              })
               .catch((error) => {
                 this.log('audio.play() failed')
                 this.log(error, "ERROR")
@@ -181,52 +235,56 @@ export default {
           }
         case "video":
           {
-            let tag = this.$refs["video"] ;
-            //this.videoStream = new MediaStream();
-            this.videoStream.addTrack(track);
-            tag.srcObject = this.videoStream;
-            //this.$refs[this.refVideo].stream = this.videoStream;
+            this.log(`${this.name} Add video track ${track.id}`)
+            this.addVideoTrack(track)
             return this.playVideoTag();
           }
       }
     },
-    getRef(type) {
-      if (type === 'video') {
-        this.refVideo = `video-${this.mdPeer.id}`;
-        return this.refVideo;
+    stopAudioStream() {
+      if (this.audioStream) {
+        const tracks = this.audioStream.getTracks();
+        tracks.forEach(function(track) {
+          track.stop();
+        });
+        this.audioStream = null;
       }
-      if (type === 'audio') {
-        this.refAudio = `audio-${this.mdPeer.id}`;
-        return this.refAudio;
+    },
+    stopVideoStream() {
+      if (this.videoStream) {
+        const tracks = this.videoStream.getTracks();
+        tracks.forEach(function(track) {
+          track.stop();
+        });
+        this.videoStream = null;
       }
-      return this.mdPeer.id;
     },
     videoButton() {
-      this.video = !this.video;
       // tag
       if (this.video) {
-        return this.playVideoTag();
-      } else {
         return this.pauseVideoTag();
+      } else {
+        return this.playVideoTag();
       }
     },
     audioButton() {
-      this.audio = !this.audio;
       // tag
       if (this.isMe) {
+        this.audio = !this.audio;
         return;
       }
       if (this.audio) {
-        this.demuteTag();
-      } else {
         this.muteTag();
+      } else {
+        this.demuteTag();
       }
     },
     monitorButton() {
-      this.monitor = !this.monitor;
+      this.screen = !this.screen;
     },
     muteTag() {
-      let tag = this.$refs["audio"] ;
+      let tag = this.$refs["audio"];
+      this.log(`Mute audio tag isme = ${this.isMe}`);
       tag.muted = true;
       if (this.isMe) {
         return;
@@ -234,31 +292,10 @@ export default {
       this.audio = false;
     },
     demuteTag() {
-      let tag = this.$refs["audio"] ;
+      let tag = this.$refs["audio"];
+      this.log(`DemuteTag audio tag isme = ${this.isMe}`);
       tag.muted = false;
       this.audio = true;
-    },
-    playVideoTag() {
-      let tag = this.$refs["video"] ;
-      console.log(tag)
-      return tag.play()
-        .then(() => {
-          this.video = true;
-          this.demuteTag();
-        })
-        .catch(e => {
-          this.log(e, "ERROR", "PLAY VIDEO ");
-        })
-    },
-    pauseVideoTag() {
-      try {
-        let tag = this.$refs["video"] ;
-        tag.pause();
-        this.video = false;
-        this.muteTag();
-      } catch (e) {
-        this.log(e, "ERROR", "PAUSE VIDEO");
-      }
     },
     close(event) {
       let response = null;
@@ -270,7 +307,7 @@ export default {
           response = false;
       }
       this.log(`response : ${response}`, "DEBUG");
-      this.$emit('close', response);
+      return this.$emit('close', response);
     },
     minimize() {
       return this.isMinimize = !this.isMinimize;
@@ -282,26 +319,7 @@ export default {
       return this.showExpend = !this.showExpend;
     }
   },
-  watch: {
-    video() {
-      if (this.monitor) {
-        return;
-      }
-      if (this.video === false && this.audio === false) {
-        return this.audio = true;
-      }
-
-    },
-    audio() {
-      if (this.video === false && this.audio === false) {
-        return this.video = true;
-      }
-    },
-    monitor() {
-      this.video = false;
-
-    }
-  },
+  watch: {}
 }
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->

@@ -102,8 +102,9 @@ class Room extends nodefony.Service {
     this.listenMediaSoupEvents();
   }
 
-  init() {
+  init(peer) {
     this.log(`Initialize room ${this.id}`, "DEBUG");
+    this.peer = peer || null ;
     //this.mediaStream = new nodefony.medias.MediaStream(null, {}, this.container);
     //peer.mediaStream = this.mediaStream;
     this.connected = false;
@@ -151,7 +152,6 @@ class Room extends nodefony.Service {
       this.log(`Event : routerRtpCapabilities `, "DEBUG");
       this.setRouterRtpCapabilities(message);
       await this.initTransport();
-
     });
     this.mediasoup.on("createWebRtcTransport", async (message) => {
       this.log(`Event : createWebRtcTransport `, "DEBUG");
@@ -383,7 +383,7 @@ class Room extends nodefony.Service {
   join() {
     // Join now into the room.
     // NOTE: Don't send our RTP capabilities if we don't want to consume.
-    return this.mediasoup.send('join', {
+    this.mediasoup.send('join', {
       displayName: this.displayName,
       device: this.mediasoup.deviceInfo,
       rtpCapabilities: this.consume ?
@@ -391,10 +391,12 @@ class Room extends nodefony.Service {
       sctpCapabilities: this.useDataChannel && this.consume ?
         this.mediasoupDevice.sctpCapabilities : undefined
     });
+    return this;
   }
 
   async close() {
-    this.log(`Closing room `);
+    this.removeAllListeners();
+    this.log(`Closing room`);
     // Close mediasoup Transports.
     if (this.sendTransport) {
       await this.sendTransport.close();
@@ -403,7 +405,8 @@ class Room extends nodefony.Service {
       await this.recvTransport.close();
     }
     this.closed = true;
-    this.init();
+    //this.init();
+    return this;
   }
 
   // DEVICE
@@ -910,30 +913,35 @@ class Room extends nodefony.Service {
     }
   }
   async updateWebcams() {
-    this.log('updateWebcams()', "DEBUG");
-    // Reset the list.
-    this.webcams = new Map();
-    //this.log('updateWebcams() | calling enumerateDevices()', "DEBUG");
-    const devices = await navigator.mediaDevices.enumerateDevices();
+    try{
+      this.log('updateWebcams()', "DEBUG");
+      // Reset the list.
+      this.webcams = new Map();
+      //this.log('updateWebcams() | calling enumerateDevices()', "DEBUG");
+      const devices = await navigator.mediaDevices.enumerateDevices();
 
-    for (const device of devices) {
-      if (device.kind !== 'videoinput') {
-        continue;
+      for (const device of devices) {
+        if (device.kind !== 'videoinput') {
+          continue;
+        }
+        this.webcams.set(device.deviceId, device);
       }
-      this.webcams.set(device.deviceId, device);
+      const array = Array.from(this.webcams.values());
+      const len = array.length;
+      const currentWebcamId =
+        this.webcam.device ? this.webcam.device.deviceId : null;
+      //this.log('updateWebcams()', "DEBUG");
+      //this.log(array, "DEBUG")
+      if (len === 0) {
+        this.webcam.device = null;
+      } else if (!this.webcams.has(currentWebcamId)) {
+        this.webcam.device = array[0];
+      }
+      return this.webcam;
+    }catch(e){
+      console.error(e)
+      this.log(e, "ERROR");
     }
-    const array = Array.from(this.webcams.values());
-    const len = array.length;
-    const currentWebcamId =
-      this.webcam.device ? this.webcam.device.deviceId : null;
-    //this.log('updateWebcams()', "DEBUG");
-    //this.log(array, "DEBUG")
-    if (len === 0) {
-      this.webcam.device = null;
-    } else if (!this.webcams.has(currentWebcamId)) {
-      this.webcam.device = array[0];
-    }
-    return this.webcam;
   }
 
   async getExternalVideoStream() {

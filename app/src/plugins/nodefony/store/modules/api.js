@@ -24,11 +24,12 @@ const actions = {
     dispatch
   },
     url,
-    options
+    method='GET',
+    options={}
   ) =>   {
     return new Promise((resolve, reject) => {
       commit(API_REQUEST)
-      return Api.http(url, "GET", options)
+      return Api.http(url, method, options)
         .then(response => {
           commit(API_REQUEST_END);
           return resolve(response);

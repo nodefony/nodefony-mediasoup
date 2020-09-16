@@ -27,13 +27,12 @@ class Peer {
   }
 
   close(){
-    console.log("close")
-    this.videoElement.pause();
+    /*this.videoElement.pause();
     this.videoElement.removeAttribute('src');
     this.videoElement.remove();
     this.audioElement.pause();
     this.audioElement.removeAttribute('src');
-    this.audioElement.remove();
+    this.audioElement.remove();*/
     this.consumers.length = 0;
     this.producers.length = 0;
     this.dataConsumers.length = 0;

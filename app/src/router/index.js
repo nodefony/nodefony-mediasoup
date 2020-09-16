@@ -32,20 +32,17 @@ const routes = [{
  }, {
     path: '/Rooms',
     name: 'Rooms',
-    component: Rooms,
-    beforeEnter: ifAuthenticated
+    component: Rooms
   },  {
     path: '/rooms/:roomid',
     name: 'MettingRoom',
     props: true,
-    component: Room,
-    beforeEnter: ifAuthenticated
+    component: Room
   }, {
     path: '/rooms/:roomid/:peerid',
     name: 'Metting',
     props: true,
-    component: Room,
-    beforeEnter: ifAuthenticated
+    component: Room
  }
 ];
 const router = new VueRouter({
