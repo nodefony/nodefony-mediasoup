@@ -30,7 +30,7 @@ const routes = [{
     component: () =>
       import( /* webpackChunkName: "about" */ '../views/About.vue')
  }, {
-    path: '/Rooms',
+    path: '/rooms',
     name: 'Rooms',
     component: Rooms
   },  {

@@ -23,12 +23,18 @@ const actions = {
     commit,
     dispatch
   },
-    url,
-    method='GET',
-    options={}
+    opt
   ) =>   {
     return new Promise((resolve, reject) => {
       commit(API_REQUEST)
+      let options = {} , url = "", method = "GET" ;
+      if( typeof opt === "string"){
+        url = opt ;
+      }else{
+         url = opt.url ;
+         method = opt.method || method;
+         options = opt.options || options;
+      }
       return Api.http(url, method, options)
         .then(response => {
           commit(API_REQUEST_END);

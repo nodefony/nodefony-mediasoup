@@ -18,7 +18,7 @@
 
       <v-window-item :value="2">
         <v-card-text>
-          <v-text-field :disabled="isAuthenticated" label="User" :value="peerid"></v-text-field>
+          <v-text-field v-model="peerid" :disabled="isAuthenticated" label="User" :value="peerid"></v-text-field>
           <span class="caption grey--text text--darken-1">
             This is the name you will use to login to Room
           </span>
@@ -27,7 +27,7 @@
 
       <v-window-item :value="3">
         <v-card-text>
-          <v-text-field label="Password" type="password" :disabled="! room.secure"></v-text-field>
+          <v-text-field v-model="password" label="Password" type="password" :disabled="! room.secure"></v-text-field>
           <span class="caption grey--text text--darken-1">
             Please enter a password for join room
           </span>
@@ -40,10 +40,10 @@
         Back
       </v-btn>
       <v-spacer></v-spacer>
-      <v-btn v-if='step < 3' name="Next" color="primary" depressed @click="lastStep">
+      <v-btn v-if='step < 2 || (room.secure && step ===2) ' name="Next" color="primary" depressed @click="lastStep">
         Next
       </v-btn>
-      <v-btn v-if='step === 3' name="Join" :disabled="room.secure" color="primary" depressed @click="lastStep">
+      <v-btn v-if='step === 3 || (! room.secure && step ===2)' name="Join" :disabled="room.secure && password === '' " color="primary" depressed @click="lastStep">
         Join
       </v-btn>
     </v-card-actions>
@@ -131,7 +131,8 @@ export default {
       audio: true,
       video: true,
       screen: false,
-      stream: null
+      stream: null,
+      password: ""
     }
   },
   computed: {
@@ -192,6 +193,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions(["API_REQUEST"]),
     async getUserMedia() {
       this.log("Auth UserMedia");
       return await navigator.mediaDevices.getUserMedia({
@@ -223,10 +225,18 @@ export default {
     async lastStep(event) {
       switch (event.currentTarget.name) {
         case "Next":
-          this.step++;
+          if (this.step === 1 && !this.room.secure) {
+            this.step = 2
+          } else {
+            this.step++;
+          }
           break;
         case "Back":
-          this.step--;
+          if (this.step === 2 && !this.room.secure) {
+            this.step = 1
+          } else {
+            this.step--;
+          }
           break;
         case "Join":
           return this.joinRoom();
@@ -235,6 +245,30 @@ export default {
       }
     },
     async joinRoom() {
+      if (this.room.secure) {
+        this.log(`check access room ${this.peerid} : ${this.password}`)
+        return this.API_REQUEST({
+            url: "/room/api/secure",
+            method: "post",
+            options: {
+              data: {
+                room: this.room,
+                user: this.peerid,
+                password: this.password
+              }
+            }
+          })
+          .then(async (res) => {
+            return await this.getUserMedia()
+              .then((stream) => {
+                this.dialog = true;
+                return stream;
+              });
+          })
+          .catch(e => {
+            this.log(e, "ERROR");
+          })
+      }
       return await this.getUserMedia()
         .then((stream) => {
           this.dialog = true;
@@ -307,7 +341,6 @@ export default {
         this.screen = false;
         return await this.getUserMedia();
       }
-
     },
   }
 }

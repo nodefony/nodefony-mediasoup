@@ -29,7 +29,12 @@ export default {
       rooms: []
     }
   },
-
+  computed: {
+    ...mapGetters([
+      'isAuthenticated',
+      'getUser'
+    ])
+  },
   async mounted() {
     if (this.isAuthenticated) {
       this.peerid = this.getUser;
@@ -40,22 +45,17 @@ export default {
   destroyed() {
 
   },
-  computed: {
-    ...mapGetters([
-      'isAuthenticated',
-      'getUser'
-    ])
-  },
+
   /*async created() {},*/
   methods: {
     ...mapMutations(["setRoom", "setPeer"]),
     ...mapActions(["API_REQUEST"]),
     connect(room, peer) {
       return this.$router.push({
-        name: 'Metting',
+        name: 'MettingRoom',
         params: {
-          roomid: room.id,
-          peerid: peer.id
+          roomid: room.id
+          //peerid: peer.id
         }
       })
     },
@@ -69,9 +69,7 @@ export default {
     }
   },
   watch: {
-    async $route(to, from) {
-      console.log("router watch")
-    }
+
   }
 
 

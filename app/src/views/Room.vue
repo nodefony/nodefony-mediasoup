@@ -2,6 +2,28 @@
 <v-app id="room">
   <v-main>
     <v-container v-if="connected" class="fill-height" fluid>
+      <v-app-bar app clipped-left>
+        <v-app-bar-nav-icon @click.stop="navigation.drawer = !navigation.drawer">
+        </v-app-bar-nav-icon>
+        <v-toolbar-title>Room {{room.id}}</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn class="ma-2" outlined color="indigo" @click="waitQuit">Quit Room</v-btn>
+        <v-spacer></v-spacer>
+        <div>
+          <v-chip class="ma-2" :color="getSpStatusColorStatus" outlined>
+            <v-icon :color="getSpColorActivity" left>mdi-server-plus</v-icon>
+            SIP Status
+          </v-chip>
+          <v-chip class="ma-2" :color="getMsStatusColorStatus" outlined>
+            <v-icon left :color="getMsColorActivity">mdi-server-plus</v-icon>
+            Mediasoup Status
+          </v-chip>
+        </div>
+        <v-btn icon>
+          <v-icon>mdi-bell</v-icon>
+        </v-btn>
+      </v-app-bar>
+
       <v-navigation-drawer :width="navigation.width" v-model="navigation.drawer" app clipped>
         <v-tabs>
           <v-tab key="user">
@@ -27,37 +49,20 @@
         </v-tabs>
 
       </v-navigation-drawer>
-      <v-app-bar app clipped-left>
-        <v-app-bar-nav-icon @click.stop="navigation.drawer = !navigation.drawer">
-        </v-app-bar-nav-icon>
-        <router-link :to="{ name: 'MettingRoom'}" tag="div">
-          <v-toolbar-title>Room {{room.id}}</v-toolbar-title>
-        </router-link>
-        <v-btn class="ma-2" outlined color="indigo" @click="waitQuit">Quit</v-btn>
-        <v-spacer></v-spacer>
-        <div>
-          <v-chip class="ma-2" :color="getSpStatusColorStatus" outlined>
-            <v-icon :color="getSpColorActivity" left>mdi-server-plus</v-icon>
-            SIP Status
-          </v-chip>
-          <v-chip class="ma-2" :color="getMsStatusColorStatus" outlined>
-            <v-icon left :color="getMsColorActivity">mdi-server-plus</v-icon>
-            Mediasoup Status
-          </v-chip>
-        </div>
-        <router-link :to="{ name: 'Rooms'}" tag="div">
-          <v-btn icon>
-            <v-icon>mdi-apps</v-icon>
-          </v-btn>
-        </router-link>
-        <v-btn icon>
-          <v-icon>mdi-bell</v-icon>
-        </v-btn>
-      </v-app-bar>
+
 
       <v-col cols="12">
         <v-row v-show='! peers.length' style="height: 600px;" align="center" justify="center">
-          Waiting Meeting Participants
+          <v-container style="height: 400px;">
+            <v-row class="fill-height" align-content="center" justify="center">
+              <v-col class="subtitle-1 text-center" cols="12">
+                Waiting Meeting Participants
+              </v-col>
+              <v-col cols="6">
+                <v-progress-linear color="deep-purple accent-4" indeterminate rounded height="6"></v-progress-linear>
+              </v-col>
+            </v-row>
+          </v-container>
         </v-row>
         <v-row v-show="peers.length" ref="room" style="height: 600px;" align="start" justify="space-around">
           <Media class="ml-5 mb-5" v-for=" (item) in peers" :ref="item.id" :room="room" :peer="item" :key="item.id" :name="item.id">
@@ -147,6 +152,23 @@ export default {
       connected: vm.isMediasoupConnected()
     }
   },
+  async mounted() {
+    this.closeDrawer();
+    if (this.connected) {
+      this.open = false;
+      this.log(`Mediasoup Server already connected ready = > ${this.$mediasoup.room.ready}`);
+      return this.connect();
+    } else {
+      this.log(`Try Connect To mediasoup server open dialog =>${this.open}`);
+      return await this.getRoom(this.roomid)
+        .then((res) => {
+          if (this.open) {
+            return res;
+          }
+          return this.connect();
+        });
+    }
+  },
   watch: {
     $route(to, from) {
       this.log(`Watcher router`);
@@ -191,18 +213,6 @@ export default {
       } else {
         return "black";
       }
-    }
-  },
-
-  async mounted() {
-    this.closeDrawer();
-    if (this.connected) {
-      this.open = false;
-      this.log(`Mediasoup Server already connected ready = > ${this.$mediasoup.room.ready}`);
-      return this.connect();
-    } else {
-      this.log(`Try Connect To mediasoup server open dialog =>${this.open}`);
-      return await this.getRoom(this.roomid);
     }
   },
 
@@ -340,8 +350,6 @@ export default {
           this.peers = [];
           return ele;
         });
-
-      //return await this.room.close();
     },
     quit(event) {
       return this.waitQuit(event)

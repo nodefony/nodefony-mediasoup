@@ -33,6 +33,29 @@ class apiRomController extends nodefony.Controller {
       room
     );
   }
+
+  /**
+   *  API GET
+   *    @Route ("/secure",
+   *      name="route-rooms-secure")
+   *    @Method ({"POST"})
+   */
+  async secureAction() {
+    let entity = this.getNodefonyEntity("room");
+    let encoder = entity.getEncoder();
+    let res =  await this.entity.findOne({
+        where: {
+          name: this.query.room.name
+        }
+      });
+    let check = await encoder.isPasswordValid(this.query.password, res.password);
+    if( check){
+      return this.api.render({
+        query:this.query
+      });
+    }
+    throw new nodefony.Error('Bad password', 401)
+  }
 }
 
 module.exports = apiRomController;
