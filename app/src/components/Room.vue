@@ -2,9 +2,14 @@
 <v-container fluid>
   <v-card class="mx-auto" max-width="500">
     <v-card-title class="title font-weight-regular justify-space-between">
-      <span>{{ currentTitle }}</span>
-      <v-avatar color="primary lighten-2" class="subheading white--text" size="24" v-text="step"></v-avatar>
+      <span>Room {{ this.mdRoom.displayName || this.mdRoom.name }}</span>
+      <v-chip v-if="room.secure" class="ma-2" color="red lighten-2" text-color="white">
+        Secure
+      </v-chip>
+      <!--v-avatar color="primary lighten-2" class="subheading white--text" size="24" v-text="step"></v-avatar-->
     </v-card-title>
+    <v-subheader>{{ currentTitle }}</v-subheader>
+    <notify class="ml-5 mr-5" v-if="message" :pdu="message" type="alert" />
     <v-window v-model="step">
       <v-window-item :value="1">
         <div class="pa-4 text-center">
@@ -99,11 +104,13 @@ import {
   mapActions
 } from 'vuex';
 import Media from "@/components/Media";
+import notify from '@/plugins/nodefony/components/notify.vue';
 
 export default {
   name: 'Room',
   components: {
-    Media
+    Media,
+    notify
   },
   props: {
     room: {
@@ -121,6 +128,7 @@ export default {
   },
   data(vm) {
     return {
+      message: null,
       mdRoom: vm.room,
       peerid: vm.peerId,
       peer: null,
@@ -141,13 +149,14 @@ export default {
       'getUser'
     ]),
     currentTitle() {
+      //let name = `Room ${this.mdRoom.displayName || this.mdRoom.name}`;
       switch (this.step) {
         case 1:
-          return `Room ${this.mdRoom.displayName || this.mdRoom.name}`;
+          return "";
         case 2:
-          return 'Connect User'
+          return `Connect User`
         default:
-          return `Join Room ${this.mdRoom.name}`;
+          return `Authorization`;
       }
     }
   },
@@ -245,6 +254,7 @@ export default {
       }
     },
     async joinRoom() {
+      this.message = null;
       if (this.room.secure) {
         this.log(`check access room ${this.peerid} : ${this.password}`)
         return this.API_REQUEST({
@@ -266,7 +276,8 @@ export default {
               });
           })
           .catch(e => {
-            this.log(e, "ERROR");
+            let error = this.log(e, "ERROR", "ROOM");
+            this.message = error;
           })
       }
       return await this.getUserMedia()
