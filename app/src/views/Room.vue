@@ -1,6 +1,6 @@
 <template>
 <v-app id="room">
-  <v-main>
+  <v-main class="pa-0">
     <v-container v-if="connected" class="fill-height" fluid>
       <v-app-bar app clipped-left>
         <v-app-bar-nav-icon @click.stop="navigation.drawer = !navigation.drawer">
@@ -49,7 +49,6 @@
         </v-tabs>
 
       </v-navigation-drawer>
-
 
       <v-col cols="12">
         <v-row v-show='! peers.length' style="height: 600px;" align="center" justify="center">
@@ -365,5 +364,8 @@ export default {
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-
+.container {
+  max-width: 100vw;
+  padding: 0px;
+}
 </style>

@@ -1,11 +1,17 @@
 <template>
-<v-container fluid>
-  <v-row>
+<v-container class="fill-height" fluid>
+  <!--v-row>
     <v-col class="d-flex flex-wrap">
       <Room :peerId="peerid" :isAuthenticated="isAuthenticated" class="ml-5 mb-5" v-for=" (item) in rooms" :ref="item.name" :room="item" :key="item.name" v-on:connect="connect">
       </Room>
     </v-col>
-  </v-row>
+  </v-row-->
+  <v-col cols="12">
+    <v-row style="height: 600px;" align="start" justify="space-around">
+      <Room :peerId="peerid" :isAuthenticated="isAuthenticated" class="ml-5 mb-5" v-for=" (item) in rooms" :ref="item.name" :room="item" :key="item.name" v-on:connect="connect">
+      </Room>
+    </v-row>
+  </v-col>
 </v-container>
 </template>
 
@@ -77,5 +83,8 @@ export default {
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-
+.container {
+  max-width: 100vw;
+  padding: 0px;
+}
 </style>
