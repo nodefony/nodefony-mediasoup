@@ -48,7 +48,7 @@
       <v-btn v-if='step < 2 || (room.secure && step ===2) ' name="Next" color="primary" depressed @click="lastStep">
         Next
       </v-btn>
-      <v-btn v-if='step === 3 || (! room.secure && step ===2)' name="Join" :disabled="room.secure && password === '' " color="primary" depressed @click="lastStep">
+      <v-btn v-if='step === 3 || (! room.secure && step ===2)' name="Join" :disabled="(room.secure && password === '') || ! peerid " color="primary" depressed @click="lastStep">
         Join
       </v-btn>
     </v-card-actions>

@@ -71,10 +71,10 @@
     </v-container>
 
     <v-container v-else class="fill-height" fluid>
-      <v-col class="d-flex flex-wrap">
+      <v-row style="height: 600px;" align="start" justify="space-around">
         <Room :join="open" :peerId="peerid" :isAuthenticated="isAuthenticated" class="ml-5 mb-5" v-for=" (item) in rooms" :ref="item.name" :room="item" :key="item.name" v-on:connect="connect">
         </Room>
-      </v-col>
+      </v-row>
     </v-container>
   </v-main>
   <v-dialog v-if="room" v-model="dialogQuit" persistent max-width="600">
