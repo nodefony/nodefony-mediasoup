@@ -7,7 +7,7 @@ const mediasoup = require('mediasoup');
  *	@param {class} context
  *  @Route ("/mediasoup/api")
  */
-class recordController extends nodefony.Controller {
+class streamerController extends nodefony.Controller {
 
   constructor(container, context) {
     super(container, context);
@@ -16,24 +16,27 @@ class recordController extends nodefony.Controller {
     this.roomsService = this.get("Rooms");
     // start session
     this.api = new nodefony.api.Json({
-      name: "mediasoup-record",
+      name: "mediasoup-streamer",
       version: mediasoup.version,
-      description: "Mediasoup Api record",
+      description: "Mediasoup Api Streamer",
     }, this.context);
-    this.recordService = this.get("record");
+    this.streamerService = this.get("Streamer");
   }
 
 
   /**
-   *    @Route ("/record/{roomId}/{peerid}",
-   *      name="route-worker-mediasoup")
+   *    @Route ("/stream/{roomId}",
+   *      name="route-worker-stream-mediasoup")
    *    @Method ({"GET"})
    */
-  recordAction(roomId, peerid) {
+  streamAction(roomId) {
     return new Promise(async (resolve, reject)=>{
       try {
-        const location = path.resolve(this.bundle.path, "recorded");
-        let worker = await this.recordService.startRecord(roomId, peerid, location, "gstreamer");
+        let streamer = "gstreamer";
+        if( this.query.streamer){
+          streamer = this.query.streamer ;
+        }
+        let worker = await this.streamerService.startStream(roomId, streamer);
         //console.log(worker);
         worker.on('message', (message) => {
           switch (message.action) {
@@ -44,14 +47,6 @@ class recordController extends nodefony.Controller {
             break;
           }
         });
-        /*setTimeout(async () => {
-          let res = await this.recordService.stopRecord(worker.threadId);
-          return resolve( this.api.render({
-            roomId,
-            peerid,
-            workerId: worker.threadId
-          }));
-        }, 20 * 1000);*/
       } catch (e) {
         this.log(e, "ERROR");
         return reject(e);
@@ -60,17 +55,16 @@ class recordController extends nodefony.Controller {
   }
 
   /**
-   *    @Route ("/record/stop/{roomId}/{peerid}",
-   *      name="route-record-stop-mediasoup")
+   *    @Route ("/stream/stop/{roomId}",
+   *      name="route-stream-stop-mediasoup")
    *    @Method ({"GET"})
    */
-  async stopRecordAction(roomId, peerid) {
+  async stopStreamAction(roomId) {
     try {
-      let worker = await this.recordService.stopRecord(roomId, peerid);
+      let worker = await this.streamerService.stopStream(roomId);
       //console.log(worker);
       return this.api.render({
         roomId,
-        peerid,
         workerId: worker.threadId
       });
     } catch (e) {
@@ -80,4 +74,4 @@ class recordController extends nodefony.Controller {
   }
 }
 
-module.exports = recordController;
+module.exports = streamerController;

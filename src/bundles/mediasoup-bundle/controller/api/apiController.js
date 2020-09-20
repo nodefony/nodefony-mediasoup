@@ -3,26 +3,6 @@ const {
   networkInterfaces
 } = require('os');
 
-
-const getLocalExternalIP = () => [].concat(...Object.values(networkInterfaces()))
-  .find((details) => details.family === 'IPv4' && !details.internal);
-
-
-const getDevice = () => {
-  const nets = networkInterfaces();
-  const devices = Object.create(null); // or just '{}', an empty object
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name]) {
-      if (!devices[name]) {
-        devices[name] = [];
-        devices[name].push(net);
-      } else {
-        devices[name].push(net);
-      }
-    }
-  }
-  return devices;
-};
 /**
  *	@class apiController
  *	@constructor
@@ -43,8 +23,8 @@ class apiController extends nodefony.Controller {
       version: mediasoup.version,
       description: "Mediasoup Api",
     }, this.context);
-  }
 
+  }
 
   /**
    *  API GET resource that returns the mediasoup Router RTP capabilities of the room
@@ -53,9 +33,20 @@ class apiController extends nodefony.Controller {
    */
   getServerAction() {
     return this.api.render({
-      external: getLocalExternalIP(),
-      devices: getDevice(),
-      config: this.bundle.settings.mediasoup
+      domain: {
+        name: this.kernel.domain,
+        alias: this.kernel.domainAlias,
+        proxy: this.context.proxy,
+        ports: {
+          http: this.kernel.httpPort,
+          https: this.kernel.httpsPort
+        }
+      },
+      interfaces: {
+        devides: this.kernel.getNetworkInterfaces(),
+        externals: this.kernel.getLocalExternalIP()
+      },
+      mediasoup: this.bundle.settings.mediasoup
     });
   }
 
@@ -82,7 +73,6 @@ class apiController extends nodefony.Controller {
       this.log(e, "ERROR");
       return this.api.render(e);
     }
-
   }
 
   /**
@@ -149,14 +139,14 @@ class apiController extends nodefony.Controller {
     if (!room) {
       throw new Error(`Room ${roomId} not found`);
     }
-    try{
+    try {
       let res = await room.deleteBroadcaster(broadcasterId);
       return this.api.render({
         roomId,
         broadcasterId,
         delete: res
       });
-    }catch(error){
+    } catch (error) {
       this.log(error, "ERROR");
       return this.api.render(error);
     }
@@ -232,25 +222,27 @@ class apiController extends nodefony.Controller {
     if (!room) {
       throw new Error(`Room ${roomId} not found`);
     }
-			const { kind, rtpParameters } = this.query;
-      try {
-				const producer = await room.createBroadcasterProducer(
-						broadcasterId,
-						transportId,
-						kind,
-						rtpParameters
-					);
-          return this.api.render({
-            roomId,
-            broadcasterId,
-            transportId,
-            producer:producer.id
-          });
-			}
-			catch (error){
-        this.log(error, "ERROR");
-        return this.api.render(error);
-			}
+    const {
+      kind,
+      rtpParameters
+    } = this.query;
+    try {
+      const producer = await room.createBroadcasterProducer(
+        broadcasterId,
+        transportId,
+        kind,
+        rtpParameters
+      );
+      return this.api.render({
+        roomId,
+        broadcasterId,
+        transportId,
+        producer: producer.id
+      });
+    } catch (error) {
+      this.log(error, "ERROR");
+      return this.api.render(error);
+    }
 
   }
 

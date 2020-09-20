@@ -63,7 +63,7 @@ export default {
   },
   async beforeMount() {
     if (!this.getProfile) {
-      if (this.getUser) {
+      if (this.getUser && this.isAuthenticated) {
         return await this.getUserProfile(`/api/users/${this.getUser}`)
       }
     }

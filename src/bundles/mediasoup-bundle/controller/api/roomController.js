@@ -56,6 +56,9 @@ class apiRomController extends nodefony.Controller {
     }
     throw new nodefony.Error('Bad password', 401)
   }
+
+
+
 }
 
 module.exports = apiRomController;

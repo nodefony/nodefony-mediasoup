@@ -13,9 +13,8 @@
  */
 
 const os = require('os');
-//const ip = kernel.settings.system.domain;
-//const ip = '192.168.0.51';
-const ip = '192.168.99.151';
+const ip = kernel.settings.system.domain;
+const anounceIp = kernel.settings.system.domain;
 module.exports = {
   type: "sandbox",
   locale: "en_en",
@@ -139,8 +138,8 @@ module.exports = {
     webRtcTransportOptions: {
       listenIps: [
         {
-          ip: process.env.MEDIASOUP_LISTEN_IP || ip,
-          announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP
+          ip: ip,
+          announcedIp: anounceIp
         }
       ],
       initialAvailableOutgoingBitrate: 1000000,
@@ -154,8 +153,8 @@ module.exports = {
     // See https://mediasoup.org/documentation/v3/mediasoup/api/#PlainTransportOptions
     plainTransportOptions: {
       listenIp: {
-        ip: process.env.MEDIASOUP_LISTEN_IP || ip,
-        announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP
+        ip: ip,
+        announcedIp: anounceIp
       },
       maxSctpMessageSize: 262144
     },

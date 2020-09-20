@@ -16,13 +16,26 @@ class Mediasoup extends nodefony.Service {
     this.sock = null;
     this.domain = "localhost";
     this.deviceInfo = deviceInfo();
+    this.domain = this.options.VUE_APP_DOMAIN;
+    this.portHttp = this.options.VUE_APP_HTTP_PORT;
+    this.portHttps = this.options.VUE_APP_HTTPS_PORT;
   }
 
   async getWssServer() {
     let result = await this.store.dispatch('API_REQUEST', "/mediasoup/api/servers");
-    return result.result.config.webRtcTransportOptions.listenIps[0].ip;
+    /*if ( result.result.domain.proxy){
+
+    }*/
+    return result.result.domain.name ;
+    //return result.result.config.webRtcTransportOptions.listenIps[0].ip;
   }
 
+  getWssUrl(){
+    return `https://${this.domain}:${this.portHttps}/mediasoup/ws` ;
+  }
+  getWsUrl(){
+    return `http://${this.domain}:${this.portHttp}/mediasoup/ws` ;
+  }
   // hooy plugins vue
   install(Vue, options) {
     Vue.prototype.$mediasoup = this;
@@ -36,6 +49,7 @@ class Mediasoup extends nodefony.Service {
     this.set("router", this.router);
     this.set("i18n", this.i18n);
     this.log(`Add Plugin mediasoup : ${this.version}`, "INFO");
+    this.log(`https://${this.domain}:${this.portHttps}`)
   }
 
   send(method, data = {}) {

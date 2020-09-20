@@ -1,5 +1,5 @@
 <template>
-<v-container class="fill-height" fluid>
+<v-container class="fill-height pa-0" fluid>
   <!--v-row>
     <v-col class="d-flex flex-wrap">
       <Room :peerId="peerid" :isAuthenticated="isAuthenticated" class="ml-5 mb-5" v-for=" (item) in rooms" :ref="item.name" :room="item" :key="item.name" v-on:connect="connect">

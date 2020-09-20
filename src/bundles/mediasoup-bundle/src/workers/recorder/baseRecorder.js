@@ -11,7 +11,7 @@ const {
   workerData
 } = require('worker_threads');
 
-class BaseRecord extends nodefony.Service {
+class BaseRecorder extends nodefony.Service {
   constructor(name) {
     super(name);
     this.execCmd = this.getCommand();
@@ -230,4 +230,4 @@ class BaseRecord extends nodefony.Service {
   }
 }
 
-module.exports = BaseRecord;
+module.exports = BaseRecorder;

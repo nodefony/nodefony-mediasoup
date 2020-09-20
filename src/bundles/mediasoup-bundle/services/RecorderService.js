@@ -7,12 +7,11 @@ const {
   workerData
 } = require('worker_threads');
 
-class record extends nodefony.Service {
+class Recorder extends nodefony.Service {
 
   constructor(container) {
-    super("record", container);
+    super("recorder", container);
     this.workers = new Map();
-    this.service = null;
     this.location = path.resolve(this.bundle.path, "recorded");
     if (!kernel.ready) {
       this.kernel.once("onReady", () => {
@@ -99,11 +98,11 @@ class record extends nodefony.Service {
         switch (name) {
         case "ffmpeg":
         case "FFmpeg":
-          recorder = path.resolve(this.bundle.path, "src", "workers", "ffmpeg.js");
+          recorder = path.resolve(this.bundle.path, "src", "workers", "recoder", "ffmpeg.js");
           break;
         case "gstreamer":
         case "GStreamer":
-          recorder = path.resolve(this.bundle.path, "src", "workers", "gstreamer.js");
+          recorder = path.resolve(this.bundle.path, "src", "workers", "recoder", "gstreamer.js");
           break;
         }
         const worker = new Worker(recorder, {
@@ -151,4 +150,4 @@ class record extends nodefony.Service {
     });
   }
 }
-module.exports = record;
+module.exports = Recorder;

@@ -19,9 +19,14 @@ module.exports = {
     class: nodefony.services.Peers,
     arguments: ["@container"]
   },
-  record: {
+  recorder: {
     environment: ["SERVER"],
-    class: nodefony.services.record,
+    class: nodefony.services.Recorder,
+    arguments: ["@container"]
+  },
+  streamer: {
+    environment: ["SERVER"],
+    class: nodefony.services.Streamer,
     arguments: ["@container"]
   }
 };

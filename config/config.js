@@ -50,12 +50,13 @@ if (process.env && process.env.NODE_ENV === "production") {
 
 module.exports = {
   system: {
-    domain: "0.0.0.0",
+    domain: "192.168.0.51",
     domainAlias: [
       "^127.0.0.1$",
       "^localhost$",
-      "^192.168.0.51$",
-      "^192.168.99.151$"
+      "^nodefony.dsb$"
+      //"^192.168.0.51$",
+      //"^192.168.99.151$"
     ],
     httpPort: 5151,
     httpsPort: 5152,

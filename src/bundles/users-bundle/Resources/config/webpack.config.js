@@ -101,7 +101,7 @@ module.exports = merge(config, {
             loader: 'postcss-loader', // Run post css actions
             options: {
               postcssOptions: {
-                plugins: [autoprefixer({}), precss({})]
+                plugins: [ precss({})]
               }
             }
           }, {

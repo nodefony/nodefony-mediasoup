@@ -1,5 +1,5 @@
 const path = require("path");
-const BaseRecord = require(path.resolve(__dirname, "BaseRecord.js"))
+const BaseRecord = require(path.resolve(__dirname, "BaseRecorder.js"))
 
 const GSTREAMER_DEBUG_LEVEL = process.env.GSTREAMER_DEBUG_LEVEL || 3;
 const GSTREAMER_COMMAND = 'gst-launch-1.0';

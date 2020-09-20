@@ -15,6 +15,10 @@ process.env.VUE_APP_VUE_VERSION = packageVue.version;
 process.env.VUE_APP_VUETIFY_VERSION = packageVuetify.version;
 process.env.VUE_APP_DEBUG = process.env.DEBUG_MODE;
 process.env.VUE_APP_NODE_ENV = process.env.NODE_ENV;
+process.env.VUE_APP_DOMAIN = kernel.domain;
+process.env.VUE_APP_HTTP_PORT = kernel.httpPort;
+process.env.VUE_APP_HTTPS_PORT = kernel.httpsPort;
+
 
 module.exports = {
   lintOnSave: false,

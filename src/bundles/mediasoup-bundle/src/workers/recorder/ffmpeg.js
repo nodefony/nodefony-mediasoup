@@ -1,5 +1,5 @@
 const path = require("path");
-const BaseRecord = require(path.resolve(__dirname, "BaseRecord.js"));
+const BaseRecord = require(path.resolve(__dirname, "BaseRecorder.js"));
 
 const FFMPEG_COMMAND = 'ffmpeg';
 

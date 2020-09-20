@@ -80,19 +80,19 @@
 
   <v-expand-transition>
     <div v-show="showExpend">
-      <v-divider></v-divider>
-      <v-card-text>
-        <h1>jjjj</h1>
-      </v-card-text>
+      <Message />
     </div>
   </v-expand-transition>
 </v-card>
 </template>
 
 <script>
+import Message from "@/components/Message";
 export default {
   name: 'Media',
-  components: {},
+  components: {
+    Message
+  },
   props: {
     name: {
       type: String,

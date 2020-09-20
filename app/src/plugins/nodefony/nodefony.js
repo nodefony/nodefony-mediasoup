@@ -14,6 +14,7 @@ class Nodefony extends nodefony.Service {
     this.vueVersion = this.options.VUE_APP_VUE_VERSION;
     this.vuetifyVersion = this.options.VUE_APP_VUETIFY_VERSION;
     this.version = nodefony.version;
+    this.domain = this.options.VUE_APP_DOMAIN;
   }
 
   // hooy plugins vue
@@ -31,6 +32,7 @@ class Nodefony extends nodefony.Service {
       return this.notify(...args);
     };
     this.log(`Add Plugin nodefony : ${this.version}`, "INFO");
+    this.log(`Nodefony Domain : ${this.domain}`);
   }
 
   initSyslog(options = null) {
