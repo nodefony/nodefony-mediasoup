@@ -136,6 +136,17 @@ class Peer extends nodefony.Service {
     return producer;
   }
 
+  async closeProducer(producerId) {
+    if (!this.hasProducer(producerId)) {
+      throw new Error(`producer with id "${producerId}" not found`);
+    }
+    const producer = this.getProducer(producerId);
+    if (!producer) {
+      throw new Error(`producer with id "${producerId}" not found`);
+    }
+    await producer.close();
+  }
+
   async pauseConsumer(consumerId) {
     if (!this.hasProducer(consumerId)) {
       throw new Error(`Consumer with id "${consumerId}" not found`);

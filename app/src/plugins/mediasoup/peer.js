@@ -4,22 +4,26 @@ const defaultOptions = {
 
 };
 
-class Peer {
+class Peer extends nodefony.Service{
   constructor(id, options, mediasoup) {
-    let opt = nodefony.extend({}, defaultOptions);
-    this.options = nodefony.extend(opt, options);
-    //super("Peer", mediasoup.container, null, nodefony.extend({}, defaultOpt, options));
+    super("Peer", mediasoup.container, null, nodefony.extend({}, defaultOptions, options));
     this.id = id;
     this.mediasoup = mediasoup;
-    this.videoElement = null;
-    this.audioElement = null;
     this.consumers = [];
     this.producers = [];
     this.dataConsumers = [];
   }
 
+  hasProducer(id){
+
+  }
+
   addProducer(producer) {
     this.producers.push(producer);
+  }
+
+  deleteProducer(producer){
+    console.log("todo deleteProducer")
   }
 
   addConsumer(consumer) {
@@ -27,12 +31,6 @@ class Peer {
   }
 
   close(){
-    /*this.videoElement.pause();
-    this.videoElement.removeAttribute('src');
-    this.videoElement.remove();
-    this.audioElement.pause();
-    this.audioElement.removeAttribute('src');
-    this.audioElement.remove();*/
     this.consumers.length = 0;
     this.producers.length = 0;
     this.dataConsumers.length = 0;

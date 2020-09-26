@@ -280,6 +280,13 @@ export default {
         this.peer.addProducer(producer);
         return this.$refs[this.peer.id].addProducer(producer);
       });
+      this.room.on("disableWebcam", (producer) => {
+        this.peer.deleteProducer(producer);
+        return this.$refs[this.peer.id].deleteProducer(producer);
+      });
+      this.room.on("disableShare", async (room) => {
+        return await room.enableWebcam();
+      });
       this.room.on("consume", (consumer, peer) => {
         this.log(`Consume event : ${peer.id}`);
         peer.addConsumer(consumer);
@@ -288,6 +295,19 @@ export default {
           return this.$refs[peer.id][0].addConsumer(consumer);
         }
         return this.$refs[peer.id].addConsumer(consumer);
+      });
+      this.room.on("consumerClosed", (consumerId, peerId) => {
+        this.log(`consumerClosed : ${peerId} condumeId =${consumerId} `, "DEBUG");
+        let peer = this.getPeer(peerId);
+        if (peer) {
+          peer.component.pauseVideoTag();
+        }
+      });
+      this.room.on("consumerPaused", (consumerId) => {
+        this.log(`consumerPaused  condumeid =${consumerId} `, "DEBUG");
+      });
+      this.room.on("consumerResumed", (consumerId) => {
+        this.log(`consumerResumed  condumeid =${consumerId} `, "DEBUG");
       });
     },
     isMediasoupConnected() {
@@ -302,6 +322,20 @@ export default {
         }
       });
       return rooms;
+    },
+    getPeer(peerId) {
+      let Peer = this.peers.find((peer) => {
+        if (peer.id === peerId) {
+          return peer
+        }
+      });
+      if (Peer) {
+        return {
+          peer: Peer,
+          component: this.$refs[Peer.id][0] ? this.$refs[Peer.id][0] : this.$refs[Peer.id]
+        };
+      }
+      throw new Error(`No peer found ${peerId}`);
     },
     async waitQuit(event) {
       return new Promise((resolve, reject) => {

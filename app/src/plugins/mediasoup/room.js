@@ -104,7 +104,7 @@ class Room extends nodefony.Service {
 
   init(peer) {
     this.log(`Initialize room ${this.id}`, "DEBUG");
-    this.peer = peer || null ;
+    this.peer = peer || null;
     //this.mediaStream = new nodefony.medias.MediaStream(null, {}, this.container);
     //peer.mediaStream = this.mediaStream;
     this.connected = false;
@@ -127,6 +127,9 @@ class Room extends nodefony.Service {
 
     this.micProducer = null;
     this.webcamProducer = null;
+
+    this.shareProducer = null;
+
     if (this.externalVideo) {
       this.externalVideo = document.createElement('video');
       this.externalVideo.controls = true;
@@ -160,23 +163,23 @@ class Room extends nodefony.Service {
           .catch((error) => {
             this.log(error, "ERROR");
           });
-          this.procudeTransportReady = true;
+        this.procudeTransportReady = true;
       }
       if (message.data.type === "consuming") {
         this.recvTransport = await this.consume(message.data)
-        .catch((error) => {
-          this.log(error, "ERROR");
-        });
+          .catch((error) => {
+            this.log(error, "ERROR");
+          });
         this.consumeTransportReady = true;
       }
-      if( this.options.produce  && this.options.consume){
-        if(this.consumeTransportReady && this.procudeTransportReady){
+      if (this.options.produce && this.options.consume) {
+        if (this.consumeTransportReady && this.procudeTransportReady) {
           this.ready = true;
           this.fire("ready", this);
         }
-      }else{
-          this.ready = true;
-          this.fire("ready", this);
+      } else {
+        this.ready = true;
+        this.fire("ready", this);
       }
     });
     this.mediasoup.on("join", async (message) => {
@@ -210,6 +213,8 @@ class Room extends nodefony.Service {
           throw e;
         }
         this.sendTransport.on('connectionstatechange', (connectionState) => {
+          this.log(`connectionstatechange`);
+          console.log(connectionState)
           if (connectionState === 'connected') {
             //this.enableChatDataProducer();
             //this.enableBotDataProducer();
@@ -237,145 +242,145 @@ class Room extends nodefony.Service {
     });
     this.mediasoup.on("notify", async (message) => {
       switch (message.data.event) {
-        case 'producerScore':
-          {
-            const {
-              producerId,
-              score
-            } = message.data.data;
-            this.fire("producerScore", producerId, score);
-            break;
-          }
-        case "newPeer":
-          {
-            const peer = message.data.data;
-            let newPeer = this.mediasoup.createPeer(peer.id, { ...peer,
-              consumers: [],
-              dataConsumers: []
-            });
-            this.peers.set(peer.id, newPeer);
-            this.fire("newPeer", newPeer);
-            break;
-          }
-        case 'peerClosed':
-          {
-            const {
-              peerId
-            } = message.data.data;
+      case 'producerScore':
+        {
+          const {
+            producerId,
+            score
+          } = message.data.data;
+          this.fire("producerScore", producerId, score);
+          break;
+        }
+      case "newPeer":
+        {
+          const peer = message.data.data;
+          let newPeer = this.mediasoup.createPeer(peer.id, { ...peer,
+            consumers: [],
+            dataConsumers: []
+          });
+          this.peers.set(peer.id, newPeer);
+          this.fire("newPeer", newPeer);
+          break;
+        }
+      case 'peerClosed':
+        {
+          const {
+            peerId
+          } = message.data.data;
 
-            this.fire("peerClosed", peerId);
-            this.peers.delete(peerId);
+          this.fire("peerClosed", peerId);
+          this.peers.delete(peerId);
+          break;
+        }
+      case 'peerDisplayNameChanged':
+        {
+          const {
+            peerId,
+            displayName,
+            oldDisplayName
+          } = message.data.data;
+          this.fire("peerDisplayNameChanged", peerId, displayName, oldDisplayName);
+          break;
+        }
+      case 'downlinkBwe':
+        {
+          this.fire("downlinkBwe", message.data.data);
+          break;
+        }
+      case 'consumerClosed':
+        {
+          const {
+            consumerId
+          } = message.data.data;
+          const consumer = this.consumers.get(consumerId);
+          if (!consumer) {
             break;
           }
-        case 'peerDisplayNameChanged':
-          {
-            const {
-              peerId,
-              displayName,
-              oldDisplayName
-            } = message.data.data;
-            this.fire("peerDisplayNameChanged", peerId, displayName, oldDisplayName);
+          this.consumers.delete(consumerId);
+          const {
+            peerId
+          } = consumer.appData;
+          this.fire("consumerClosed", consumerId, peerId);
+          break;
+        }
+      case 'consumerPaused':
+        {
+          const {
+            consumerId
+          } = message.data.data;
+          const consumer = this.consumers.get(consumerId);
+          if (!consumer) {
             break;
           }
-        case 'downlinkBwe':
-          {
-            this.fire("downlinkBwe", message.data.data);
+          consumer.pause();
+          this.fire("consumerPaused", consumerId, "remote");
+          break;
+        }
+      case 'consumerResumed':
+        {
+          const {
+            consumerId
+          } = message.data.data;
+          const consumer = this.consumers.get(consumerId);
+          if (!consumer) {
             break;
           }
-        case 'consumerClosed':
-          {
-            const {
-              consumerId
-            } = message.data.data;
-            const consumer = this.consumers.get(consumerId);
-            if (!consumer) {
-              break;
-            }
-            this.consumers.delete(consumerId);
-            const {
-              peerId
-            } = consumer.appData;
-            this.fire("consumerClosed", consumerId, peerId);
+          consumer.resume();
+          this.fire("consumerResumed", consumerId, "remote");
+          break;
+        }
+      case 'consumerLayersChanged':
+        {
+          const {
+            consumerId,
+            spatialLayer,
+            temporalLayer
+          } = message.data.data;
+          const consumer = this.consumers.get(consumerId);
+          if (!consumer) {
             break;
           }
-        case 'consumerPaused':
-          {
-            const {
-              consumerId
-            } = message.data.data;
-            const consumer = this.consumers.get(consumerId);
-            if (!consumer) {
-              break;
-            }
-            consumer.pause();
-            this.fire("consumerClosed", consumerId, "remote");
+          this.fire("consumerLayersChanged", consumerId, spatialLayer, temporalLayer);
+          break;
+        }
+      case 'consumerScore':
+        {
+          const {
+            consumerId,
+            score
+          } = message.data.data;
+          this.fire("consumerScore", consumerId, score);
+          break;
+        }
+      case 'dataConsumerClosed':
+        {
+          const {
+            dataConsumerId
+          } = message.data.data;
+          const dataConsumer = this.dataConsumers.get(dataConsumerId);
+          if (!dataConsumer) {
             break;
           }
-        case 'consumerResumed':
-          {
-            const {
-              consumerId
-            } = message.data.data;
-            const consumer = this.consumers.get(consumerId);
-            if (!consumer) {
-              break;
-            }
-            consumer.resume();
-            this.fire("consumerResumed", consumerId, "remote");
-            break;
-          }
-        case 'consumerLayersChanged':
-          {
-            const {
-              consumerId,
-              spatialLayer,
-              temporalLayer
-            } = message.data.data;
-            const consumer = this.consumers.get(consumerId);
-            if (!consumer) {
-              break;
-            }
-            this.fire("consumerLayersChanged", consumerId, spatialLayer, temporalLayer);
-            break;
-          }
-        case 'consumerScore':
-          {
-            const {
-              consumerId,
-              score
-            } = message.data.data;
-            this.fire("consumerScore", consumerId, score);
-            break;
-          }
-        case 'dataConsumerClosed':
-          {
-            const {
-              dataConsumerId
-            } = message.data.data;
-            const dataConsumer = this.dataConsumers.get(dataConsumerId);
-            if (!dataConsumer) {
-              break;
-            }
-            dataConsumer.close();
-            this.dataConsumers.delete(dataConsumerId);
-            const {
-              peerId
-            } = dataConsumer.appData;
-            this.fire("dataConsumerClosed", dataConsumerId, peerId);
-            break;
-          }
-        case 'activeSpeaker':
-          {
-            const {
-              peerId
-            } = message.data.data;
-            this.fire("activeSpeaker", peerId);
-            break;
-          }
-        default:
-          this.log(message.data.event, "NOTICE");
-          this.log(message.data.data, "DEBUG");
-          this.fire("notify", message.data.event, message.data.data);
+          dataConsumer.close();
+          this.dataConsumers.delete(dataConsumerId);
+          const {
+            peerId
+          } = dataConsumer.appData;
+          this.fire("dataConsumerClosed", dataConsumerId, peerId);
+          break;
+        }
+      case 'activeSpeaker':
+        {
+          const {
+            peerId
+          } = message.data.data;
+          this.fire("activeSpeaker", peerId);
+          break;
+        }
+      default:
+        this.log(message.data.event, "NOTICE");
+        this.log(message.data.data, "DEBUG");
+        this.fire("notify", message.data.event, message.data.data);
       }
     });
   }
@@ -433,7 +438,7 @@ class Room extends nodefony.Service {
       if (this.options.consume) {
         this.createWebRtcTransport(false, true);
       }
-      if(!  this.options.produce && ! this.options.consume){
+      if (!this.options.produce && !this.options.consume) {
         this.ready = true;
         this.fire("ready", this);
       }
@@ -507,7 +512,16 @@ class Room extends nodefony.Service {
               this.log(message.error, "DEBUG");
               return errback(message.error);
             }
-            this.log(`Produce ${kind}  id : ${id} `, "DEBUG", "EVENT produce");
+            this.log(`Produce ${kind}  id : ${id} `, "INFO", "EVENT produce");
+            if (message.data.appData.audio) {
+              this.micProducerId = id;
+            }
+            if (message.data.appData.video) {
+              this.videoProducerId = id;
+            }
+            if (message.data.appData.share) {
+              this.shareProducerId = id;
+            }
             /*this.log(` rtpParameters :
                 ${JSON.stringify(rtpParameters, null, " ")}`, "DEBUG");
             this.log(` appData :
@@ -731,6 +745,9 @@ class Room extends nodefony.Service {
         codecOptions: {
           opusStereo: 1,
           opusDtx: 1
+        },
+        appData: {
+          audio: true
         }
         // NOTE: for testing codec selection.
         // codec : this._mediasoupDevice.rtpCapabilities.codecs
@@ -744,7 +761,7 @@ class Room extends nodefony.Service {
           .catch(() => {});
       });
       this.fire("addProducer", {
-        id: this.micProducer.id,
+        id: this.micProducerId,
         paused: this.micProducer.paused,
         track: this.micProducer.track,
         rtpParameters: this.micProducer.rtpParameters,
@@ -768,9 +785,10 @@ class Room extends nodefony.Service {
     try {
       this.micProducer.close();
       this.mediasoup.send('closeProducer', {
-        producerId: this.micProducer.id
+        producerId: this.micProducerId
       });
       this.micProducer = null;
+      this.micProducerId = null;
       return this.micProducer;
     } catch (e) {
       this.micProducer = null;
@@ -780,24 +798,52 @@ class Room extends nodefony.Service {
   }
   async muteMic() {
     this.log('muteMic()', "DEBUG");
-    try{
-        this.micProducer.pause();
-        this.mediasoup.send('pauseProducer', {
-          producerId: this.micProducer.id
-        });
-		}
-		catch (error){
+    try {
+      this.micProducer.pause();
+      this.mediasoup.send('pauseProducer', {
+        producerId: this.micProducerId
+      });
+    } catch (error) {
       this.log(error, "ERROR");
-			throw error;
-		}
+      throw error;
+    }
   }
   async unmuteMic() {
     this.log('unmuteMic()', "DEBUG");
+    try {
+      this.micProducer.resume();
+      this.mediasoup.send('resumeProducer', {
+        producerId: this.micProducerId
+      });
+    } catch (error) {
+      this.log(error, "ERROR");
+      throw error;
+    }
   }
-  async enableAudioOnly() {}
-  async disableAudioOnly() {}
-  async muteAudio() {}
-  async unmuteAudio() {}
+  async enableAudioOnly() {
+    this.log('enableAudioOnly()', "DEBUG");
+    this.disableWebcam();
+    for (const consumer of this.consumers.values()) {
+      if (consumer.kind !== 'video') {
+        continue;
+      }
+      this.pauseConsumer(consumer);
+    }
+  }
+  async disableAudioOnly() {
+    this.log('disableAudioOnly()', "DEBUG");
+    if (!this.webcamProducer && this.options.produce) {
+      this.enableWebcam();
+    }
+    for (const consumer of this.consumers.values()) {
+      if (consumer.kind !== 'video') {
+        continue;
+      }
+      this.resumeConsumer(consumer);
+    }
+  }
+  //async muteAudio() {}
+  //async unmuteAudio() {}
 
   // webcam
   async enableWebcam() {
@@ -875,18 +921,21 @@ class Room extends nodefony.Service {
         track,
         encodings,
         codecOptions,
-        codec
+        codec,
+        appData: {
+          video: true
+        }
       });
       this.webcamProducer.on('transportclose', () => {
         this.webcamProducer = null;
       });
 
       this.webcamProducer.on('trackended', () => {
-        this.disableWebcam()
+        return this.disableWebcam()
           .catch(() => {});
       });
       this.fire("addProducer", {
-        id: this.webcamProducer.id,
+        id: this.videoProducerId,
         deviceLabel: device.label,
         type: this.getWebcamType(device),
         paused: this.webcamProducer.paused,
@@ -913,7 +962,7 @@ class Room extends nodefony.Service {
     }
   }
   async updateWebcams() {
-    try{
+    try {
       this.log('updateWebcams()', "DEBUG");
       // Reset the list.
       this.webcams = new Map();
@@ -938,9 +987,10 @@ class Room extends nodefony.Service {
         this.webcam.device = array[0];
       }
       return this.webcam;
-    }catch(e){
-      console.error(e)
+    } catch (e) {
+      this.log(`updateWebcams()`, "ERROR");
       this.log(e, "ERROR");
+      throw e;
     }
   }
 
@@ -969,11 +1019,13 @@ class Room extends nodefony.Service {
       return;
     }
     try {
+      this.fire("disableWebcam", this.webcamProducer);
       this.webcamProducer.close();
       this.mediasoup.send('closeProducer', {
-        producerId: this.webcamProducer.id
+        producerId: this.videoProducerId
       });
       this.webcamProducer = null;
+      this.videoProducerId = null;
       return this.webcamProducer;
     } catch (e) {
       this.webcamProducer = null;
@@ -981,28 +1033,235 @@ class Room extends nodefony.Service {
       throw e;
     }
   }
-  async changeWebcam() {}
-  async changeWebcamResolution() {}
+  async changeWebcam() {
+    this.log('changeWebcam()', "DEBUG");
+    try {
+      await this.updateWebcams();
+      const array = Array.from(this.webcams.keys());
+      const len = array.length;
+      const deviceId =
+        this.webcam.device ? this.webcam.device.deviceId : undefined;
+      let idx = array.indexOf(deviceId);
+      if (idx < len - 1)
+        idx++;
+      else
+        idx = 0;
+      this.webcam.device = this.webcams.get(array[idx]);
+      this.log(`changeWebcam() | new selected webcam device`, "DEBUG");
+      this.log(this.webcam.device, "DEBUG");
+      // Reset video resolution to HD.
+      this.webcam.resolution = 'hd';
+      if (!this.webcam.device) {
+        throw new Error('no webcam devices');
+      }
+      // Closing the current video track before asking for a new one (mobiles do not like
+      // having both front/back cameras open at the same time).
+      this.webcamProducer.track.stop();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: {
+            exact: this.webcam.device.deviceId
+          },
+          ...VIDEO_CONSTRAINS[this.webcam.resolution]
+        }
+      });
+      const track = stream.getVideoTracks()[0];
+      await this.webcamProducer.replaceTrack({
+        track
+      });
+      this.fire("changeWebCam", track, this.webcam);
+    } catch (error) {
+      this.log('changeWebcam()', "ERROR");
+      this.log(error, "ERROR");
+      throw error;
+    }
+  }
+  async changeWebcamResolution() {
+    this.log('changeWebcamResolution()', "DEBUG");
+    try {
+      switch (this.webcam.resolution) {
+      case 'qvga':
+        this.webcam.resolution = 'vga';
+        break;
+      case 'vga':
+        this.webcam.resolution = 'hd';
+        break;
+      case 'hd':
+        this.webcam.resolution = 'qvga';
+        break;
+      default:
+        this.webcam.resolution = 'hd';
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: {
+            exact: this.webcam.device.deviceId
+          },
+          ...VIDEO_CONSTRAINS[this.webcam.resolution]
+        }
+      });
+      const track = stream.getVideoTracks()[0];
+      await this.webcamProducer.replaceTrack({
+        track
+      });
+      this.fire("changeWebcamResolution", track, this.webcam);
+    } catch (error) {
+      this.log('changeWebcamResolution()', "ERROR");
+      this.log(error, "ERROR");
+      throw error;
+    }
+  }
 
   // screen
-  async enableShare() {}
-  async disableShare() {}
+  async enableShare() {
+    this.log(`Enable share screen`, "DEBUG");
+    if (this.shareProducer) {
+      return;
+    }
+    if (this.webcamProducer) {
+      await this.disableWebcam();
+    }
+    if (!this.mediasoupDevice.canProduce('video')) {
+      this.log('enableShare() | cannot produce video', "ERROR");
+      return;
+    }
+    let track;
+    try {
+      this.log('enableShare() | calling getDisplayMedia()');
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        audio: false,
+        video: {
+          displaySurface: 'monitor',
+          logicalSurface: true,
+          cursor: true,
+          width: {
+            max: 1920
+          },
+          height: {
+            max: 1080
+          },
+          frameRate: {
+            max: 30
+          }
+        }
+      });
+      // May mean cancelled (in some implementations).
+      if (!stream) {
+        this.log(`Share screen no stream `, "ERROR");
+        return;
+      }
+      track = stream.getVideoTracks()[0];
+      let encodings;
+      let codec;
+      const codecOptions = {
+        videoGoogleStartBitrate: 1000
+      };
+      if (this.forceH264) {
+        codec = this.mediasoupDevice.rtpCapabilities.codecs
+          .find((c) => c.mimeType.toLowerCase() === 'video/h264');
+        if (!codec) {
+          throw new Error('desired H264 codec+configuration is not supported');
+        }
+      } else if (this.forceVP9) {
+        codec = this.mediasoupDevice.rtpCapabilities.codecs
+          .find((c) => c.mimeType.toLowerCase() === 'video/vp9');
+        if (!codec) {
+          throw new Error('desired VP9 codec+configuration is not supported');
+        }
+      }
+      if (this.useSharingSimulcast) {
+        // If VP9 is the only available video codec then use SVC.
+        const firstVideoCodec = this.mediasoupDevice
+          .rtpCapabilities
+          .codecs
+          .find((c) => c.kind === 'video');
+        if (
+          (this._forceVP9 && codec) ||
+          firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
+        ) {
+          encodings = SCREEN_SHARING_SVC_ENCODINGS;
+        } else {
+          encodings = SCREEN_SHARING_SIMULCAST_ENCODINGS
+            .map((encoding) => ({ ...encoding,
+              dtx: true
+            }));
+        }
+      }
+      this.shareProducer = await this.sendTransport.produce({
+        track,
+        encodings,
+        codecOptions,
+        codec,
+        appData: {
+          share: true
+        }
+      });
+      this.shareProducer.on('transportclose', () => {
+        this.shareProducer = null;
+      });
+      this.shareProducer.on('trackended', () => {
+        this.log(`Share disconnected`, "ERROR");
+        this.fire("error", new Error(`Share disconnected`))
+        this.disableShare()
+          .catch(() => {});
+      });
+      this.fire("addProducer", {
+        id: this.shareProducerId,
+        type: 'share',
+        paused: this.shareProducer.paused,
+        track: this.shareProducer.track,
+        rtpParameters: this.shareProducer.rtpParameters,
+        codec: this.shareProducer.rtpParameters.codecs[0].mimeType.split('/')[1]
+      });
+      return this.shareProducer;
+    } catch (error) {
+      this.log(error, "ERROR");
+      if (error.name !== 'NotAllowedError') {
+        this.fire("error", error)
+      }
+      if (track) {
+        track.stop();
+      }
+    }
+  }
 
+  async disableShare() {
+    try {
+      this.log(`Disable share screen`);
+      if (!this.shareProducer) {
+        return;
+      }
+      this.shareProducer.close();
+      this.mediasoup.send('closeProducer', {
+        producerId: this.shareProducerId
+      });
+      this.shareProducer = null;
+      this.shareProducerId = null;
+      this.fire("disableShare", this);
+      return this;
+    } catch (error) {
+      this.fire("error", error)
+      this.log(error);
+      throw error;
+    }
+  }
 
   async restartIce() {}
+  async changeDisplayName(displayName) {}
   async setMaxSendingSpatialLayer() {}
   async setConsumerPreferredLayers() {}
 
   async setConsumerPriority() {}
   async requestConsumerKeyFrame() {}
 
+
+  // CHAT DATA
   async enableChatDataProducer() {}
   async enableBotDataProducer() {}
-
   async sendChatMessage(text) {}
   async sendBotMessage(text) {}
 
-  async changeDisplayName(displayName) {}
+
 
   // stats
   async getSendTransportRemoteStats() {}

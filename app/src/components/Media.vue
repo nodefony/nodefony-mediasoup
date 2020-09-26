@@ -42,7 +42,7 @@
           <v-icon v-if="this.audio">mdi-volume-high</v-icon>
           <v-icon v-else dark>mdi-volume-off</v-icon>
         </v-btn>
-        <v-btn v-if="mdRoom && mdRoom.connected" small :loading="loadingMonitor" :disabled="loadingMonitor" color="blue-grey" class="ma-2 white--text" fab @click="monitorButton">
+        <v-btn v-if="mdRoom && mdRoom.connected && isMe" small :loading="loadingMonitor" :disabled="loadingMonitor" color="blue-grey" class="ma-2 white--text" fab @click="monitorButton">
           <v-icon v-if="screen">mdi-monitor-share</v-icon>
           <v-icon v-else dark>mdi-monitor-off</v-icon>
         </v-btn>
@@ -147,8 +147,8 @@ export default {
     isMaximize: false,
     refAudio: vm.$refs["audio"],
     refVideo: vm.$refs["video"],
-    videoStream: new window.MediaStream(),
-    audioStream: new window.MediaStream(),
+    videoStream: null, //new window.MediaStream(),
+    audioStream: null, //new window.MediaStream(),
     loadingVideo: false,
     loadingAudio: false,
     loadingMonitor: false,
@@ -169,10 +169,17 @@ export default {
     addProducer(producer) {
       return this.addTracks(producer.track);
     },
+    deleteProducer(producer) {
+      return this.deleteTracks(producer.track);
+    },
     addConsumer(consumer) {
       return this.addTracks(consumer.track);
     },
     addAudioTrack(track) {
+      if (this.audioStream) {
+        this.stopAudioStream();
+      }
+      this.audioStream = new window.MediaStream();
       let tag = this.$refs["audio"];
       tag.srcObject = this.audioStream;
       this.audioStream.addTrack(track);
@@ -181,11 +188,26 @@ export default {
       }
       return tag;
     },
+    deleteAudioTrack() {
+      if (this.videoStream) {
+        return this.stopAudioStream();
+      }
+    },
     addVideoTrack(track) {
-      let tag = this.$refs["video"];
+      if (this.videoStream) {
+        this.stopVideoStream();
+      }
+      this.videoStream = new window.MediaStream();
+      //let tag = this.$refs["video"];
+      //tag.srcObject = null;
       this.videoStream.addTrack(track);
-      tag.srcObject = this.videoStream;
-      return tag;
+      //tag.srcObject = this.videoStream;
+      //return tag;
+    },
+    deleteVideoTrack() {
+      if (this.videoStream) {
+        return this.stopVideoStream();
+      }
     },
     playVideoTag() {
       let tag = this.$refs["video"];
@@ -241,6 +263,16 @@ export default {
           }
       }
     },
+    deleteTracks(track) {
+      switch (track.kind) {
+        case "audio":
+          this.log(`${this.name} Delete audio track ${track.id}`);
+          return this.deleteAudioTrack();
+        case "video":
+          this.log(`${this.name} Delete video track ${track.id}`);
+          return this.deleteVideoTrack();
+      }
+    },
     stopAudioStream() {
       if (this.audioStream) {
         const tracks = this.audioStream.getTracks();
@@ -259,28 +291,46 @@ export default {
         this.videoStream = null;
       }
     },
-    videoButton() {
+    async videoButton() {
       // tag
       if (this.video) {
+        if (this.isMe) {
+          await this.room.disableWebcam()
+        }
         return this.pauseVideoTag();
       } else {
+        if (this.isMe) {
+          await this.room.enableWebcam()
+        }
         return this.playVideoTag();
       }
     },
-    audioButton() {
+    async audioButton() {
       // tag
-      if (this.isMe) {
-        this.audio = !this.audio;
-        return;
-      }
+
       if (this.audio) {
+        if (this.isMe) {
+          await this.room.muteMic()
+        }
         this.muteTag();
       } else {
+        if (this.isMe) {
+          await this.room.unmuteMic()
+        }
         this.demuteTag();
       }
     },
     monitorButton() {
-      this.screen = !this.screen;
+      if (this.screen) {
+        return this.room.disableShare()
+          .then(() => {
+            this.screen = false;
+          })
+      }
+      return this.room.enableShare()
+        .then(() => {
+          this.screen = true;
+        })
     },
     muteTag() {
       let tag = this.$refs["audio"];

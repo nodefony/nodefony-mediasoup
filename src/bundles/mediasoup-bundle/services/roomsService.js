@@ -176,7 +176,8 @@ class Rooms extends nodefony.Service {
         try {
           producer = await room.createProducer(peer, message.data);
           peer.send(room, "produce", {
-            id: producer.id
+            id: producer.id,
+            ...message.data
           });
         } catch (e) {
           this.log(e, "ERROR");
@@ -260,6 +261,7 @@ class Rooms extends nodefony.Service {
       case "setConsumerPreferredLayers":
       case "setConsumerPriority":
       case "requestConsumerKeyFrame":
+      break;
       case "produceData":
         break;
         //tools
