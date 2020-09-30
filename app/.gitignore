@@ -2,6 +2,14 @@
 node_modules
 /dist
 
+/Resources/public/hot/
+/Resources/public/img/
+/Resources/public/precache-manifest*
+/Resources/public/robots.txt
+/Resources/public/manifest.json
+/Resources/public/favicon.ico
+/Resources/views/index.html.twig
+
 # local env files
 .env.local
 .env.*.local
@@ -11,6 +19,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+yarn.lock
 
 # Editor directories and files
 .idea
