@@ -1,5 +1,5 @@
 <template>
-<v-app id="room">
+<v-app id="meeting">
   <v-main class="pa-0">
     <v-container v-if="connected" class="fill-height" fluid>
       <v-app-bar app clipped-left>
@@ -40,7 +40,7 @@
           </v-tab-item>
           <v-tab-item key="message">
             <v-card-text>Content for tab message would go here</v-card-text>
-            <Message />
+            <Message :room="room" :peer="peer" />
 
           </v-tab-item>
           <v-tab-item key="stats">
@@ -63,15 +63,37 @@
             </v-row>
           </v-container>
         </v-row>
-        <v-row v-show="peers.length" ref="room" style="height: 600px;" align="start" justify="space-around">
-          <Media class="ml-5 mb-5" v-for=" (item) in peers" :ref="item.id" :room="room" :peer="item" :key="item.id" :name="item.id">
+        <v-row v-show="peers.length" ref="room" style="" align="start" justify="space-around">
+          <Media class="ml-5 mb-5" v-for=" (item) in peers" :ref="item.id" :room="room" :peer="item" :key="item.id" :name="item.id" v-on:maximize="maximize">
           </Media>
         </v-row>
       </v-col>
+      <v-expand-transition>
+        <v-footer v-show="isMaximize" padless fixed height="200px">
+
+          <v-container fluid>
+            <v-slide-group v-model="model" ref="thumbnail" class="pa-4" active-class="success" show-arrows>
+
+              <!--v-slide-item v-for="(item) in peers" :key="item.id" v-slot:default="{ active, toggle }">
+                <v-row class="fill-height" align="center" justify="center">
+                  <Media class="ml-5 mb-5" :ref="item.id" :room="room" :peer="item" :key="item.id" :name="item.id" v-on:maximize="maximize">
+                  </Media>
+                  <v-card :color="active ? undefined : 'grey lighten-1'" class="ma-4" height="200" width="100" @click="toggle">
+                    <div :name='item.id'>{{item.id}}</div>
+                    <v-scale-transition>
+                      <v-icon v-if="active" color="white" size="48" v-text="'mdi-close-circle-outline'"></v-icon>
+                    </v-scale-transition>
+                  </v-card>
+                </v-row>
+              </v-slide-item-->
+            </v-slide-group>
+          </v-container>
+        </v-footer>
+      </v-expand-transition>
     </v-container>
 
     <v-container v-else class="fill-height" fluid>
-      <v-row style="height: 600px;" align="start" justify="space-around">
+      <v-row style="" align="start" justify="space-around">
         <Room :join="open" :peerId="peerid" :isAuthenticated="isAuthenticated" class="ml-5 mb-5" v-for=" (item) in rooms" :ref="item.name" :room="item" :key="item.name" v-on:connect="connect">
         </Room>
       </v-row>
@@ -145,6 +167,8 @@ export default {
       open: vm.peerid ? true : false,
       joined: false,
       dialogQuit: false,
+      isMaximize: false,
+      model: "",
       room: null,
       peer: null,
       peers: [],
@@ -158,12 +182,13 @@ export default {
       this.log(`Mediasoup Server already connected ready = > ${this.$mediasoup.room.ready}`);
       return this.connect();
     } else {
-      this.log(`Try Connect To mediasoup server open dialog =>${this.open}`);
+      this.log("Get rooms")
       return await this.getRoom(this.roomid)
         .then((res) => {
           if (this.open) {
             return res;
           }
+          this.log(`Try Connect To mediasoup server open dialog =>${this.open}`);
           return this.connect();
         });
     }
@@ -237,19 +262,21 @@ export default {
       this.open = false;
       this.room = this.$mediasoup.room;
       this.peer = this.$mediasoup.peer;
-      if (this.room.ready) {
-        return this.joinRoom();
-      }
-      return new Promise((resolve, reject) => {
-        this.room.on("ready", () => {
-          this.log(`Mediasoup room ${this.room.id} ready `);
-          try {
-            return resolve(this.joinRoom());
-          } catch (e) {
-            return reject(e);
-          }
+      if (this.room) {
+        if (this.room.ready) {
+          return this.joinRoom();
+        }
+        return new Promise((resolve, reject) => {
+          this.room.on("ready", () => {
+            this.log(`Mediasoup room ${this.room.id} ready `);
+            try {
+              return resolve(this.joinRoom());
+            } catch (e) {
+              return reject(e);
+            }
+          });
         });
-      });
+      }
     },
     async joinRoom() {
       this.connected = this.getMediasoupStatus;
@@ -261,6 +288,9 @@ export default {
         this.log(`joined : ${room.id}`)
         this.joined = true;
         this.peer = room.peer;
+      });
+      this.room.on("ready", () => {
+        this.log("room ready", "DEBUG");
       });
       this.room.on("newPeer", (peer) => {
         this.log(`New Peer : ${peer.id}`)
@@ -281,7 +311,7 @@ export default {
         return this.$refs[this.peer.id].addProducer(producer);
       });
       this.room.on("disableWebcam", (producer) => {
-        this.peer.deleteProducer(producer);
+        this.peer.deleteProducer(producer.id);
         return this.$refs[this.peer.id].deleteProducer(producer);
       });
       this.room.on("disableShare", async (room) => {
@@ -291,24 +321,59 @@ export default {
         this.log(`Consume event : ${peer.id}`);
         peer.addConsumer(consumer);
         // media
-        if (this.$refs[peer.id] && this.$refs[peer.id][0]) {
-          return this.$refs[peer.id][0].addConsumer(consumer);
-        }
-        return this.$refs[peer.id].addConsumer(consumer);
+        let component = this.getPeerComponent(peer.id);
+        return component.addConsumer(consumer);
       });
       this.room.on("consumerClosed", (consumerId, peerId) => {
         this.log(`consumerClosed : ${peerId} condumeId =${consumerId} `, "DEBUG");
         let peer = this.getPeer(peerId);
+        peer.deleteConsumer(consumerId);
         if (peer) {
-          peer.component.pauseVideoTag();
+          this.getPeerComponent(peerId).pauseVideoTag();
         }
       });
       this.room.on("consumerPaused", (consumerId) => {
         this.log(`consumerPaused  condumeid =${consumerId} `, "DEBUG");
+        let consumer = null;
+        let res = this.peers.find((peer) => {
+          let consu = peer.hasConsumer(consumerId);
+          if (consu) {
+            consumer = consu;
+            return peer;
+          }
+        });
+        if (res) {
+          let component = this.getPeerComponent(res.id);
+          if (consumer.track.kind === "audio") {
+            return component.muteTag();
+          }
+          if (consumer.track.kind === "video") {
+            return component.pauseVideoTag();
+          }
+        }
       });
+
       this.room.on("consumerResumed", (consumerId) => {
         this.log(`consumerResumed  condumeid =${consumerId} `, "DEBUG");
+        let consumer = null;
+        let res = this.peers.find((peer) => {
+          let consu = peer.hasConsumer(consumerId);
+          if (consu) {
+            consumer = consu;
+            return peer;
+          }
+        });
+        if (res) {
+          let component = this.getPeerComponent(res.id);
+          if (consumer.track.kind === "audio") {
+            return component.demuteTag();
+          }
+          if (consumer.track.kind === "video") {
+            return component.playVideoTag();
+          }
+        }
       });
+
     },
     isMediasoupConnected() {
       return this.getMediasoupStatus;
@@ -330,12 +395,18 @@ export default {
         }
       });
       if (Peer) {
-        return {
-          peer: Peer,
-          component: this.$refs[Peer.id][0] ? this.$refs[Peer.id][0] : this.$refs[Peer.id]
-        };
+        return Peer;
       }
       throw new Error(`No peer found ${peerId}`);
+    },
+    getPeerComponent(peerId) {
+      if (!this.$refs[peerId]) {
+        return null;
+      }
+      if (this.$refs[peerId][0]) {
+        return this.$refs[peerId][0];
+      }
+      return this.$refs[peerId];
     },
     async waitQuit(event) {
       return new Promise((resolve, reject) => {
@@ -355,6 +426,9 @@ export default {
           return reject(res)
         });
       })
+    },
+    maximize(state, component) {
+      this.isMaximize = state;
     },
     leave(event) {
       let response = null;

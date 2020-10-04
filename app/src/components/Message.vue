@@ -3,11 +3,11 @@
   <v-timeline dense clipped>
     <v-timeline-item fill-dot class="white--text mb-12" color="orange" large>
       <template v-slot:icon>
-        <span>JL</span>
+        <span>{{mdPeer.id}}</span>
       </template>
-      <v-text-field v-model="input" hide-details flat label="Leave a comment..." solo @keydown.enter="comment">
+      <v-text-field v-model="input" hide-details flat label="Leave a comment..." solo @keydown.enter="post">
         <template v-slot:append>
-          <v-btn class="mx-0" depressed @click="comment">
+          <v-btn class="mx-0" depressed @click="post">
             Post
           </v-btn>
         </template>
@@ -17,7 +17,7 @@
     <v-slide-x-transition group>
       <v-timeline-item v-for="event in timeline" :key="event.id" class="mb-4" color="orange" large>
         <template v-slot:icon>
-          <span>JL</span>
+          <span v-text="event.from"></span>
         </template>
         <v-row justify="space-between">
           <v-col cols="7" v-text="event.text"></v-col>
@@ -87,28 +87,69 @@
 <script>
 export default {
   name: 'media-message',
-  data: () => ({
+  data: (vm) => ({
     events: [],
     input: null,
     nonce: 0,
+    mdRoom: vm.room,
+    mdPeer: vm.peer
   }),
+  props: {
+    room: {
+      type: Object,
+      default: null
+    },
+    peer: {
+      type: Object,
+      default: null
+    }
+  },
+  mounted() {
+    if (this.mdRoom) {
+      this.room.on("onDataConsumerMessage", (message) => {
+        this.comment(message.from, message.message)
+      });
+    }
+
+  },
   computed: {
     timeline() {
-      return this.events.slice().reverse()
+      let ele = this.events.slice().reverse()
+      return ele;
     },
   },
   methods: {
-    comment() {
+    post() {
+      if (!this.input) {
+        return;
+      }
       const time = (new Date()).toTimeString()
-      this.events.push({
+      let post = {
+        from: this.mdPeer.id,
         id: this.nonce++,
         text: this.input,
         time: time.replace(/:\d{2}\sGMT-\d{4}\s\((.*)\)/, (match, contents, offset) => {
           return ` ${contents.split(' ').map(v => v.charAt(0)).join('')}`
         }),
-      })
+      }
+      this.events.push(post);
+      if (this.mdRoom) {
 
-      this.input = null
+        this.mdRoom.sendChatMessage(this.input.trim());
+      }
+      this.input = null;
+    },
+    comment(from, message) {
+      const time = (new Date()).toTimeString()
+      let post = {
+        from: from.id,
+        id: this.nonce++,
+        text: message,
+        time: time.replace(/:\d{2}\sGMT-\d{4}\s\((.*)\)/, (match, contents, offset) => {
+          return ` ${contents.split(' ').map(v => v.charAt(0)).join('')}`
+        }),
+      };
+      this.events.push(post)
     },
   },
 }

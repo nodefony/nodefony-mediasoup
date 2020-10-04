@@ -6,7 +6,7 @@ import alert from './notify/alert';
 
 class Nodefony extends nodefony.Service {
   constructor(settings) {
-    super('kernel', null, null, settings);
+    super('app', null, null, settings);
     this.initSyslog();
     this.set("kernel", this);
     this.debug = this.options.VUE_APP_DEBUG;

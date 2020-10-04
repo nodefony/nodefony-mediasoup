@@ -44,13 +44,9 @@ import {
 export default {
   name: 'Bar',
   components: {},
-  props: {
-
-  },
+  props: {},
   data(vm) {
-    return {
-
-    }
+    return {}
   },
   computed: {
     ...mapGetters([
@@ -59,8 +55,8 @@ export default {
       'getProfile',
       'getTrigramme'
     ])
-
   },
+  destroyed() {},
   async beforeMount() {
     if (!this.getProfile) {
       if (this.getUser && this.isAuthenticated) {

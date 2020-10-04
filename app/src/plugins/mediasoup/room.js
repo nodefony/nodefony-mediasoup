@@ -123,6 +123,8 @@ class Room extends nodefony.Service {
     this.recvTransport = null;
     this.consumers = new Map();
     this.dataConsumers = new Map();
+    this.chatDataProducer = null;
+    this.botDataProducer = null;
     this.webcams = new Map();
 
     this.micProducer = null;
@@ -163,6 +165,13 @@ class Room extends nodefony.Service {
           .catch((error) => {
             this.log(error, "ERROR");
           });
+          this.sendTransport.on('connectionstatechange', (connectionState) => {
+            this.log(connectionState, "DEBUG", "connectionstatechange");
+            if (connectionState === 'connected') {
+              this.enableChatDataProducer();
+              this.enableBotDataProducer();
+            }
+          });
         this.procudeTransportReady = true;
       }
       if (message.data.type === "consuming") {
@@ -189,9 +198,7 @@ class Room extends nodefony.Service {
         peers
       } = message.data;
       for (const peer of peers) {
-        let newPeer = this.mediasoup.createPeer(peer.id, { ...peer,
-          consumers: [],
-          dataConsumers: []
+        let newPeer = this.mediasoup.createPeer(peer.id, { ...peer
         });
         this.peers.set(peer.id, newPeer);
         this.fire("newPeer", newPeer);
@@ -212,14 +219,6 @@ class Room extends nodefony.Service {
           this.log(e, "ERROR");
           throw e;
         }
-        this.sendTransport.on('connectionstatechange', (connectionState) => {
-          this.log(`connectionstatechange`);
-          console.log(connectionState)
-          if (connectionState === 'connected') {
-            //this.enableChatDataProducer();
-            //this.enableBotDataProducer();
-          }
-        });
       }
       this.fire("joined", this);
     });
@@ -229,8 +228,8 @@ class Room extends nodefony.Service {
     this.mediasoup.on("produce", async (message) => {
       return this.fire("produce", message.data.id, message, this);
     });
-    this.mediasoup.on("producedata", async (message) => {
-      return this.fire("producedata", message.data.id, message, this);
+    this.mediasoup.on("produceData", async (message) => {
+      return this.fire("produceData", message.data.id, message, this);
     });
     this.mediasoup.on("newConsumer", async (message) => {
       await this.newConsumer(message.data);
@@ -254,9 +253,7 @@ class Room extends nodefony.Service {
       case "newPeer":
         {
           const peer = message.data.data;
-          let newPeer = this.mediasoup.createPeer(peer.id, { ...peer,
-            consumers: [],
-            dataConsumers: []
+          let newPeer = this.mediasoup.createPeer(peer.id, { ...peer
           });
           this.peers.set(peer.id, newPeer);
           this.fire("newPeer", newPeer);
@@ -372,9 +369,10 @@ class Room extends nodefony.Service {
       case 'activeSpeaker':
         {
           const {
-            peerId
+            peerId,
+            volume
           } = message.data.data;
-          this.fire("activeSpeaker", peerId);
+          this.fire("activeSpeaker", peerId, volume);
           break;
         }
       default:
@@ -544,7 +542,7 @@ class Room extends nodefony.Service {
           appData
         }, callback, errback) => {
           // eslint-disable-next-line no-shadow
-          this.on("producedata", (id, message) => {
+          this.on("produceData", (id, message) => {
             if (message.error) {
               this.log(message.error, "DEBUG");
               return errback(message.error);
@@ -553,7 +551,7 @@ class Room extends nodefony.Service {
             return callback(id);
           });
           this.log(`Try "producedata" event: [sctpStreamParameters:${sctpStreamParameters}, appData:${appData}]`, "DEBUG");
-          return this.mediasoup.send('producedata', {
+          return this.mediasoup.send('produceData', {
             transportId: transport.id,
             sctpStreamParameters,
             label,
@@ -618,9 +616,9 @@ class Room extends nodefony.Service {
       id,
       kind,
       rtpParameters,
-      type,
+      //type,
       appData,
-      producerPaused
+      //producerPaused
     } = data;
     //console.log(peerId, producerId);
     try {
@@ -694,8 +692,110 @@ class Room extends nodefony.Service {
     }
   }
 
-  newDataConsumer() {
+  async newDataConsumer(data) {
+    try {
+      if (!this.options.consume) {
+        throw new Error('I do not want to data consume');
+      }
+      if (!this.useDataChannel) {
+        throw new Error('I do not want DataChannels');
+      }
+      const {
+        peerId, // NOTE: Null if bot.
+        dataProducerId,
+        id,
+        sctpStreamParameters,
+        label,
+        protocol,
+        appData
+      } = data;
+      const dataConsumer = await this.recvTransport.consumeData({
+        id,
+        dataProducerId,
+        sctpStreamParameters,
+        label,
+        protocol,
+        appData: { ...appData,
+          peerId
+        } // Trick.
+      });
+      let peer = this.peers.get(peerId);
+      let dataConsumers = null;
+      if (peer){
+        dataConsumers = peer.dataConsumers;
+      }else{
+        dataConsumers = this.peer.dataConsumers;
+      }
+      // Store in the map.
+      dataConsumers.set(dataConsumer.id, dataConsumer);
+      dataConsumer.on('transportclose', () => {
+        dataConsumers.delete(dataConsumer.id);
+      });
+      dataConsumer.on('open', () => {
+        this.log('DataConsumer "open" event', "DEBUG");
+      });
+      dataConsumer.on('close', () => {
+        this.log('DataConsumer "close" event', "WARNING");
+        dataConsumers.delete(dataConsumer.id);
+        this.fire('onDataConsumerClose', {
+          id: dataConsumer.id
+        })
+      });
+      dataConsumer.on('error', (error) => {
+        this.log(error, "ERROR");
+        this.fire("onDataConsumerError", error);
+      });
+      dataConsumer.on('message', (message) => {
+        this.log(`DataConsumer "message" event [streamId:${dataConsumer.sctpStreamParameters.streamId}]`, "DEBUG");
+        if (message instanceof ArrayBuffer) {
+          const view = new DataView(message);
+          const number = view.getUint32();
+          this.log(number, "INFO", "DataConsumer ArrayBuffer")
 
+        } else if (typeof message !== 'string') {
+          this.log('ignoring DataConsumer "message" (not a string)', "DEBUG");
+          return;
+        }
+        switch (dataConsumer.label) {
+        case 'chat':
+          {
+            let from = null;
+            this.peers.forEach((peer) => {
+              let res = peer.dataConsumers.has(dataConsumer.id);
+              if(res){
+                from = peer;
+              }
+            });
+            if (!from) {
+              this.log('DataConsumer "message" from unknown peer', "DEBUG");
+              break;
+            }
+            this.fire("onDataConsumerMessage", {
+              from,
+              message
+            });
+            break;
+          }
+        case 'bot':
+          {
+            this.fire("onDataConsumerMessage", {
+              from: 'bot',
+              message
+            });
+            break;
+          }
+        }
+      });
+      this.fire("addDataConsumer", {
+        id: dataConsumer.id,
+        sctpStreamParameters: dataConsumer.sctpStreamParameters,
+        label: dataConsumer.label,
+        protocol: dataConsumer.protocol
+      }, peerId);
+
+    } catch (error) {
+      this.fire("onDataConsumerError", error);
+    }
   }
 
   setRouterRtpCapabilities(message) {
@@ -1254,14 +1354,137 @@ class Room extends nodefony.Service {
   async setConsumerPriority() {}
   async requestConsumerKeyFrame() {}
 
-
   // CHAT DATA
-  async enableChatDataProducer() {}
-  async enableBotDataProducer() {}
-  async sendChatMessage(text) {}
-  async sendBotMessage(text) {}
-
-
+  async enableChatDataProducer() {
+    this.log('enableChatDataProducer()', "DEBUG");
+    if (!this.useDataChannel) {
+      return;
+    }
+    if (this.chatDataProducer) {
+      return;
+    }
+    try {
+      // Create chat DataProducer.
+      this.chatDataProducer = await this.sendTransport.produceData({
+        ordered: false,
+        maxRetransmits: 1,
+        //maxPacketLifeTime : 2000,
+        label: 'chat',
+        priority: 'medium',
+        appData: {
+          info: 'my-chat-DataProducer'
+        }
+      });
+      //this.chatDataProducer.bufferedAmountLowThreshold = 100;
+      this.fire("onDataProducer", {
+        id: this.chatDataProducer.id,
+        sctpStreamParameters: this.chatDataProducer.sctpStreamParameters,
+        label: this.chatDataProducer.label,
+        protocol: this.chatDataProducer.protocol
+      });
+      this.chatDataProducer.on('transportclose', () =>{
+				this.chatDataProducer = null;
+			});
+			this.chatDataProducer.on('open', () =>{
+				this.log('chat DataProducer "open" event');
+			});
+      this.chatDataProducer.on('close', () =>{
+				this.log('chat DataProducer "close" event',"DEBUG","chat DataProducer Event");
+        this.fire("onDataProducerClose", this.chatDataProducer);
+				this.chatDataProducer = null;
+			});
+      this.chatDataProducer.on('error', (error) => {
+				this.log(error, "ERROR", "chat DataProducer Event");
+        this.fire("onChatDataProducerError", error);
+			});
+			this.chatDataProducer.on('bufferedamountlow', () =>{
+        this.log({
+          bufferedAmountLowThreshold:this.chatDataProducer.bufferedAmountLowThreshold,
+          bufferedAmount:this.chatDataProducer.bufferedAmount
+        }, "ERROR", "chat DataProducer Event bufferedamountlow");
+			});
+      return this.chatDataProducer;
+    } catch (error) {
+      this.log(error, "ERROR", 'chat DataProducer');
+      this.fire("onChatDataProducerError", error);
+      throw error;
+    }
+  }
+  async enableBotDataProducer() {
+    this.log('enableBotDataProducer()', "DEBUG");
+    if (!this.useDataChannel) {
+      return;
+    }
+    if (this.botDataProducer) {
+      return;
+    }
+    try {
+      // Create Bot DataProducer.
+      this.botDataProducer = await this.sendTransport.produceData({
+        ordered: false,
+        maxPacketLifeTime : 2000,
+        label: 'bot',
+        priority: 'medium',
+        appData: {
+          info: 'my-bot-DataProducer'
+        }
+      });
+      this.fire("onDataProducer", {
+        id: this.botDataProducer.id,
+        sctpStreamParameters: this.botDataProducer.sctpStreamParameters,
+        label: this.botDataProducer.label,
+        protocol: this.botDataProducer.protocol
+      });
+      this.botDataProducer.on('transportclose', () =>{
+				this.botDataProducer = null;
+			});
+			this.botDataProducer.on('open', () =>{
+        console.log("open data channel")
+				this.log('Bot DataProducer "open" event');
+			});
+      this.botDataProducer.on('close', () =>{
+				this.log('Bot DataProducer "close" event');
+        this.fire("onBotDataProducerClose", this.chatDataProducer);
+				this.chatDataProducer = null;
+			});
+      this.botDataProducer.on('error', (error) => {
+				this.log(error, "ERROR", "chat DataProducer");
+        this.fire("onBotDataProducerError", error);
+			});
+			this.botDataProducer.on('bufferedamountlow', () =>{
+        this.log("bufferedamountlow", "ERROR", "Bot DataProducer");
+			});
+      return this.botDataProducer;
+    } catch (error) {
+      this.log(error, "ERROR", 'enableBotDataProducer');
+      this.fire("onBotDataProducerError", error);
+      throw error;
+    }
+  }
+  async sendChatMessage(text) {
+    this.log(text, "INFO", "sendChatMessage");
+    if (!this.chatDataProducer) {
+      return this.fire("onDataProducerError", new Error('No chat DataProducer'));
+    }
+    try {
+      this.chatDataProducer.send(text);
+    } catch (error) {
+      this.log(error, "ERROR", "DataProducer send");
+      this.fire("onDataProducerError", error);
+    }
+  }
+  async sendBotMessage(text) {
+    this.log(text, "INFO", "sendBotMessage");
+    if (!this.botDataProducer) {
+      return this.fire("onDataProducerError", new Error('No bot DataProducer'));
+    }
+    try {
+      this.botDataProducer.send(text);
+    } catch (error) {
+      this.log(error, "ERROR", "botDataProducer send");
+      this.fire("onDataProducerError", error);
+    }
+  }
 
   // stats
   async getSendTransportRemoteStats() {}

@@ -6,7 +6,7 @@ class Bots extends nodefony.Service {
     super("Bots", container);
   }
 
-  async create(router) {
+  async create(name, router) {
     // Create a DirectTransport for connecting the bot.
     const transport = await router.createDirectTransport({
       maxMessageSize: 512
@@ -14,10 +14,10 @@ class Bots extends nodefony.Service {
 
     // Create DataProducer to send messages to peers.
     const dataProducer = await transport.produceData({
-      label: this.name
+      label: name
     });
 
-    return new Bot(transport, dataProducer, this.container);
+    return new Bot(name, transport, dataProducer, this.container);
   }
 }
 

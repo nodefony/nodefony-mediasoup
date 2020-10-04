@@ -149,7 +149,7 @@ class Room extends nodefony.Service {
     this.audioLevelObserver.on('silence', () => {
       this.log(`audioLevelObserver : silence event`, "DEBUG");
       this.notifyAllPeers('activeSpeaker', {
-        peerId: null
+        peerId: producer.appData.peerId
       });
     });
   }
@@ -194,6 +194,8 @@ class Room extends nodefony.Service {
       ...this.getJoinedPeers(),
       ...this.broadcasters.values()
     ];
+    this.log(peer.rtpCapabilities ,"DEBUG", `${peer.id} rtpCapabilities`)
+    this.log(peer.sctpCapabilities ,"DEBUG", `${peer.id} sctpCapabilities`)
     // Reply now the request with the list of joined peers (all but the new one).
     const peerInfos = joinedPeers
       .filter((joinedPeer) => joinedPeer.id !== peer.id)
@@ -267,8 +269,7 @@ class Room extends nodefony.Service {
         }
       });
       // NOTE: For testing.
-      // await transport.enableTraceEvent([ 'probation', 'bwe' ]);
-      await transport.enableTraceEvent(['bwe']);
+      //await transport.enableTraceEvent(['bwe']);
       const {
         maxIncomingBitrate
       } = this.webRtcTransportOptions;
@@ -477,9 +478,63 @@ class Room extends nodefony.Service {
   }
 
   async createDataConsumer(dataConsumerPeer, dataProducerPeer, dataProducer) {
-
+    // NOTE: Don't create the DataConsumer if the remote Peer cannot consume it.
+    if (!dataConsumerPeer.sctpCapabilities) {
+      return;
+    }
+    // Must take the Transport the remote Peer is using for consuming.
+    const transport = Array.from(dataConsumerPeer.transports.values())
+      .find((t) => t.appData.consuming);
+    // This should not happen.
+    if (!transport) {
+      this.log('_createDataConsumer() | Transport for consuming not found', "WARNING");
+      return;
+    }
+    // Create the DataConsumer.
+    let dataConsumer;
+    try {
+      dataConsumer = await transport.consumeData({
+        dataProducerId: dataProducer.id
+      });
+    } catch (error) {
+      this.log('_createDataConsumer() | transport.consumeData()', "ERROR");
+      this.log(error, "ERROR")
+    }
+    // Store the DataConsumer  dataConsumerPeer  peer.
+    dataConsumerPeer.dataConsumers.set(dataConsumer.id, dataConsumer);
+    // Set DataConsumer events.
+    dataConsumer.on('transportclose', () => {
+      // Remove from its map.
+      dataConsumerPeer.dataConsumers.delete(dataConsumer.id);
+    });
+    dataConsumer.on('dataproducerclose', () => {
+      // Remove from its map.
+      dataConsumerPeer.dataConsumers.delete(dataConsumer.id);
+      dataConsumerPeer.notify(this, 'dataConsumerClosed', {
+          dataConsumerId: dataConsumer.id
+        })
+        .catch(() => {});
+    });
+    // Send a protoo request to the remote Peer with Consumer parameters.
+    try {
+      dataConsumerPeer.send(this, 'newDataConsumer', {
+        // This is null for bot DataProducer.
+        peerId: dataProducerPeer ? dataProducerPeer.id : null,
+        dataProducerId: dataProducer.id,
+        id: dataConsumer.id,
+        sctpStreamParameters: dataConsumer.sctpStreamParameters,
+        label: dataConsumer.label,
+        protocol: dataConsumer.protocol,
+        appData: dataProducer.appData
+      });
+    } catch (error) {
+      this.log('_createDataConsumer()', "WARNING");
+      this.log(error, "ERROR")
+    }
+    return dataConsumer ;
   }
 
+  // BROADCASTER
   async createBroadcaster(id, displayName, device = {}, rtpCapabilities = null) {
     if (typeof id !== 'string' || !id) {
       throw new TypeError('missing query.id');

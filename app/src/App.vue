@@ -1,11 +1,9 @@
 <template>
 <v-app id="inspire" class="main">
   <v-main>
-    <!--v-container fluid-->
     <Bar />
     <Navigation />
     <router-view />
-    <!--/v-container-->
   </v-main>
 </v-app>
 </template>
@@ -19,9 +17,7 @@ export default {
     Bar,
     Navigation
   },
-  data: () => ({
-    //
-  }),
+  data: () => ({}),
 };
 </script>
 <style>

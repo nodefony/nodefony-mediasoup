@@ -11,29 +11,64 @@ class Peer extends nodefony.Service{
     this.mediasoup = mediasoup;
     this.consumers = [];
     this.producers = [];
-    this.dataConsumers = [];
+    this.dataConsumers = new Map();
   }
 
   hasProducer(id){
-
+    let prod = this.producers.find((producer) => {
+      if (producer.id === id) {
+        return producer;
+      }
+    });
+    if (prod) {
+      return prod;
+    }
+    return null ;
   }
 
   addProducer(producer) {
     this.producers.push(producer);
   }
 
-  deleteProducer(producer){
-    console.log("todo deleteProducer")
+  deleteProducer(id){
+    let res = this.producers.findIndex((producer) => {
+      return producer.id === id;
+    });
+    if (res !== -1) {
+      this.log(`remove Producer : ${id}`)
+      this.producers.splice(res, 1);
+    }
+  }
+
+  hasConsumer(id){
+    let cons = this.consumers.find((consumer) => {
+      if (consumer.id === id) {
+        return consumer
+      }
+    });
+    if (cons) {
+      return cons;
+    }
+    return null ;
   }
 
   addConsumer(consumer) {
     this.consumers.push(consumer);
   }
+  deleteConsumer(id){
+    let res = this.consumers.findIndex((consumer) => {
+      return consumer.id === consumer;
+    });
+    if (res !== -1) {
+      this.log(`remove Consumer : ${id}`)
+      this.consumers.splice(res, 1);
+    }
+  }
 
   close(){
     this.consumers.length = 0;
     this.producers.length = 0;
-    this.dataConsumers.length = 0;
+    delete this.dataConsumers;
   }
 }
 

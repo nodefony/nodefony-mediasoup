@@ -123,8 +123,11 @@ class Mediasoup extends nodefony.Service {
         case "produce":
           this.fire("produce", message, this);
           break;
-        case "producedata":
-          this.fire("producedata", message, this);
+        case "produceData":
+          this.fire("produceData", message, this);
+          break;
+        case "newDataConsumer":
+          this.fire("newDataConsumer", message, this);
           break;
         case "newConsumer":
           this.fire("newConsumer", message, this);

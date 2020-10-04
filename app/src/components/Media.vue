@@ -1,5 +1,5 @@
 <template>
-<v-card class="peer" :max-width="maxWidth" :max-height="maxHeight" :min-width="minWidth" :min-height="minHeight">
+<v-card class="d-flex flex-wrap" :max-width="maxWidth" :max-height="maxHeight" :min-width="minWidth" :min-height="minHeight">
 
   <v-system-bar color="indigo darken-2" dark>
     <h5>{{this.name}}</h5>
@@ -7,10 +7,10 @@
     <v-icon v-if="mdRoom && mdRoom.connected" @click="minimize">
       mdi-window-minimize
     </v-icon>
-    <v-icon v-if="mdRoom && mdRoom.connected" @click="maximize">
+    <v-icon v-if="mdRoom && mdRoom.connected && ! isMe" @click="maximize">
       mdi-window-maximize
     </v-icon>
-    <v-icon name="close" @click="close"> mdi-close</v-icon>
+    <v-icon v-if="isMe" name="close" @click="close"> mdi-close</v-icon>
   </v-system-bar>
 
   <v-expand-transition>
@@ -26,19 +26,25 @@
           </div>
           <audio playsinline :controls="false" style="display:none" :muted="isMe" ref="audio">
           </audio>
-          <v-btn v-if="mdRoom && mdRoom.connected" small :loading="loadingAudio" :disabled="loadingAudio" color="blue-grey" class="ma-2 white--text buttons" fab @click="audioButton">
-            <v-icon v-if="this.audio">mdi-volume-high</v-icon>
-            <v-icon v-else dark>mdi-volume-off</v-icon>
+          <v-btn v-if="mdRoom && mdRoom.connected" small :disabled="false" color="blue-grey" class="ma-2 white--text buttons" fab>
+            <div v-if="this.audio">
+              <v-icon v-if="this.volume < -50 && this.volume >= -100">mdi-volume-low</v-icon>
+              <v-icon v-if="this.volume >= -50 && this.volume <= -25">mdi-volume-medium</v-icon>
+              <v-icon v-if="this.volume > -25 ">mdi-volume-high</v-icon>
+            </div>
+            <div v-else>
+              <v-icon dark>mdi-volume-off</v-icon>
+            </div>
           </v-btn>
         </div>
       </v-container>
 
       <v-card-actions>
-        <v-btn v-if="mdRoom && mdRoom.connected" small :loading="loadingVideo" :disabled="loadingVideo" color="blue-grey" class="ma-2 white--text" fab @click="videoButton">
+        <v-btn v-if="mdRoom && mdRoom.connected && isMe" small :loading="loadingVideo" :disabled="loadingVideo" color="blue-grey" class="ma-2 white--text" fab @click="videoButton">
           <v-icon v-if="this.video">mdi-video-box</v-icon>
           <v-icon v-else dark>mdi-video-box-off</v-icon>
         </v-btn>
-        <v-btn v-if="mdRoom && mdRoom.connected" small :loading="loadingAudio" :disabled="loadingAudio" color="blue-grey" class="ma-2 white--text" fab @click="audioButton">
+        <v-btn v-if="mdRoom && mdRoom.connected && isMe" small :loading="loadingAudio" :disabled="loadingAudio" color="blue-grey" class="ma-2 white--text" fab @click="audioButton">
           <v-icon v-if="this.audio">mdi-volume-high</v-icon>
           <v-icon v-else dark>mdi-volume-off</v-icon>
         </v-btn>
@@ -47,7 +53,7 @@
           <v-icon v-else dark>mdi-monitor-off</v-icon>
         </v-btn>
         <v-spacer></v-spacer>
-        <v-btn v-if="mdRoom && mdRoom.connected" icon @click="expendMenu">
+        <v-btn v-if="mdRoom && mdRoom.connected && !isMe" icon @click="expendMenu">
           <v-icon>{{ showExpend ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
         </v-btn>
       </v-card-actions>
@@ -79,9 +85,11 @@
   </v-expand-transition>
 
   <v-expand-transition>
-    <div v-show="showExpend">
-      <Message />
-    </div>
+    <v-card-text>
+      <div v-show="showExpend" style="height:300px">
+        <Message id="scroll-target" :peer="mdPeer" />
+      </div>
+    </v-card-text>
   </v-expand-transition>
 </v-card>
 </template>
@@ -124,11 +132,11 @@ export default {
     },
     maxWidth: {
       type: [String, Number],
-      default: 600
+      default: ""
     },
     maxHeight: {
       type: [String, Number],
-      default: 800
+      default: ""
     },
     minHeight: {
       type: [String, Number],
@@ -155,9 +163,15 @@ export default {
     audio: true,
     video: true,
     screen: false,
-    closed: false
+    closed: false,
+    volume: 0
   }),
-  mounted() {},
+  mounted() {
+    this.mdRoom.on("activeSpeaker", (peerId, volume) => {
+      console.log(`${peerId} volume : ${volume}`);
+      this.volume = volume || 0
+    });
+  },
   computed: {},
   destroyed() {
     this.mdRoom = null;
@@ -166,6 +180,9 @@ export default {
     this.stopVideoStream();
   },
   methods: {
+    onScroll(e) {
+      this.offsetTop = e.target.scrollTop
+    },
     addProducer(producer) {
       return this.addTracks(producer.track);
     },
@@ -184,7 +201,7 @@ export default {
       tag.srcObject = this.audioStream;
       this.audioStream.addTrack(track);
       if (this.isMe) {
-        this.muteTag();
+        this.muteTag(true);
       }
       return tag;
     },
@@ -307,7 +324,6 @@ export default {
     },
     async audioButton() {
       // tag
-
       if (this.audio) {
         if (this.isMe) {
           await this.room.muteMic()
@@ -332,13 +348,16 @@ export default {
           this.screen = true;
         })
     },
-    muteTag() {
+    muteTag(first) {
       let tag = this.$refs["audio"];
       this.log(`Mute audio tag isme = ${this.isMe}`);
-      tag.muted = true;
       if (this.isMe) {
+        if (!first) {
+          this.audio = false;
+        }
         return;
       }
+      tag.muted = true;
       this.audio = false;
     },
     demuteTag() {
@@ -360,10 +379,12 @@ export default {
       return this.$emit('close', response);
     },
     minimize() {
-      return this.isMinimize = !this.isMinimize;
+      this.isMinimize = !this.isMinimize;
+      this.$emit('minimize', this.isMinimize, this);
     },
     maximize() {
-      return this.isMaximize = !this.isMaximize;
+      this.isMaximize = !this.isMaximize;
+      this.$emit('maximize', this.isMaximize, this);
     },
     expendMenu() {
       return this.showExpend = !this.showExpend;
@@ -374,11 +395,6 @@ export default {
 </script>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.peer {
-  /*width: 400px;
-  height: 300px;*/
-}
-
 .media-content {
   position: relative
 }
@@ -396,5 +412,15 @@ export default {
   top: 0;
   right: 0;
   bottom: 0;
+}
+
+.v-card {
+  display: flex !important;
+  flex-direction: column;
+}
+
+.v-card__text {
+  flex-grow: 1;
+  overflow: auto;
 }
 </style>

@@ -6,6 +6,7 @@ import vuetify from './plugins/vuetify';
 import i18n from './i18n'
 import nodefony from '@/plugins/nodefony/nodefony'
 import mediasoup from '@/plugins/mediasoup/mediasoup'
+import './registerServiceWorker'
 
 Vue.config.productionTip = false
 
