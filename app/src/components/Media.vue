@@ -164,12 +164,12 @@ export default {
     video: true,
     screen: false,
     closed: false,
-    volume: 0
+    volume: -100
   }),
   mounted() {
     this.mdRoom.on("activeSpeaker", (peerId, volume) => {
-      console.log(`${peerId} volume : ${volume}`);
-      this.volume = volume || 0
+      this.log(`${peerId} volume : ${volume}`, "DEBUG");
+      this.volume = volume || -100
     });
   },
   computed: {},

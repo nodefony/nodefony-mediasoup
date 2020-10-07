@@ -39,9 +39,7 @@
             <Media max-width="100%" v-show="peer && joined" :name="peer.id" class="mt-5" :isMe="true" :ref="peer.id" :room="room" :peer="peer" :key="peer.id" v-on:close="quit" />
           </v-tab-item>
           <v-tab-item key="message">
-            <v-card-text>Content for tab message would go here</v-card-text>
             <Message :room="room" :peer="peer" />
-
           </v-tab-item>
           <v-tab-item key="stats">
             <v-card-text>Content for tab stats would go here</v-card-text>
