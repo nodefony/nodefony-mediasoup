@@ -290,6 +290,10 @@ export default {
       this.room.on("ready", () => {
         this.log("room ready", "DEBUG");
       });
+      this.room.on("closeRoom", () => {
+        this.joined = false;
+        return  this.leaveRoom();
+      });
       this.room.on("newPeer", (peer) => {
         this.log(`New Peer : ${peer.id}`)
         this.peers.push(peer);

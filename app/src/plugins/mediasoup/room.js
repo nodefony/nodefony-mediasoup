@@ -152,6 +152,7 @@ class Room extends nodefony.Service {
     this.mediasoup.on("closeSock", () => {
       this.connected = false;
       this.closed = true;
+      return this.fire("closeRoom",  this);
     });
     this.mediasoup.on("routerRtpCapabilities", async (message) => {
       this.log(`Event : routerRtpCapabilities `, "DEBUG");
@@ -750,8 +751,7 @@ class Room extends nodefony.Service {
         if (message instanceof ArrayBuffer) {
           const view = new DataView(message);
           const number = view.getUint32();
-          this.log(number, "INFO", "DataConsumer ArrayBuffer")
-
+          this.log(number, "INFO", "DataConsumer ArrayBuffer");
         } else if (typeof message !== 'string') {
           this.log('ignoring DataConsumer "message" (not a string)', "DEBUG");
           return;

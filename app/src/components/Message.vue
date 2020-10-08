@@ -1,91 +1,69 @@
 <template>
-<v-container style="max-width: 600px;">
-  <v-timeline dense clipped>
-    <v-timeline-item fill-dot class="white--text mb-12" color="orange" large>
-      <template v-slot:icon>
-        <span>{{mdPeer.id}}</span>
+<!--v-container style="max-width: 600px;"-->
+<v-timeline dense clipped>
+  <v-timeline-item fill-dot class="white--text mb-12" color="orange" large>
+    <template v-slot:icon>
+      <span>{{mdPeer.id}}</span>
+    </template>
+
+    <v-textarea v-model="input" @keydown.enter="dragdrop" @paste="dragdrop" @dragstart="dragdrop" @dragenter="dragdrop" @dragleave="dragdrop" @dragover="dragdrop" @drop.prevent.stop="dragdrop" label="Leave a comment.." auto-grow outlined rows="3"
+      row-height="30" shaped>
+      <template v-slot:append>
+        <v-btn class="mx-0" depressed @click="dragdrop">
+          Post
+        </v-btn>
       </template>
-      <v-text-field v-model="input" hide-details flat label="Leave a comment..." solo @keydown.enter="dragdrop" @paste="dragdrop" @dragstart="dragdrop" @dragenter="dragdrop" @dragleave="dragdrop" @dragover="dragdrop" @drop.prevent.stop="dragdrop">
-        <template v-slot:append>
-          <v-btn class="mx-0" depressed @click="dragdrop">
-            Post
-          </v-btn>
-        </template>
-      </v-text-field>
-    </v-timeline-item>
+    </v-textarea>
+  </v-timeline-item>
 
-    <v-slide-x-transition group>
-      <v-timeline-item v-for="event in timeline" :key="event.id" class="mb-4" color="orange" large>
-        <template v-slot:icon>
-          <span v-text="event.from"></span>
-        </template>
-        <v-row justify="space-between">
-          <v-col cols="7" v-if="event.html" v-html="event.html"></v-col>
-          <v-col cols="7" v-else-if="event.url" v-html="event.url"></v-col>
-          <v-col cols="7" v-else-if="event.uri" v-html="event.uri"></v-col>
-          <v-col cols="7" v-else-if="event.text" v-text="event.text"></v-col>
-          <v-col class="text-right" cols="5" v-text="event.formatTime"></v-col>
-        </v-row>
-      </v-timeline-item>
-    </v-slide-x-transition>
+  <v-slide-x-transition group>
 
-    <!--v-timeline-item class="mb-6" hide-dot>
-      <span>TODAY</span>
-    </v-timeline-item>
-
-    <v-timeline-item class="mb-4" color="grey" icon-color="grey lighten-2" small>
+    <v-timeline-item v-for="event in timeline" :key="event.id" class="mb-4" color="orange" large>
+      <template v-slot:icon>
+        <span v-text="event.from"></span>
+      </template>
       <v-row justify="space-between">
-        <v-col cols="7">This order was archived.</v-col>
-        <v-col class="text-right" cols="5">15:26 EDT</v-col>
+        <v-col cols="7" v-if="event.html" v-html="event.html"></v-col>
+        <v-col cols="7" v-else-if="event.url" v-html="event.url"></v-col>
+        <v-col cols="7" v-else-if="event.uri" v-html="event.uri"></v-col>
+        <v-col cols="7" v-else-if="event.text" v-text="event.text"></v-col>
+        <v-col cols="7" v-else-if="event.files && event.files[0]" v-text="event.files[0]"></v-col>
+        <v-col class="text-right" cols="5" v-text="event.formatTime"></v-col>
+
       </v-row>
     </v-timeline-item>
-
-    <v-timeline-item class="mb-4" small>
-      <v-row justify="space-between">
-        <v-col cols="7">
-          <v-chip class="white--text ml-0" color="purple" label small>
-            APP
-          </v-chip>
-          Digital Downloads fulfilled 1 item.
-        </v-col>
-        <v-col class="text-right" cols="5">15:25 EDT</v-col>
-      </v-row>
-    </v-timeline-item>
-
-    <v-timeline-item class="mb-4" color="grey" small>
-      <v-row justify="space-between">
-        <v-col cols="7">
-          Order confirmation email was sent to John Leider (john@vuetifyjs.com).
-        </v-col>
-        <v-col class="text-right" cols="5">15:25 EDT</v-col>
-      </v-row>
-    </v-timeline-item>
-
-    <v-timeline-item class="mb-4" hide-dot>
-      <v-btn class="mx-0" color="white">
-        Resend Email
-      </v-btn>
-    </v-timeline-item>
-
-    <v-timeline-item class="mb-4" color="grey" small>
-      <v-row justify="space-between">
-        <v-col cols="7">
-          A $15.00 USD payment was processed on PayPal Express Checkout
-        </v-col>
-        <v-col class="text-right" cols="5">15:25 EDT</v-col>
-      </v-row>
-    </v-timeline-item>
-
-    <v-timeline-item color="grey" small>
-      <v-row justify="space-between">
-        <v-col cols="7">
-          John Leider placed this order on Online Store (checkout #1937432132572).
-        </v-col>
-        <v-col class="text-right" cols="5">15:25 EDT</v-col>
-      </v-row>
-    </v-timeline-item-->
-  </v-timeline>
-</v-container>
+  </v-slide-x-transition>
+  <v-dialog
+    v-model="dialog"
+    persistent
+    max-width="290"
+  >
+    <v-card>
+      <v-card-title class="headline">
+        File ?
+      </v-card-title>
+      <v-card-text></v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+          color="green darken-1"
+          text
+          @click="disagree"
+        >
+          Disagree
+        </v-btn>
+        <v-btn
+          color="green darken-1"
+          text
+          @click="agree"
+        >
+          Agree
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+</v-timeline>
+<!--/v-container-->
 </template>
 <script>
 export default {
@@ -93,10 +71,11 @@ export default {
   data: (vm) => ({
     events: [],
     input: null,
-    data:null,
+    data: null,
     nonce: 0,
     mdRoom: vm.room,
-    mdPeer: vm.peer
+    mdPeer: vm.peer,
+    dialog:false
   }),
   props: {
     room: {
@@ -110,7 +89,11 @@ export default {
   },
   mounted() {
     if (this.mdRoom) {
-      this.room.on("onDataConsumerMessage", (message) => {
+      this.room.on("onDataConsumerMessage", async (message) => {
+        if (message.message instanceof ArrayBuffer) {
+          let file = await this.previewFile(new Blob([message.message]));
+          return this.comment(message.from, file)
+        }
         let data = JSON.parse(message.message);
         return this.comment(message.from, data)
       });
@@ -124,6 +107,41 @@ export default {
     },
   },
   methods: {
+    agree(){
+      this.dialog =  false;
+      window.open(this.data);
+      this.data = null;
+    },
+    disagree(){
+      this.dialog =  false;
+      this.data = null;
+    },
+    async convertFile(file){
+      return new Promise((resolve, reject) => {
+        try {
+          let reader = new FileReader()
+          reader.readAsArrayBuffer(file)
+          reader.onloadend = () => {
+            return resolve(reader)
+          }
+        } catch (e) {
+          return reject(e);
+        }
+      });
+    },
+    async previewFile(file) {
+      return new Promise((resolve, reject) => {
+        try {
+          let reader = new FileReader()
+          reader.readAsDataURL(file);
+          reader.onloadend = () => {
+            return resolve(reader)
+          }
+        } catch (e) {
+          return reject(e);
+        }
+      });
+    },
     async entryParser(value, ogp) {
       let regUrl = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/
       if (ogp) {
@@ -149,7 +167,7 @@ export default {
         }
       }
       let data = {
-        time: (new Date()).toTimeString(),
+        time: Date.now(),
         text: "",
         html: "",
         ogp: null
@@ -161,11 +179,34 @@ export default {
             data.html = value.getData("text/html");
             data.url = value.getData("URL");
             data.uri = value.getData("text/uri-list");
+            data.files = [];
+            data.items = [];
             if (data.url) {
               data.ogp = await this.entryParser(data.url, true);
             }
             if (data.text) {
               data.ogp = await this.entryParser(data.text, true);
+            }
+            //console.log(value.files)
+            //console.log(value.items)
+            if (value.items.length) {
+              for (let i = 0; i < value.items.length; i++) {
+                data.items.push(value.items[i])
+                if (value.items[i].kind === 'file') {
+                  let file = value.items[i].getAsFile();
+                  if (file) {
+                    //data.files.push(file);
+                    let reader = await this.convertFile(file);
+                    data.files.push(reader.result);
+                    return reader.result
+                  }
+                }
+              }
+            } else {
+              // Use DataTransfer interface to access the file(s)
+              for (let i = 0; i < value.files.length; i++) {
+                data.files.push(value.files[i])
+              }
             }
             break;
           }
@@ -186,16 +227,16 @@ export default {
         case "click":
         case "keydown":
           {
-            if ( this.data){
-              return this.post(this.comment(this.mdPeer, this.data) );
+            if (this.data) {
+              return this.post(this.comment(this.mdPeer, this.data));
             }
             let data = await this.entryParser(this.input);
-            return this.post(this.comment(this.mdPeer, data) );
+            return this.post(this.comment(this.mdPeer, data));
           }
         case "paste":
           {
             this.data = await this.entryParser(event.clipboardData);
-            //this.input = data;
+            this.input = this.data.text || this.data.html;
             break;
           }
         case "dragstart":
@@ -215,7 +256,7 @@ export default {
           {
             try {
               let data = await this.entryParser(event.dataTransfer);
-              this.post(this.comment(this.mdPeer, data) );
+              this.post(this.comment(this.mdPeer, data));
             } catch (e) {
               this.log(e, "ERROR");
               throw e;
@@ -227,18 +268,43 @@ export default {
       }
     },
     post(data, protocol) {
+      if (!data){
+        return
+      }
+      if (data.buffer){
+        this.mdRoom.sendChatMessage(data.buffer);
+      }
       if (this.mdRoom) {
         this.mdRoom.sendChatMessage(JSON.stringify(data));
       }
     },
     comment(from, data) {
+      switch(true) {
+        case (data instanceof window.Blob):
+        case (data instanceof window.ArrayBuffer):
+        {
+          return {
+            buffer:data
+          };
+        }
+        case (data instanceof window.FileReader):
+        {
+          this.dialog = true;
+          this.events.push({
+            from:from.id
+          })
+          this.data = data.result;
+          return "dddddddd";
+          //window.open(data.result)
+        }
+      }
       let time = null;
       if (data && data.time) {
         time = data.time;
       } else {
-        time = (new Date()).toTimeString();
+        time = Date.now();
       }
-      const formatTime = time.replace(/:\d{2}\sGMT-\d{4}\s\((.*)\)/, (match, contents, offset) => {
+      const formatTime = new Date(time).toTimeString().replace(/:\d{2}\sGMT-\d{4}\s\((.*)\)/, (match, contents, offset) => {
         return ` ${contents.split(' ').map(v => v.charAt(0)).join('')}`
       })
       data.from = from.id;
