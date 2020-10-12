@@ -23,7 +23,32 @@
         <span v-text="event.from"></span>
       </template>
       <v-row justify="space-between">
-        <v-col cols="7" v-if="event.html" v-html="event.html"></v-col>
+
+        <v-card v-if="event.ogp">
+          <div class="d-flex flex-no-wrap justify-space-between">
+            <div>
+              <v-card-title class="headline" v-if="event.ogp['og:title']" v-text="event.ogp['og:title'][0] ">
+              </v-card-title>
+              <v-card-subtitle v-if="event.ogp['og:site_name']" v-text="event.ogp['og:site_name'][0]">
+              </v-card-subtitle>
+              <v-card-text v-if="event.ogp['og:description']">
+                {{ event.ogp['og:description'][0] }}
+              </v-card-text>
+              <v-card-actions v-if="event.ogp['og:url']">
+                <v-btn outlined rounded text link :src="event.ogp['og:url'][0]">
+                  {{ event.ogp['og:site_name'][0]}}
+                </v-btn>
+              </v-card-actions>
+            </div>
+            <v-avatar v-if="event.ogp['og:video']" class="ma-3" size="125" tile>
+              <video controls v-if="event.ogp['og:video']" :src=" event.ogp['og:video'][0]" />
+            </v-avatar>
+            <v-avatar v-else-if="event.ogp['og:image']" class="ma-3" size="125" tile>
+              <v-img :src="event.ogp['og:image'][0]"></v-img>
+            </v-avatar>
+          </div>
+        </v-card>
+        <v-col cols="7" v-else-if="event.html" v-html="event.html"></v-col>
         <v-col cols="7" v-else-if="event.url" v-html="event.url"></v-col>
         <v-col cols="7" v-else-if="event.uri" v-html="event.uri"></v-col>
         <v-col cols="7" v-else-if="event.text" v-text="event.text"></v-col>
@@ -33,11 +58,7 @@
       </v-row>
     </v-timeline-item>
   </v-slide-x-transition>
-  <v-dialog
-    v-model="dialog"
-    persistent
-    max-width="290"
-  >
+  <v-dialog v-model="dialog" persistent max-width="290">
     <v-card>
       <v-card-title class="headline">
         File ?
@@ -45,18 +66,10 @@
       <v-card-text></v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn
-          color="green darken-1"
-          text
-          @click="disagree"
-        >
+        <v-btn color="green darken-1" text @click="disagree">
           Disagree
         </v-btn>
-        <v-btn
-          color="green darken-1"
-          text
-          @click="agree"
-        >
+        <v-btn color="green darken-1" text @click="agree">
           Agree
         </v-btn>
       </v-card-actions>
@@ -66,6 +79,7 @@
 <!--/v-container-->
 </template>
 <script>
+import urlRegex from 'url-regex';
 export default {
   name: 'media-message',
   data: (vm) => ({
@@ -75,7 +89,7 @@ export default {
     nonce: 0,
     mdRoom: vm.room,
     mdPeer: vm.peer,
-    dialog:false
+    dialog: false
   }),
   props: {
     room: {
@@ -107,16 +121,16 @@ export default {
     },
   },
   methods: {
-    agree(){
-      this.dialog =  false;
+    agree() {
+      this.dialog = false;
       window.open(this.data);
       this.data = null;
     },
-    disagree(){
-      this.dialog =  false;
+    disagree() {
+      this.dialog = false;
       this.data = null;
     },
-    async convertFile(file){
+    async convertFile(file) {
       return new Promise((resolve, reject) => {
         try {
           let reader = new FileReader()
@@ -142,40 +156,45 @@ export default {
         }
       });
     },
-    async entryParser(value, ogp) {
-      let regUrl = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/
+    async entryParser(value, ogp = false) {
+
+      let regUrl = urlRegex({
+        exact: true,
+        strict: false
+      });
+      this.log(`try ogp ==> ${ogp} Is Url ? ${value}  ====>  ${regUrl.test(value)}`);
+      //let regUrl = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/
       if (ogp) {
         if (regUrl.test(value)) {
           const headers = new Headers();
           headers.append("Content-Type", "application/json");
-          let res = await window.fetch(`/service/ogp`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              url: value
+          return window.fetch(`/service/ogp`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                url: value
+              })
+            }).then(async (response) => {
+              let res = await response.json();
+              return res.ogp || null;
             })
-          }).then((response) => {
-            return response.json();
-          })
-
-          if (res) {
-            return res
-          }
-          return null;
+            .catch(() => {
+              return null;
+            })
         } else {
           return null;
         }
       }
       let data = {
         time: Date.now(),
-        text: "",
+        text: value,
         html: "",
         ogp: null
       }
       switch (true) {
         case (value instanceof window.DataTransfer):
           {
-            data.text = value.getData("text");
+            data.text = value.getData("text") || data.text;
             data.html = value.getData("text/html");
             data.url = value.getData("URL");
             data.uri = value.getData("text/uri-list");
@@ -268,10 +287,10 @@ export default {
       }
     },
     post(data, protocol) {
-      if (!data){
+      if (!data) {
         return
       }
-      if (data.buffer){
+      if (data.buffer) {
         this.mdRoom.sendChatMessage(data.buffer);
       }
       if (this.mdRoom) {
@@ -279,24 +298,24 @@ export default {
       }
     },
     comment(from, data) {
-      switch(true) {
+      switch (true) {
         case (data instanceof window.Blob):
         case (data instanceof window.ArrayBuffer):
-        {
-          return {
-            buffer:data
-          };
-        }
+          {
+            return {
+              buffer: data
+            };
+          }
         case (data instanceof window.FileReader):
-        {
-          this.dialog = true;
-          this.events.push({
-            from:from.id
-          })
-          this.data = data.result;
-          return "dddddddd";
-          //window.open(data.result)
-        }
+          {
+            this.dialog = true;
+            this.events.push({
+              from: from.id
+            })
+            this.data = data.result;
+            return "dddddddd";
+            //window.open(data.result)
+          }
       }
       let time = null;
       if (data && data.time) {
@@ -310,14 +329,6 @@ export default {
       data.from = from.id;
       data.formatTime = formatTime;
       data.id = this.nonce++;
-      /*let mypost = {
-        from: from.id,
-        id: this.nonce++,
-        text: data.html ? "" : data.text,
-        html: data.html ? data.html : "",
-        formatTime: formatTime,
-        time: time
-      };*/
       this.events.push(data)
       delete data.formatTime;
       this.input = null;

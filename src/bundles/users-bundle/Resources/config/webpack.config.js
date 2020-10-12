@@ -42,7 +42,8 @@ module.exports = merge(config, {
   },
   externals: {},
   resolve: {
-    extensions: ['.js', '.json', '.jsx', '.css', '.mjs']
+    extensions: ['.js', '.json', '.jsx', '.css', '.mjs'],
+    fallback: { "path": false }
   },
   module: {
     rules: [{
