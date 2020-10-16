@@ -39,11 +39,11 @@
     "pm2": "^4.5.0",
     "pm2-logrotate": "^2.7.0",
     "sequelize": "^6.3.5",
-    "webpack": "^5.0.0",
+    "webpack": "^5.1.2",
     "webpack-dev-server": "^3.11.0"
   },
   "devDependencies": {
-    "node-gyp": "^7.1.0",
+    "node-gyp": "^7.1.1",
     "node-pre-gyp": "^0.15.0"
   },
   "author": "Christophe CAMENSULI <ccamensuli@gmail.com>",
