@@ -6,9 +6,13 @@ import {
   USER_PROFILE
 } from '../actions/user'
 
+
 import {
-  api as Api
-} from 'nodefony'
+  Api as baseApi
+} from 'nodefony-client';
+const Api = new baseApi("mediasoup","/api/users",{
+});
+
 /*import {
   api as Api
 } from '@/../../../nodefony-core/src/nodefony'*/
@@ -60,6 +64,7 @@ const actions = {
     commit(USER_LOADING)
     return Api.http(url)
       .then(resp => {
+        console.log(resp)
         commit(USER_SUCCESS, resp)
         commit(USER_PROFILE, resp.result)
         return resp

@@ -1,4 +1,4 @@
-import nodefony from 'nodefony';
+import nodefony from 'nodefony-client';
 import * as mediasoupClient from 'mediasoup-client';
 
 const defaultOptions = {

@@ -8,16 +8,15 @@ import {
 import {
   // USER_REQUEST,
   USER_PROFILE
-} from '../actions/user'
+} from '../actions/user';
 
 
 import {
-  api as Api
-} from 'nodefony'
-/*import {
-  api as Api
-} from '@/../../../nodefony-core/src/nodefony'*/
+  Api as baseApi
+} from 'nodefony-client';
+const Api = new baseApi("mediasoup","/api/jwt",{
 
+});
 
 const state = {
   token: Api.token,
@@ -25,7 +24,7 @@ const state = {
   status: '',
   loading: false,
   decodedToken: null
-}
+};
 
 const getters = {
   getUser: state => state.username,
@@ -48,9 +47,9 @@ const actions = {
       Api.clearToken();
       return Api.login(url, username, password)
         .then(async response => {
-          commit(AUTH_SUCCESS, response.data.result)
-          commit(USER_PROFILE, response.data.result.user)
-          return resolve(response.data.result)
+          commit(AUTH_SUCCESS, response.result)
+          commit(USER_PROFILE, response.result.user)
+          return resolve(response.result)
         })
         .catch(err => {
           commit(AUTH_ERROR, err)
@@ -63,7 +62,7 @@ const actions = {
     dispatch
   }) => {
     return new Promise((resolve, reject) => {
-      return Api.logout('/api/jwt/logout')
+      return Api.logout('logout')
         .then(resp => {
           commit(AUTH_LOGOUT)
           return resolve(resp)

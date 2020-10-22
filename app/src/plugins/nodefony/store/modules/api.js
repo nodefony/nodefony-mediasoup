@@ -2,14 +2,14 @@ import {
   API_REQUEST,
   API_ERROR,
   API_REQUEST_END
-} from '../actions/api'
+} from '../actions/api';
 
 import {
-  api as Api
-} from 'nodefony'
-/*import {
-  api as Api
-} from '@/../../../nodefony-core/src/nodefony'*/
+   Api as baseApi
+} from 'nodefony-client';
+const Api = new baseApi("mediasoup","/api/mediasoup",{
+
+});
 
 const state = {
   loading: false,

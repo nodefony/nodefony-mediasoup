@@ -29,3 +29,6 @@ config/certificates/**/*
 /.project
 /.settings
 /nbproject/private/
+
+
+yarn.lock
