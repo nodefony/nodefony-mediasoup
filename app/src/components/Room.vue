@@ -261,10 +261,13 @@ export default {
             url: "/room/api/secure",
             method: "post",
             options: {
-              data: {
+              body: JSON.stringify({
                 room: this.room,
                 user: this.peerid,
                 password: this.password
+              }),
+              headers: {
+                'Content-Type': 'application/json'
               }
             }
           })
