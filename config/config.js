@@ -51,7 +51,6 @@ if (process.env && process.env.NODE_ENV === "production") {
 module.exports = {
   system: {
     domain: "127.0.0.1",
-    //domain: "192.168.0.51",
     domainAlias: [
       "^localhost$",
       "^mediasoup.nodefony.com$"

@@ -7,8 +7,8 @@ import deviceInfo from './deviceInfo.js';
 
 class Mediasoup extends nodefony.Service {
 
-  constructor(settings) {
-    super('Mediasoup', null, null, settings);
+  constructor(settings, service) {
+    super('Mediasoup', service.container, null, settings);
     this.version = mediasoupClient.version;
     this.room = null;
     this.peer = null;
@@ -183,7 +183,6 @@ class Mediasoup extends nodefony.Service {
   async join() {
     return await this.room.join();
   }
-
 }
 
-export default new Mediasoup(process.env);
+export default new Mediasoup(process.env, nodefony.kernel);

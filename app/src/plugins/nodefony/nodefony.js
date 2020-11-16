@@ -5,20 +5,29 @@ import webaudio from "nodefony-client/dist/webaudio";
 webaudio(nodefony);
 import socket from "nodefony-client/dist/socket";
 socket(nodefony);
+import sip from "nodefony-client/dist/sip";
+sip(nodefony);
+//nodefony.showBanner();
 
 import snackBar from './notify/snackbar';
 import alert from './notify/alert';
 
-class Nodefony extends nodefony.Service {
-  constructor(settings) {
-    super('app', null, null, settings);
-    this.initSyslog();
-    this.set("kernel", this);
-    this.debug = this.options.VUE_APP_DEBUG;
-    this.environment = this.options.VUE_APP_NODE_ENV;
+class Nodefony extends nodefony.Kernel {
+  constructor(name, settings) {
+    if(typeof settings.VUE_APP_DEBUG === "string"){
+      if (settings.VUE_APP_DEBUG === "false"){
+        settings.VUE_APP_DEBUG = false;
+      }
+      if (settings.VUE_APP_DEBUG === "true"){
+        settings.VUE_APP_DEBUG = true;
+      }
+    }
+    settings.environment = settings.VUE_APP_NODE_ENV;
+    settings.debug = settings.VUE_APP_DEBUG ;
+    settings.version = nodefony.version;
+    super(name, settings);
     this.vueVersion = this.options.VUE_APP_VUE_VERSION;
     this.vuetifyVersion = this.options.VUE_APP_VUETIFY_VERSION;
-    this.version = nodefony.version;
     this.domain = this.options.VUE_APP_DOMAIN;
   }
 
@@ -38,29 +47,6 @@ class Nodefony extends nodefony.Service {
     };
     this.log(`Add Plugin nodefony : ${this.version}`, "INFO");
     this.log(`Nodefony Domain : ${this.domain}`);
-  }
-
-  initSyslog(options = null) {
-    const defaultOptions = {
-      severity: {
-        operator: '<=',
-        data: '7'
-      }
-    };
-    return this.syslog.listenWithConditions(this, options || defaultOptions,
-      (pdu) => {
-        this.parse(pdu);
-        const message = pdu.payload;
-        const date = new Date(pdu.timeStamp);
-        let wrapper = nodefony.Service.logSeverity(pdu.severityName, typeof message);
-        if (typeof message === "object") {
-          wrapper(`${date.toDateString()} ${date.toLocaleTimeString()} ${pdu.severityName} ${pdu.msgid} :`);
-          console.dir(message);
-          return pdu;
-        }
-        wrapper(`${date.toDateString()} ${date.toLocaleTimeString()} ${pdu.severityName} ${pdu.msgid} : ${message}`);
-        return pdu;
-      });
   }
 
   parse(pdu, element) {
@@ -126,7 +112,6 @@ class Nodefony extends nodefony.Service {
   }
 
 }
-nodefony.kernel = new Nodefony(process.env);
-
+nodefony.kernel = new Nodefony("KERNEL",process.env);
 
 export default nodefony.kernel;

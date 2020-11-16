@@ -13,11 +13,11 @@
   ],
   "repository": {},
   "dependencies": {
-    "mediasoup": "^3.6.22"
+    "mediasoup": "^3.6.25"
   },
   "devDependencies": {
     "node-gyp": "^7.1.1",
-    "node-pre-gyp": "^0.15.0"
+    "node-pre-gyp": "^0.16.0"
   },
   "license": "",
   "readmeFilename": "README.md",
