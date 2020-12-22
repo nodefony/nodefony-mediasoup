@@ -3,42 +3,31 @@ import Vuex from 'vuex'
 
 Vue.use(Vuex)
 
+// nodefony store
 import user from '../plugins/nodefony/store/modules/user'
 import auth from '../plugins/nodefony/store/modules/auth'
-import api from '../plugins/nodefony/store/modules/api'
 
-
+// mediasoup store
 import mediasoup from '../plugins/mediasoup/store/modules/mediasoup'
-import peer from '../plugins/mediasoup/store/modules/peer'
-import room from '../plugins/mediasoup/store/modules/room'
+import mediasoupPeer from '../plugins/mediasoup/store/modules/peer'
+import mediasoupRoom from '../plugins/mediasoup/store/modules/room'
+
+// application store
+import app from './application/index.js'
+import room from './application/room/index.js'
 
 
 export default new Vuex.Store({
-  state:{
-    drawer: true
-  },
-  getters:{
-    getDrawer(state){
-      return state.drawer;
-    }
-  },
-  mutations: {
-   toogleDrawer (state) {
-     state.drawer = ! state.drawer;
-   },
-   openDrawer(state){
-     state.drawer =true;
-   },
-   closeDrawer(state){
-     state.drawer =false;
-   }
- },
+  state:{},
+  getters:{},
+  mutations: {},
   modules: {
+    app,
+    room,
     user,
     auth,
-    api,
     mediasoup,
-    peer,
-    room
+    mediasoupPeer,
+    mediasoupRoom
   }
 });

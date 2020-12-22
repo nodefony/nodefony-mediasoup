@@ -76,7 +76,7 @@ VIDEO_PT=101
 echo ">>> verifying that room '${ROOM_ID}' exists..."
 
 ${HTTPIE_COMMAND} \
-  GET ${SERVER_URL}/mediasoup/api/rooms/${ROOM_ID} > /dev/null
+  GET ${SERVER_URL}/mediasoup/api/cli/rooms/${ROOM_ID} > /dev/null
 
 #
 # Create a Broadcaster entity in the server by sending a POST with our metadata.
@@ -87,7 +87,7 @@ ${HTTPIE_COMMAND} \
 echo ">>> creating Broadcaster..."
 
 ${HTTPIE_COMMAND} \
-  POST ${SERVER_URL}/mediasoup/api/rooms/${ROOM_ID}/broadcasters \
+  POST ${SERVER_URL}/mediasoup/api/cli/rooms/${ROOM_ID}/broadcasters \
   id="${BROADCASTER_ID}" \
   displayName="Broadcaster" \
   device:='{"name": "GStreamer"}' \
@@ -107,7 +107,7 @@ trap 'echo ">>> script exited with status code $?"; ${HTTPIE_COMMAND} DELETE ${S
 echo ">>> creating mediasoup PlainTransport for producing audio..."
 
 res=$(${HTTPIE_COMMAND} \
-    POST ${SERVER_URL}/mediasoup/api/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports \
+    POST ${SERVER_URL}/mediasoup/api/cli/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports \
     type="plain" \
     comedia:=true \
     rtcpMux:=false \
@@ -127,7 +127,7 @@ eval "$(echo ${res} | jq -r '@sh "audioTransportId=\(.result.transport.id) audio
 echo ">>> creating mediasoup PlainTransport for producing video..."
 
 res=$(${HTTPIE_COMMAND} \
-    POST ${SERVER_URL}/mediasoup/api/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports \
+    POST ${SERVER_URL}/mediasoup/api/cli/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports \
     type="plain" \
     comedia:=true \
     rtcpMux:=false \
@@ -146,7 +146,7 @@ eval "$(echo ${res} | jq -r '@sh "videoTransportId=\(.result.transport.id) video
 echo ">>> creating mediasoup audio Producer..."
 
 ${HTTPIE_COMMAND} -v \
-  POST ${SERVER_URL}/mediasoup/api/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports/${audioTransportId}/producers \
+  POST ${SERVER_URL}/mediasoup/api/cli/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports/${audioTransportId}/producers \
   kind="audio" \
   rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"audio/opus\", \"payloadType\":${AUDIO_PT}, \"clockRate\":48000, \"channels\":2, \"parameters\":{ \"sprop-stereo\":1 } }], \"encodings\": [{ \"ssrc\":${AUDIO_SSRC} }] }" \
   > /dev/null
@@ -158,7 +158,7 @@ ${HTTPIE_COMMAND} -v \
 echo ">>> creating mediasoup video Producer..."
 
 ${HTTPIE_COMMAND} -v \
-  POST ${SERVER_URL}/mediasoup/api/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports/${videoTransportId}/producers \
+  POST ${SERVER_URL}/mediasoup/api/cli/rooms/${ROOM_ID}/broadcasters/${BROADCASTER_ID}/transports/${videoTransportId}/producers \
   kind="video" \
   rtpParameters:="{ \"codecs\": [{ \"mimeType\":\"video/vp8\", \"payloadType\":${VIDEO_PT}, \"clockRate\":90000 }], \"encodings\": [{ \"ssrc\":${VIDEO_SSRC} }] }" \
   > /dev/null

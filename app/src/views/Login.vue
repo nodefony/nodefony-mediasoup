@@ -1,14 +1,14 @@
 <template>
 <v-container fluid>
-  <v-dialog v-model="dialog" persistent max-width="600">
-    <v-row align="center" justify="center" class="">
-      <v-card width="600" class=" pa-5">
+  <v-col cols="12">
+    <v-row align="center" justify="center" class="pt-10">
+      <v-card min-width="600" min-height=">400">
         <v-row align="center" justify="center">
           <v-col cols="12" sm="8" md="4">
             <v-img src="/app/images/app-logo.png" aspect-ratio="1"></v-img>
           </v-col>
         </v-row>
-        <v-card-title>Nodefony {{ $t('signin') }} {{select}} </v-card-title>
+        <v-card-title>Mediasoup {{ $t('signin') }} {{select}} </v-card-title>
         <v-card-subtitle class="pb-0">
           <v-text-field v-if="isLoading" color="success" loading disabled>
           </v-text-field>
@@ -18,17 +18,21 @@
 
           <v-form @submit.prevent="submit" ref="form">
             <v-select v-model="select" :items="items" label="Authencation type" required></v-select>
-            <v-text-field v-model="username" placeholder="username" :counter="50" :rules="nameRules" :label="$t('username')" required prepend-icon="mdi-account-circle" required />
+
+            <v-text-field v-model="username" placeholder="username" :counter="50" :rules="nameRules" :label="$t('username')" required prepend-icon="mdi-account-circle" />
+
             <v-text-field :label="$t('password')" v-model="password" placeholder="password" prepend-icon="mdi-lock" :type="showPassword ? 'text' : 'password'" :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'" @click:append="showPassword = !showPassword"
               required />
+
             <v-btn type="submit" class="mr-4" color="success">
               {{ $t('submit') }}
             </v-btn>
+
           </v-form>
         </v-card-text>
       </v-card>
     </v-row>
-  </v-dialog>
+  </v-col>
 </v-container>
 </template>
 
@@ -38,13 +42,12 @@ import {
   mapActions
   //mapMutations
 } from 'vuex';
+
 import notify from '@/plugins/nodefony/components/notify.vue';
 
 export default {
   name: 'Login',
   data: () => ({
-    dialog: true,
-    message: null,
     showPassword: false,
     valid: true,
     username: 'admin',
@@ -60,6 +63,11 @@ export default {
       'OAUTH',
       'GITHUB'
     ],
+    message: null,
+    validMessage: null,
+    logColor: 'teal',
+    viewerActive: false,
+    iframe: null
   }),
   components: {
     notify
@@ -70,7 +78,7 @@ export default {
     ])
   },
   mounted() {
-
+    console.log("passss")
   },
   beforeUpdate() {
 
@@ -115,6 +123,9 @@ export default {
       const form = this.$refs.form;
       if (form.validate()) {
         this.message = null;
+        if (this.$cube) {
+          this.$cube.play();
+        }
         try {
           const {
             username,
@@ -126,14 +137,20 @@ export default {
               password
             })
             .then((res) => {
-              this.dialog = false;
-              window.location = '/app';
+              this.$router.push('/')
+              window.location = 'home';
               return res;
             })
             .catch(e => {
+              if (this.$cube) {
+                this.$cube.pause();
+              }
               this.message = this.parseMessage(this.log(e, 'ERROR'));
             });
         } catch (e) {
+          if (this.$cube) {
+            this.$cube.pause();
+          }
           this.message = this.parseMessage(this.log(e, 'ERROR'));
         } finally {
           form.resetValidation();
@@ -144,7 +161,23 @@ export default {
 }
 </script>
 
-
 <style scoped lang="scss">
 
 </style>
+
+<i18n>
+  {
+    "en" : {
+      "signin" : "Authentication",
+      "submit" : "Submit",
+      "username" : "User Name",
+      "password" : "Password"
+    },
+    "fr" : {
+      "signin" : "Authentification",
+      "submit" : "Se Connecter",
+      "username" : "Utilisateur",
+      "password" : "Mot de Passe"
+    }
+  }
+</i18n>

@@ -6,20 +6,16 @@ import {
   USER_PROFILE
 } from '../actions/user'
 
+import {
+  AUTH_LOGOUT
+} from '../actions/auth'
 
 import {
   Api as baseApi
 } from 'nodefony-client';
-const Api = new baseApi("mediasoup","/api/users",{
+const Api = new baseApi("users",{
+  baseUrl:"/api/users"
 });
-
-/*import {
-  api as Api
-} from '@/../../../nodefony-core/src/nodefony'*/
-// import Vue from 'vue';
-import {
-  AUTH_LOGOUT
-} from '../actions/auth'
 
 const state = {
   status: '',
@@ -64,7 +60,7 @@ const actions = {
     commit(USER_LOADING)
     return Api.http(url)
       .then(resp => {
-        console.log(resp)
+        //console.log(resp)
         commit(USER_SUCCESS, resp)
         commit(USER_PROFILE, resp.result)
         return resp

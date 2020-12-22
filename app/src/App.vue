@@ -1,29 +1,40 @@
 <template>
-<v-app id="inspire" class="main">
+<v-app id="mediasoup">
+  <Navigation />
+  <Bar />
+  <!-- Sizes your content based upon application components -->
   <v-main>
-    <Bar />
-    <Navigation />
-    <router-view />
+    <!-- Provides the application the proper gutter -->
+    <v-container fluid class="pa-0">
+      <!-- If using vue-router -->
+      <router-view></router-view>
+    </v-container>
   </v-main>
+  <!--v-footer app>
+  </v-footer-->
 </v-app>
 </template>
 
 <script>
-import Navigation from "@/components/Navigation";
-import Bar from "@/components/Bar";
+import Navigation from "@/components/layouts/Navigation"
+import Bar from "@/components/layouts/Bar"
 export default {
   name: 'App',
   components: {
     Bar,
     Navigation
   },
-  data: () => ({}),
+  data: () => ({
+
+  }),
 };
 </script>
-<style>
-.main {
-  padding: 0px ! important;
-  margin: 0px;
-  height: 100%;
+<style lang="scss">
+#app {
+    font-family: Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    color: #2c3e50;
 }
 </style>

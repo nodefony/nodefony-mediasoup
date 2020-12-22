@@ -34,17 +34,17 @@
     "node": ">=10"
   },
   "dependencies": {
-    "mongoose": "^5.10.14",
+    "mongoose": "^5.11.8",
     "nodefony": "^6.1.0",
     "pm2": "^4.5.0",
     "pm2-logrotate": "^2.7.0",
     "sequelize": "^6.3.5",
-    "webpack": "^5.4.0",
+    "webpack": "^5.10.2",
     "webpack-dev-server": "^3.11.0"
   },
   "devDependencies": {
     "node-gyp": "^7.1.2",
-    "node-pre-gyp": "^0.16.0"
+    "node-pre-gyp": "^0.17.0"
   },
   "author": "Christophe CAMENSULI <ccamensuli@gmail.com>",
   "readmeFilename": "README.md",

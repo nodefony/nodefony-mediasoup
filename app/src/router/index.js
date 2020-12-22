@@ -1,53 +1,57 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Store from '../store';
-import Rooms from '../views/Rooms.vue'
-import Room from '../views/Room.vue'
-import About from '../views/About.vue'
-import Login from '../views/Login.vue'
+import Login from '../views/Login.vue';
+import Home from '../views/Home.vue';
+import Rooms from '../views/Rooms.vue';
+import Room from '../views/Room.vue';
+import RoomLayout from '../views/layouts/Room.vue';
 
 const ifAuthenticated = (to, from, next) => {
   if (Store.getters.isAuthenticated) {
     next();
     return;
   }
-  next('login');
-  document.location = `/app/login`;
+  next('Login');
+  //document.location = `/app/mediasoup/login`;
 };
 
 Vue.use(VueRouter)
 
 const routes = [{
+    path: '/',
+    name: 'Home',
+    component: Home
+}, {
     path: '/login',
     name: 'Login',
     component: Login
-  }, {
-    path: '/',
+}, {
+    path: '/about',
     name: 'About',
-    //route level code-splitting
-    //this generates a separate chunk (about.[hash].js) for this route
-    //which is lazy-loaded when the route is visited.
     component: () =>
       import( /* webpackChunkName: "about" */ '../views/About.vue')
  }, {
     path: '/rooms',
     name: 'Rooms',
-    component: Rooms
-  },  {
-    path: '/rooms/:roomid',
-    name: 'MettingRoom',
+    component: Rooms,
+    beforeEnter: ifAuthenticated
+ }, {
+    path: '/room/:roomid',
+    name: 'Room',
     props: true,
-    component: Room
-  }, {
-    path: '/rooms/:roomid/:peerid',
-    name: 'Metting',
-    props: true,
-    component: Room
+    component: Room,
+    beforeEnter: ifAuthenticated
+ },{
+   path: '/layout/room',
+   name: 'RoomLayout',
+   component: RoomLayout,
  }
 ];
+
 const router = new VueRouter({
   mode: 'history',
-  base: process.env.BASE_URL,
+  base: `${process.env.BASE_URL}`,
   //base: '/mediasoup/',
   routes
 });

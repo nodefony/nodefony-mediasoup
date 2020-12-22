@@ -1,0 +1,8 @@
+{
+  "traduction": "Translation",
+  "rooms" : {
+    "name" : "Rooms",
+    "description" : "Description",
+    "secure" : "Secure Room"
+  }
+}

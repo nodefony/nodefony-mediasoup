@@ -1,13 +1,12 @@
 import nodefony from 'nodefony-client'
 import media from "nodefony-client/dist/medias";
 media(nodefony);
-import webaudio from "nodefony-client/dist/webaudio";
-webaudio(nodefony);
-import socket from "nodefony-client/dist/socket";
-socket(nodefony);
-import sip from "nodefony-client/dist/sip";
-sip(nodefony);
-//nodefony.showBanner();
+//import webaudio from "nodefony-client/dist/webaudio";
+//webaudio(nodefony);
+//import socket from "nodefony-client/dist/socket";
+//socket(nodefony);
+//import sip from "nodefony-client/dist/sip";
+//sip(nodefony);
 
 import snackBar from './notify/snackbar';
 import alert from './notify/alert';
@@ -32,7 +31,7 @@ class Nodefony extends nodefony.Kernel {
   }
 
   // hooy plugins vue
-  install(Vue, options) {
+  async install(Vue, options) {
     this.store = options.store;
     this.router = options.router;
     this.vuetify = options.vuetify;
@@ -42,11 +41,15 @@ class Nodefony extends nodefony.Kernel {
     Vue.prototype.log = (...args) => {
       return this.log(...args);
     };
+    Vue.prototype.logger = (...args) => {
+      return this.logger(...args);
+    };
     Vue.prototype.notify = (...args) => {
       return this.notify(...args);
     };
     this.log(`Add Plugin nodefony : ${this.version}`, "INFO");
     this.log(`Nodefony Domain : ${this.domain}`);
+    this.client = nodefony;
   }
 
   parse(pdu, element) {
@@ -111,7 +114,70 @@ class Nodefony extends nodefony.Kernel {
     return component;
   }
 
+  drawSpectrum(canvas, mystream, size, frequency= 60) {
+    return new Promise((resolve, reject)=>{
+      try{
+        const ctx = canvas.getContext('2d');
+        const contextAudio = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = contextAudio.createAnalyser();
+        const width = canvas.width;
+        const height = canvas.height;
+        const draw = ( bar_width=10) => {
+          ctx.clearRect(0, 0, width, height);
+          const freqByteData = new Uint8Array(analyser.frequencyBinCount);
+          analyser.getByteFrequencyData(freqByteData);
+          const barCount = Math.round(width / bar_width);
+          for ( let i = 0; i < barCount; i++) {
+            const magnitude = freqByteData[i];
+            // some values need adjusting to fit on the canvas
+            ctx.fillStyle = 'rgb(150,50,250)';
+            ctx.fillRect(bar_width * i, height, bar_width - 2, -magnitude + 60);
+          }
+        }
+        let audioNodes = null;
+        const loadStream = (stream) => {
+          audioNodes = contextAudio.createMediaStreamSource(stream);
+          audioNodes.connect(analyser);
+          //analyser.connect(contextAudio.destination);
+        }
+        if(mystream){
+          loadStream(mystream);
+        }
+
+        let interval = null;
+        const start = (stream) =>{
+          if(stream){
+            audioNodes = null;
+            loadStream(stream)
+          }
+          return interval = setInterval(()=>{
+            draw(size);
+          }, frequency);
+        };
+        const stop = () =>{
+          clearInterval(interval);
+          interval = null;
+          clear();
+        };
+        const clear = () =>{
+          ctx.clearRect(0, 0, width, height);
+        };
+        interval = start();
+        return resolve({
+          stop: stop,
+          start: start,
+          clear : clear
+        });
+      }catch(e){
+        return reject(e);
+      }
+    });
+
+
+  }
+
+
 }
-nodefony.kernel = new Nodefony("KERNEL",process.env);
+nodefony.kernel = new Nodefony("VUE",process.env);
 
 export default nodefony.kernel;

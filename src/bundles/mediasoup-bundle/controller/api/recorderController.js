@@ -18,7 +18,7 @@ class recorderController extends nodefony.Controller {
     this.api = new nodefony.api.Json({
       name: "mediasoup-record",
       version: mediasoup.version,
-      description: "Mediasoup Api record",
+      description: "Mediasoup record Api",
     }, this.context);
     this.recordService = this.get("recorder");
   }

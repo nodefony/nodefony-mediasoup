@@ -18,7 +18,7 @@ class streamerController extends nodefony.Controller {
     this.api = new nodefony.api.Json({
       name: "mediasoup-streamer",
       version: mediasoup.version,
-      description: "Mediasoup Api Streamer",
+      description: "Mediasoup Streamer Api",
     }, this.context);
     this.streamerService = this.get("Streamer");
   }

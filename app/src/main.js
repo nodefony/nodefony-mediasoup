@@ -1,12 +1,17 @@
 import Vue from 'vue'
 import App from './App.vue'
+
+import i18n from './i18n/i18n'
+import Vuetify from './plugins/vuetify/vuetify'
+const vuetify = Vuetify(i18n)
 import router from './router'
 import store from './store'
-import vuetify from './plugins/vuetify';
-import i18n from './i18n'
+
 import nodefony from '@/plugins/nodefony/nodefony'
 import mediasoup from '@/plugins/mediasoup/mediasoup'
-import './registerServiceWorker'
+//import apolloProvider from '@/apollo/apollo'
+
+import './pwa/registerServiceWorker'
 
 Vue.config.productionTip = false
 

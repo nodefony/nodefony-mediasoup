@@ -1,0 +1,95 @@
+<template>
+<v-container class="fill-height pa-0" fluid>
+  <v-col cols="12">
+    <v-row style="height: 600px;" align="start" justify="space-around">
+      <Room :peerId="peerid" :isAuthenticated="isAuthenticated" class="ml-5 mb-5" v-for=" (item) in rooms" :ref="item.name" :room="item" :key="item.name" v-on:connect="connect">
+      </Room>
+    </v-row>
+  </v-col>
+</v-container>
+</template>
+
+<script>
+import Room from "@/components/Room";
+import {
+  mapGetters,
+  mapActions,
+  mapMutations
+} from 'vuex';
+
+export default {
+  name: 'Rooms',
+  components: {
+    Room
+  },
+  props: {},
+  data(vm) {
+    return {
+      peerid: null,
+      rooms: []
+    }
+  },
+  computed: {
+    ...mapGetters([
+      'isAuthenticated',
+      'getUser'
+    ])
+  },
+  async mounted() {
+    if (this.isAuthenticated) {
+      this.peerid = this.getUser;
+    }
+    return await this.getRooms();
+  },
+
+  destroyed() {
+
+  },
+
+  /*async created() {},*/
+  methods: {
+    ...mapMutations(["setRoom", "setPeer"]),
+    connect(room, peer) {
+      return this.$router.push({
+        name: 'MettingRoom',
+        params: {
+          roomid: room.id
+          //peerid: peer.id
+        }
+      })
+    },
+    async getRooms() {
+      return this.$mediasoup.api.http("/room/api")
+        .then((data) => {
+          let rooms = data.result.rows;
+          rooms.forEach((item) => {
+            this.rooms.push(item).catch(() => {});
+          });
+          this.loading = false;
+        })
+        .catch(e => {
+          this.log(e.message, "ERROR");
+          this.loading = false;
+          throw e
+        })
+    },
+    openRoom(item) {
+      return this.$router.push({
+        name: 'Room',
+        params: {
+          roomid: item.name
+        }
+      }).catch(() => {});
+    }
+
+  },
+  watch: {}
+}
+</script>
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style scoped>
+.container {
+  max-width: 100vw;
+  padding: 0px;
+}
+</style>

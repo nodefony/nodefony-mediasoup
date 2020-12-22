@@ -62,6 +62,15 @@ class roomEntity extends nodefony.Entity {
         type: DataTypes.BOOLEAN,
         defaultValue: false
       },
+      accees:{
+        type:   DataTypes.ENUM,
+        values: ['private', 'public'],
+        defaultValue: 'private'
+      },
+      sticky_cookie:{
+        type: DataTypes.STRING(256),
+        allowNull: true
+      },
       image: DataTypes.STRING
     };
   }
@@ -96,6 +105,9 @@ class roomEntity extends nodefony.Entity {
                 throw err;
               });
           }
+          if( ! room.sticky_cookie){
+            room.sticky_cookie = `sticky-room-${room.name}`;
+          }
           return room;
         },
         beforeBulkUpdate: (roomUpate) => {
@@ -125,7 +137,7 @@ class roomEntity extends nodefony.Entity {
 
   logger(pci /*, sequelize*/ ) {
     const msgid = "Entity " + this.name;
-    return super.logger(pci, "DEBUG", msgid);
+    return super.log(pci, "DEBUG", msgid);
   }
 }
 

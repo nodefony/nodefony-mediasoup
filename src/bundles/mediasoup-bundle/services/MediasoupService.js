@@ -12,11 +12,13 @@ module.exports = class Mediasoup extends nodefony.Service {
     this.MIN_PORT = 20000;
     this.MAX_PORT = 30000;
     this.TIMEOUT = 400;
+    this.orm = this.kernel.getORM();
     this.takenPortSet = new Set();
     if (!kernel.ready) {
       this.kernel.once("onReady", () => {
         this.roomsService = this.get("Rooms");
         this.peersService = this.get("Peers");
+        this.entity = this.orm.getEntity("room");
         this.runMediasoupWorkers();
       });
       this.kernel.once("onTerminate", () => {
@@ -25,6 +27,7 @@ module.exports = class Mediasoup extends nodefony.Service {
     } else {
       this.roomsService = this.get("Rooms");
       this.peersService = this.get("Peers");
+      this.entity = this.orm.getEntity("room");
     }
   }
 
@@ -33,12 +36,12 @@ module.exports = class Mediasoup extends nodefony.Service {
       let info = `websocket handshake connection :
       [roomId:${query.roomId}, peerId:${query.peerId}, address:${context.remoteAddress}, origin:${context.origin}]`;
       this.log(info);
-      let room = await this.getOrCreateRoom(query.roomId);
-      let peer = await room.createPeer(query.peerId, context);
+      let mdroom = await this.getOrCreateRoom(query.roomId);
+      let peer = await mdroom.createPeer(query.peerId, context);
       let message = {
         query,
         method: "handshake",
-        roomid: room.id,
+        roomid: mdroom.id,
         peerid: peer.id
       };
       return context.send(JSON.stringify(message));

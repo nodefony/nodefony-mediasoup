@@ -8,7 +8,7 @@ const dirConfig = path.resolve(__dirname, "nodefony");
 
 module.exports = {
   locale: "en_en",
-  type  : "vue",
+  type: "vue",
   App: {
     projectYear: 2020,
     locale: "en_en",
@@ -37,14 +37,14 @@ module.exports = {
    *      }
    *
    */
-    watch: {
+  watch: {
     controllers: true,
     config: true,
     translations: true,
-    views: false,
+    views: true,
     webpack: true
   },
-    /**
+  /**
    * DEV SERVER
    */
   devServer: {
@@ -54,14 +54,14 @@ module.exports = {
   /*
    *   OVERRIDE BUNDLES CONFIG
    */
-   "http-bundle": require(path.resolve(dirConfig, "http-bundle.js")),
-   "monitoring-bundle": require(path.resolve(dirConfig, "monitoring-bundle.js")),
-   "security-bundle": require(path.resolve(dirConfig, "security-bundle.js")),
-   "framework-bundle": require(path.resolve(dirConfig, "framework-bundle.js")),
-   "sequelize-bundle": require(path.resolve(dirConfig, "sequelize-bundle.js")),
-   "mongoose-bundle": require(path.resolve(dirConfig, "mongoose-bundle.js")),
-   "mail-bundle": require(path.resolve(dirConfig, "mail-bundle.js")),
-   "redis-bundle": require(path.resolve(dirConfig, "redis-bundle.js")),
-   "elastic-bundle": require(path.resolve(dirConfig, "elastic-bundle.js")),
-   "realtime-bundle": require(path.resolve(dirConfig, "realtime-bundle.js"))
+  "http-bundle": require(path.resolve(dirConfig, "http-bundle.js")),
+  "monitoring-bundle": require(path.resolve(dirConfig, "monitoring-bundle.js")),
+  "security-bundle": require(path.resolve(dirConfig, "security-bundle.js")),
+  "framework-bundle": require(path.resolve(dirConfig, "framework-bundle.js")),
+  "sequelize-bundle": require(path.resolve(dirConfig, "sequelize-bundle.js")),
+  "mongoose-bundle": require(path.resolve(dirConfig, "mongoose-bundle.js")),
+  "mail-bundle": require(path.resolve(dirConfig, "mail-bundle.js")),
+  "redis-bundle": require(path.resolve(dirConfig, "redis-bundle.js")),
+  "elastic-bundle": require(path.resolve(dirConfig, "elastic-bundle.js")),
+  "realtime-bundle": require(path.resolve(dirConfig, "realtime-bundle.js"))
 };

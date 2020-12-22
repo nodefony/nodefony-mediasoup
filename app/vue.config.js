@@ -1,23 +1,30 @@
 // vue.config.js
 const path = require('path');
-const package = require(path.resolve("package.json"));
-const packageVue = require(path.resolve("node_modules","vue","package.json"));
+const Package = require(path.resolve("package.json"));
+const packageVue = require(path.resolve("node_modules", "vue", "package.json"));
 const outputDir = path.resolve("Resources", "public");
 const indexPath = path.resolve("Resources", "views", 'index.html.twig');
 const publicPath = "/app";
 const template = path.resolve('public', 'index.html');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const title = package.name;
-const packageVuetify = require(path.resolve("node_modules", "vuetify", "package.json"));
+const {
+  CleanWebpackPlugin
+} = require('clean-webpack-plugin');
+const title = Package.name;
 
-process.env.VUE_APP_VERSION = package.version;
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+
+const packageVuetify = require(path.resolve("node_modules", "vuetify", "package.json"));
+process.env.VUE_APP_VERSION = Package.version;
 process.env.VUE_APP_VUE_VERSION = packageVue.version;
 process.env.VUE_APP_VUETIFY_VERSION = packageVuetify.version;
 process.env.VUE_APP_DEBUG = process.env.NODE_DEBUG;
 process.env.VUE_APP_NODE_ENV = process.env.NODE_ENV;
-process.env.VUE_APP_DOMAIN = kernel.domain;
-process.env.VUE_APP_HTTP_PORT = kernel.httpPort;
-process.env.VUE_APP_HTTPS_PORT = kernel.httpsPort;
+try {
+  process.env.VUE_APP_DOMAIN = kernel.domain;
+  process.env.VUE_APP_HTTP_PORT = kernel.httpPort;
+  process.env.VUE_APP_HTTPS_PORT = kernel.httpsPort;
+} catch (e) {}
 
 
 module.exports = {
@@ -35,11 +42,18 @@ module.exports = {
         args[0].template = template;
         return args;
       });
+    config.module
+      .rule("i18n")
+      .resourceQuery(/blockType=i18n/)
+      .type('javascript/auto')
+      .use("i18n")
+      .loader("@kazupon/vue-i18n-loader")
+      .end();
   },
 
   configureWebpack: {
     devtool: process.env.NODE_ENV === "development" ? "source-map" : "",
-    output:{
+    output: {
       hotUpdateChunkFilename: 'hot/hot-update.js',
       hotUpdateMainFilename: 'hot/hot-update.json'
     },
@@ -49,16 +63,17 @@ module.exports = {
         dry: false,
         verbose: false,
         initialClean: false,
-        cleanStaleWebpackAssets:true,
-        protectWebpackAssets:true,
-        cleanAfterEveryBuildPatterns:[],
+        cleanStaleWebpackAssets: true,
+        protectWebpackAssets: true,
+        cleanAfterEveryBuildPatterns: [],
         dangerouslyAllowCleanPatternsOutsideProject: true
-      })
+      }),
+      //new BundleAnalyzerPlugin()
     ]
   },
 
   transpileDependencies: [
-    "vuetify"
+    //"vuetify"
   ],
 
   pluginOptions: {

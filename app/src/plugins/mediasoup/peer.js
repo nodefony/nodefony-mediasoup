@@ -12,6 +12,9 @@ class Peer extends nodefony.Service{
     this.consumers = [];
     this.producers = [];
     this.dataConsumers = new Map();
+    this.audioStream = new nodefony.medias.Stream(null,{}, this);
+    this.videoStream = new nodefony.medias.Stream(null,{}, this);
+    //console.log(this)
   }
 
   hasProducer(id){
@@ -69,6 +72,8 @@ class Peer extends nodefony.Service{
     this.consumers.length = 0;
     this.producers.length = 0;
     delete this.dataConsumers;
+    this.audioStream = null;
+    this.videoStream = null;
   }
 }
 

@@ -11,32 +11,7 @@ const defaultOptions = {
   useSimulcast: false,
   externalVideo: false
 };
-const VIDEO_CONSTRAINS = {
-  qvga: {
-    width: {
-      ideal: 320
-    },
-    height: {
-      ideal: 240
-    }
-  },
-  vga: {
-    width: {
-      ideal: 640
-    },
-    height: {
-      ideal: 480
-    }
-  },
-  hd: {
-    width: {
-      ideal: 1280
-    },
-    height: {
-      ideal: 720
-    }
-  }
-};
+
 const PC_PROPRIETARY_CONSTRAINTS = {
   optional: [{
     googDscp: true
@@ -152,7 +127,7 @@ class Room extends nodefony.Service {
     this.mediasoup.on("closeSock", () => {
       this.connected = false;
       this.closed = true;
-      return this.fire("closeRoom",  this);
+      return this.fire("closeRoom", this);
     });
     this.mediasoup.on("routerRtpCapabilities", async (message) => {
       this.log(`Event : routerRtpCapabilities `, "DEBUG");
@@ -166,13 +141,13 @@ class Room extends nodefony.Service {
           .catch((error) => {
             this.log(error, "ERROR");
           });
-          this.sendTransport.on('connectionstatechange', (connectionState) => {
-            this.log(connectionState, "DEBUG", "connectionstatechange");
-            if (connectionState === 'connected') {
-              this.enableChatDataProducer();
-              this.enableBotDataProducer();
-            }
-          });
+        this.sendTransport.on('connectionstatechange', (connectionState) => {
+          this.log(connectionState, "DEBUG", "connectionstatechange");
+          if (connectionState === 'connected') {
+            this.enableChatDataProducer();
+            this.enableBotDataProducer();
+          }
+        });
         this.procudeTransportReady = true;
       }
       if (message.data.type === "consuming") {
@@ -205,23 +180,30 @@ class Room extends nodefony.Service {
         this.fire("newPeer", newPeer);
       }
       // Enable mic/webcam.
+      let canSendMic = false;
+      let canSendWebcam = false;
       if (this.options.produce) {
         // Set our media capabilities.
-        this.log(`canSendMic : ${this.mediasoupDevice.canProduce('audio')}`, "DEBUG");
-        this.log(`canSendWebcam : ${this.mediasoupDevice.canProduce('video')}`, "DEBUG");
-        try {
+        canSendMic = this.mediasoupDevice.canProduce('audio');
+        canSendWebcam = this.mediasoupDevice.canProduce('video');
+        this.log(`canSendMic : ${canSendMic}`, "DEBUG");
+        this.log(`canSendWebcam : ${canSendWebcam}`, "DEBUG");
+        /*try {
           await this.enableMic();
           //const devicesCookie = cookiesManager.getDevices();
-          /*if (!devicesCookie || devicesCookie.webcamEnabled || this._externalVideo){
-          }*/
+          //if (!devicesCookie || devicesCookie.webcamEnabled || this._externalVideo){
+          //}
           await this.enableWebcam();
 
         } catch (e) {
           this.log(e, "ERROR");
           throw e;
-        }
+        }*/
       }
-      this.fire("joined", this);
+      this.fire("joined", {
+        canProduceAudio: canSendMic,
+        canProduceVideo: canSendWebcam
+      }, this);
     });
     this.mediasoup.on("connectWebRtcTransport", async (message) => {
       return this.fire("connectWebRtcTransport", message.data.id, message, this);
@@ -722,9 +704,9 @@ class Room extends nodefony.Service {
       });
       let peer = this.peers.get(peerId);
       let dataConsumers = null;
-      if (peer){
+      if (peer) {
         dataConsumers = peer.dataConsumers;
-      }else{
+      } else {
         dataConsumers = this.peer.dataConsumers;
       }
       // Store in the map.
@@ -762,7 +744,7 @@ class Room extends nodefony.Service {
             let from = null;
             this.peers.forEach((peer) => {
               let res = peer.dataConsumers.has(dataConsumer.id);
-              if(res){
+              if (res) {
                 from = peer;
               }
             });
@@ -808,7 +790,7 @@ class Room extends nodefony.Service {
   //
   // Just get access to the mic and DO NOT close the mic track for a while.
   // Super hack!
-  async hackAudio() {
+  /*async hackAudio() {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true
     });
@@ -816,9 +798,9 @@ class Room extends nodefony.Service {
     audioTrack.enabled = false;
     setTimeout(() => audioTrack.stop(), 120000);
     return stream;
-  }
+  }*/
 
-  async enableMic() {
+  async enableMic(stream) {
     this.log('enableMic()', "DEBUG");
     if (this.micProducer) {
       return this.micProducer;
@@ -831,9 +813,12 @@ class Room extends nodefony.Service {
     try {
       if (!this.externalVideo) {
         this.log(`enableMic() | calling getUserMedia())`, "DEBUG");
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true
-        });
+        if (!stream) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: true
+          });
+        }
+
         track = stream.getAudioTracks()[0];
       } else {
         const stream = await this.getExternalVideoStream();
@@ -930,10 +915,10 @@ class Room extends nodefony.Service {
       this.pauseConsumer(consumer);
     }
   }
-  async disableAudioOnly() {
+  async disableAudioOnly(stream) {
     this.log('disableAudioOnly()', "DEBUG");
     if (!this.webcamProducer && this.options.produce) {
-      this.enableWebcam();
+      this.enableWebcam(stream);
     }
     for (const consumer of this.consumers.values()) {
       if (consumer.kind !== 'video') {
@@ -946,7 +931,7 @@ class Room extends nodefony.Service {
   //async unmuteAudio() {}
 
   // webcam
-  async enableWebcam() {
+  async enableWebcam(stream) {
     this.log('enableWebcam()', "DEBUG");
     if (this.webcamProducer) {
       return this.webcamProducer;
@@ -969,14 +954,16 @@ class Room extends nodefony.Service {
         if (!device) {
           throw new Error('no webcam devices');
         }
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            deviceId: {
-              ideal: device.deviceId
-            },
-            ...VIDEO_CONSTRAINS[resolution]
-          }
-        });
+        if (!stream) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: {
+                ideal: device.deviceId
+              },
+              ...this.mediasoup.VIDEO_CONSTRAINS[resolution]
+            }
+          });
+        }
         track = stream.getVideoTracks()[0];
       } else {
         device = {
@@ -1162,7 +1149,7 @@ class Room extends nodefony.Service {
           deviceId: {
             exact: this.webcam.device.deviceId
           },
-          ...VIDEO_CONSTRAINS[this.webcam.resolution]
+          ...this.mediasoup.VIDEO_CONSTRAINS[this.webcam.resolution]
         }
       });
       const track = stream.getVideoTracks()[0];
@@ -1197,7 +1184,7 @@ class Room extends nodefony.Service {
           deviceId: {
             exact: this.webcam.device.deviceId
           },
-          ...VIDEO_CONSTRAINS[this.webcam.resolution]
+          ...this.mediasoup.VIDEO_CONSTRAINS[this.webcam.resolution]
         }
       });
       const track = stream.getVideoTracks()[0];
@@ -1382,27 +1369,27 @@ class Room extends nodefony.Service {
         label: this.chatDataProducer.label,
         protocol: this.chatDataProducer.protocol
       });
-      this.chatDataProducer.on('transportclose', () =>{
-				this.chatDataProducer = null;
-			});
-			this.chatDataProducer.on('open', () =>{
-				this.log('chat DataProducer "open" event');
-			});
-      this.chatDataProducer.on('close', () =>{
-				this.log('chat DataProducer "close" event',"DEBUG","chat DataProducer Event");
+      this.chatDataProducer.on('transportclose', () => {
+        this.chatDataProducer = null;
+      });
+      this.chatDataProducer.on('open', () => {
+        this.log('chat DataProducer "open" event');
+      });
+      this.chatDataProducer.on('close', () => {
+        this.log('chat DataProducer "close" event', "DEBUG", "chat DataProducer Event");
         this.fire("onDataProducerClose", this.chatDataProducer);
-				this.chatDataProducer = null;
-			});
+        this.chatDataProducer = null;
+      });
       this.chatDataProducer.on('error', (error) => {
-				this.log(error, "ERROR", "chat DataProducer Event");
+        this.log(error, "ERROR", "chat DataProducer Event");
         this.fire("onChatDataProducerError", error);
-			});
-			this.chatDataProducer.on('bufferedamountlow', () =>{
+      });
+      this.chatDataProducer.on('bufferedamountlow', () => {
         this.log({
-          bufferedAmountLowThreshold:this.chatDataProducer.bufferedAmountLowThreshold,
-          bufferedAmount:this.chatDataProducer.bufferedAmount
+          bufferedAmountLowThreshold: this.chatDataProducer.bufferedAmountLowThreshold,
+          bufferedAmount: this.chatDataProducer.bufferedAmount
         }, "ERROR", "chat DataProducer Event bufferedamountlow");
-			});
+      });
       return this.chatDataProducer;
     } catch (error) {
       this.log(error, "ERROR", 'chat DataProducer');
@@ -1422,7 +1409,7 @@ class Room extends nodefony.Service {
       // Create Bot DataProducer.
       this.botDataProducer = await this.sendTransport.produceData({
         ordered: false,
-        maxPacketLifeTime : 2000,
+        maxPacketLifeTime: 2000,
         label: 'bot',
         priority: 'medium',
         appData: {
@@ -1435,25 +1422,25 @@ class Room extends nodefony.Service {
         label: this.botDataProducer.label,
         protocol: this.botDataProducer.protocol
       });
-      this.botDataProducer.on('transportclose', () =>{
-				this.botDataProducer = null;
-			});
-			this.botDataProducer.on('open', () =>{
+      this.botDataProducer.on('transportclose', () => {
+        this.botDataProducer = null;
+      });
+      this.botDataProducer.on('open', () => {
         console.log("open data channel")
-				this.log('Bot DataProducer "open" event');
-			});
-      this.botDataProducer.on('close', () =>{
-				this.log('Bot DataProducer "close" event');
+        this.log('Bot DataProducer "open" event');
+      });
+      this.botDataProducer.on('close', () => {
+        this.log('Bot DataProducer "close" event');
         this.fire("onBotDataProducerClose", this.chatDataProducer);
-				this.chatDataProducer = null;
-			});
+        this.chatDataProducer = null;
+      });
       this.botDataProducer.on('error', (error) => {
-				this.log(error, "ERROR", "chat DataProducer");
+        this.log(error, "ERROR", "chat DataProducer");
         this.fire("onBotDataProducerError", error);
-			});
-			this.botDataProducer.on('bufferedamountlow', () =>{
+      });
+      this.botDataProducer.on('bufferedamountlow', () => {
         this.log("bufferedamountlow", "ERROR", "Bot DataProducer");
-			});
+      });
       return this.botDataProducer;
     } catch (error) {
       this.log(error, "ERROR", 'enableBotDataProducer');

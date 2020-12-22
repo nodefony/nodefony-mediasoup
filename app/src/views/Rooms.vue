@@ -1,90 +1,80 @@
 <template>
-<v-container class="fill-height pa-0" fluid>
-  <!--v-row>
-    <v-col class="d-flex flex-wrap">
-      <Room :peerId="peerid" :isAuthenticated="isAuthenticated" class="ml-5 mb-5" v-for=" (item) in rooms" :ref="item.name" :room="item" :key="item.name" v-on:connect="connect">
-      </Room>
-    </v-col>
-  </v-row-->
-  <v-col cols="12">
-    <v-row style="height: 600px;" align="start" justify="space-around">
-      <Room :peerId="peerid" :isAuthenticated="isAuthenticated" class="ml-5 mb-5" v-for=" (item) in rooms" :ref="item.name" :room="item" :key="item.name" v-on:connect="connect">
-      </Room>
-    </v-row>
-  </v-col>
+<v-container fluid>
+  <h1> Rooms</h1>
+
+  <v-data-table :loading="loading" :headers="headers" :items="rooms" :items-per-page="5" class="elevation-2" @click:row="openRoom">
+  </v-data-table>
+
 </v-container>
 </template>
 
 <script>
-import Room from "@/components/Room";
 import {
   mapGetters,
-  mapActions,
-  mapMutations
+  mapMutations,
+  mapActions
 } from 'vuex';
 
 export default {
   name: 'Rooms',
-  components: {
-    Room
-  },
+  components: {},
   props: {},
   data(vm) {
     return {
-      peerid: null,
+      loading: true,
       rooms: []
     }
   },
+  mounted() {
+    this.getRooms();
+  },
   computed: {
-    ...mapGetters([
-      'isAuthenticated',
-      'getUser'
-    ])
-  },
-  async mounted() {
-    if (this.isAuthenticated) {
-      this.peerid = this.getUser;
+    headers() {
+      return [{
+          text: this.$t("rooms.name"),
+          align: 'start',
+          sortable: false,
+          value: 'name',
+        },
+        {
+          text: this.$t("rooms.description"),
+          value: 'description'
+        },
+        {
+          text: this.$t("rooms.secure"),
+          value: 'secure'
+        },
+        {
+          text: 'image',
+          value: 'image'
+        }
+      ]
     }
-    return await this.getRoom();
   },
-
-  destroyed() {
-
-  },
-
-  /*async created() {},*/
+  destroyed() {},
+  beforeMount() {},
   methods: {
-    ...mapMutations(["setRoom", "setPeer"]),
-    ...mapActions(["API_REQUEST"]),
-    connect(room, peer) {
+    async getRooms() {
+      return this.$mediasoup.api.get("rooms")
+        .then((data) => {
+          this.rooms = data.result.rows
+          this.loading = false;
+        })
+        .catch(e => {
+          this.log(e, "ERROR");
+          this.loading = false;
+          throw e
+        })
+    },
+    openRoom(item) {
       return this.$router.push({
-        name: 'MettingRoom',
+        name: 'Room',
         params: {
-          roomid: room.id
-          //peerid: peer.id
+          roomid: item.name
         }
       })
-    },
-    async getRoom() {
-      let res = await this.API_REQUEST("/room/api", "GET");
-      let rooms = res.result.rows;
-      rooms.forEach((item) => {
-        this.rooms.push(item);
-      });
-      return rooms;
     }
-  },
-  watch: {
-
   }
-
 
 }
 </script>
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-.container {
-  max-width: 100vw;
-  padding: 0px;
-}
-</style>

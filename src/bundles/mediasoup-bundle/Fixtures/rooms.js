@@ -3,12 +3,15 @@ const defaultFixtures = [{
   name: "webrtc",
   description:"webrtc Meeting",
   secure: false,
-  password: null
+  accees:"private",
+  sticky_cookie:null
 }, {
   name: "broadcast",
   description:"Videos Broadcaster",
   secure: true,
-  password: "admin"
+  password: "admin",
+  accees:"private",
+  sticky_cookie:"sticky-room-broadcast"
 }];
 
 module.exports.default = defaultFixtures;

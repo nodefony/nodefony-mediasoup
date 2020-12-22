@@ -1,9 +1,34 @@
 import nodefony from 'nodefony-client';
 import * as mediasoupClient from 'mediasoup-client';
-
 import Room from './room.js';
 import Peer from './peer.js';
-import deviceInfo from './deviceInfo.js';
+
+const VIDEO_CONSTRAINS = {
+  qvga: {
+    width: {
+      ideal: 320
+    },
+    height: {
+      ideal: 240
+    }
+  },
+  vga: {
+    width: {
+      ideal: 640
+    },
+    height: {
+      ideal: 480
+    }
+  },
+  hd: {
+    width: {
+      ideal: 1280
+    },
+    height: {
+      ideal: 720
+    }
+  }
+};
 
 class Mediasoup extends nodefony.Service {
 
@@ -14,27 +39,18 @@ class Mediasoup extends nodefony.Service {
     this.peer = null;
     this.sock = null;
     this.domain = "localhost";
-    this.deviceInfo = deviceInfo();
+    this.deviceInfo = nodefony.browser;
     this.domain = this.options.VUE_APP_DOMAIN;
     this.portHttp = this.options.VUE_APP_HTTP_PORT;
     this.portHttps = this.options.VUE_APP_HTTPS_PORT;
+    // new Api(apiName, options);
+    this.api = new nodefony.Api(this.name, {
+      baseUrl: "/mediasoup/api"
+    });
+    this.VIDEO_CONSTRAINS = VIDEO_CONSTRAINS;
+    this.init();
   }
 
-  async getWssServer() {
-    let result = await this.store.dispatch('API_REQUEST', "/mediasoup/api/servers");
-    /*if ( result.result.domain.proxy){
-
-    }*/
-    return result.result.domain.name ;
-    //return result.result.config.webRtcTransportOptions.listenIps[0].ip;
-  }
-
-  getWssUrl(){
-    return `https://${this.domain}:${this.portHttps}/mediasoup/ws` ;
-  }
-  getWsUrl(){
-    return `http://${this.domain}:${this.portHttp}/mediasoup/ws` ;
-  }
   // hooy plugins vue
   install(Vue, options) {
     Vue.prototype.$mediasoup = this;
@@ -51,6 +67,31 @@ class Mediasoup extends nodefony.Service {
     this.log(`https://${this.domain}:${this.portHttps}`)
   }
 
+  async init(){
+    return await this.api.http("/mediasoup/api/servers")
+    .then((response)=>{
+        nodefony.extend(this.options, response.result);
+        return response;
+    })
+    .catch(e=>{
+      throw e;
+    })
+  }
+
+  async getWssServer() {
+    return this.api.http("/mediasoup/api/servers")
+    .then((result)=>{
+      return result.result.domain.name ;
+    });
+  }
+
+  getWssUrl(){
+    return `https://${this.domain}:${this.portHttps}/mediasoup/ws` ;
+  }
+  getWsUrl(){
+    return `http://${this.domain}:${this.portHttp}/mediasoup/ws` ;
+  }
+
   send(method, data = {}) {
     let message = JSON.stringify({
       method: method,
@@ -61,15 +102,14 @@ class Mediasoup extends nodefony.Service {
     return this.sock.send(message);
   }
 
-  connect(roomid = "test", peerid = "cci", options = {}) {
+  connect(roomid = null, peerid = null, options = {}) {
     return new Promise(async (resolve, reject) => {
+      this.domain = await this.getWssServer();
+      const url = `wss://${this.domain}:5152/mediasoup/ws?roomId=${roomid}&peerId=${peerid}`;
       this.on("connect", (room, peer) => {
         room.init(peer);
       });
-      this.domain = await this.getWssServer();
-      let url = `wss://${this.domain}:5152/mediasoup/ws?roomId=${roomid}&peerId=${peerid}`;
       this.sock = new WebSocket(url);
-
       this.sock.onopen = (event) => {
         this.log(`Mediasoup Websocket Connect peer ${peerid} room : ${roomid}`);
         this.fire("openSock", event, this);
@@ -77,6 +117,7 @@ class Mediasoup extends nodefony.Service {
       };
       this.sock.onmessage = (event) => {
         let message = null;
+        let sendMessage = null;
         this.store.commit("mediasoupActivity");
         try {
           message = JSON.parse(event.data);
@@ -85,7 +126,6 @@ class Mediasoup extends nodefony.Service {
           this.log(event.data, "ERROR");
           throw new Error(`Bad Json Message`);
         }
-        let sendMessage = null;
         //this.log(message,"INFO", 'WebSocket message')
         switch (message.method) {
         case "notify":

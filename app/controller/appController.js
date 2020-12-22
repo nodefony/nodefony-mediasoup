@@ -15,7 +15,7 @@ class appController extends nodefony.Controller {
   }
 
   /**
-   *    @Route ("/app*",
+   *    @Route ("/app/*",
    *      name="App")
    */
   appAction() {
@@ -24,8 +24,6 @@ class appController extends nodefony.Controller {
       description: this.kernel.package.description
     });
   }
-
-
 
   /**
    *    @Route ("/service/ogp",
@@ -40,7 +38,7 @@ class appController extends nodefony.Controller {
       .then((data) => {
         this.log(JSON.stringify(data, null, "    "));
         return data;
-      }).catch(function(error) {
+      }).catch(function (error) {
         throw error;
       });
     return this.renderJson(res);

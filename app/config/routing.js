@@ -15,9 +15,9 @@
 
   module.exports = {
     app: {
-      pattern: "/app*",
+      pattern: "/",
       defaults: {
-        controller: "app:app:index"
+        controller: "app:app:app"
       }
     },
   };

@@ -14,13 +14,13 @@ import {
 import {
   Api as baseApi
 } from 'nodefony-client';
-const Api = new baseApi("mediasoup","/api/jwt",{
-
+const Api = new baseApi("auth", {
+  baseUrl:"/api/jwt"
 });
 
 const state = {
   token: Api.token,
-  username: window.localStorage.getItem('username'),
+  username: window.sessionStorage.getItem('username'),
   status: '',
   loading: false,
   decodedToken: null
@@ -80,13 +80,13 @@ const mutations = {
   [AUTH_REQUEST]: (state) => {
     state.status = 'loading'
     state.loading = true
-    state.username = window.localStorage.removeItem('username')
+    state.username = window.sessionStorage.removeItem('username')
   },
   [AUTH_SUCCESS]: (state, resp) => {
     state.status = 'success'
     state.loading = false
     state.token = resp.token
-    localStorage.setItem('username', resp.decodedToken.data.user.username)
+    sessionStorage.setItem('username', resp.decodedToken.data.user.username)
     state.username = resp.decodedToken.data.user.username
     state.decodedToken = resp.decodedToken
   },
@@ -98,7 +98,7 @@ const mutations = {
     state.token = ''
     state.status = 'logout'
     state.loading = false
-    state.username = window.localStorage.removeItem('username')
+    state.username = window.sessionStorage.removeItem('username')
     state.decodedToken = null
   }
 }
