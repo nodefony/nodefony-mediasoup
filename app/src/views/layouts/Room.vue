@@ -3,12 +3,12 @@
 
   <room-dialog-join :roomid="roomid" v-on:join="acceptConnect" v-on:close="closeDialogJoin" />
   <!--room-system-bar /-->
-  <room-tool-bar-top v-on:layoutchange="selectLayout" />
+  <room-tool-bar-top v-on:layoutchange="selectLayout" :roomid="roomid" />
 
-  <v-row v-if="joined" style="margin:23px 0 23px 0">
+  <v-row v-show="joined" class="pa-0 ma-0">
     <v-col cols="9" class="pa-0 ma-0">
-      <room-focus-layout v-show="focus" :layout="focus" ref="focus" />
       <room-grid-layout v-show="grid" :layout="grid" ref="grid" />
+      <room-focus-layout v-show="focus" :layout="focus" ref="focus" />
     </v-col>
     <v-col cols="3" class="pa-0 ma-0">
       <room-side-bar :peers="peers" />
@@ -34,7 +34,7 @@ import RoomToolBarTop from '../../components/room/nav/RoomToolBarTop';
 import RoomToolBarBottom from '../../components/room/nav/RoomToolBarBottom';
 import RoomSideBar from '../../components/room/nav/sidebar/RoomSideBar';
 import RoomFocusLayout from '../../components/room/layouts/RoomFocusLayout';
-import RoomGrilleLayout from '../../components/room/layouts/RoomGrilleLayout';
+import RoomGrilleLayout from '../../components/room/layouts/RoomGridLayout';
 
 export default {
   name: 'Layout',
@@ -50,13 +50,13 @@ export default {
   },
   data(vm) {
     return {
-      peer: null,
+      //peer: null,
       peerid: null,
-      room: null,
+      //room: null,
       roomid: "webrtc",
       intevalTime: null,
-      grid: false,
-      focus: true,
+      grid: true,
+      focus: false,
       joined: false,
       connected: false
     }
@@ -69,19 +69,18 @@ export default {
     this.openJoinDialog();
     this.closeDrawer();
     this.closeNavBar();
-    this.intevalTime = setInterval(() => {
+    /*this.intevalTime = setInterval(() => {
       //this.setClock();
-    }, 1000);
+    }, 1000);*/
   },
   beforeDestroy() {
-
+    this.deleteVideoStream();
+    this.deleteAudioStream();
+    this.room = null;
+    this.peer = null;
   },
   destroyed() {
     this.log(`destroyed room component`);
-    this.peer = null;
-    this.room = null;
-    this.deleteVideoStream();
-    this.deleteAudioStream();
     if (this.intevalTime) {
       clearInterval(this.intevalTime);
     }
@@ -96,17 +95,36 @@ export default {
   computed: {
     ...mapGetters({
       clock: 'getClock',
-      audioStream: 'audioStream',
-      videoStream: 'videoStream',
-      peers: 'peers',
-
     }),
     ...mapGetters([
+      'getRoom',
+      'getPeer',
+      'peers',
+      'getRemotePeer',
+      'microphone',
+      'audioStream',
+      'videoStream',
       'getMediasoupStatus',
       'getMediasoupActivity',
       'getUser',
       'dialogQuit'
     ]),
+    room: {
+      get() {
+        return this.getRoom;
+      },
+      set(value) {
+        return this.setRoom(value)
+      }
+    },
+    peer: {
+      get() {
+        return this.getPeer;
+      },
+      set(value) {
+        return this.setPeer(value)
+      }
+    },
     getMsStatusColorStatus() {
       if (this.getMediasoupStatus) {
         return "success";
@@ -124,9 +142,7 @@ export default {
   },
 
   methods: {
-    ...mapGetters([
-      'getPeer'
-    ]),
+    ...mapGetters([]),
     ...mapMutations([
       'openJoinDialog',
       'closeJoinDialog',
@@ -137,11 +153,15 @@ export default {
       'openNavBar',
       'closeNavBar',
       'setClock',
-      'addPeer',
+      'addRemotePeer',
       'removePeer',
       'removeAllPeers',
       'deleteVideoStream',
-      'deleteAudioStream'
+      'deleteAudioStream',
+      'setRoom',
+      'setPeer',
+      'deleteMedias',
+      'setMedia'
     ]),
 
     // mediasoup
@@ -152,8 +172,6 @@ export default {
           return this.startMediasoup()
             .then(() => {
               this.loading = false;
-              //this.peers.push(this.peer);
-              this.addPeer(this.peer)
               return;
             })
         })
@@ -169,6 +187,7 @@ export default {
         }) => {
           this.log("Connect Mediasoup Server");
           this.peer = peer;
+          this.peer.local = true;
           this.room = room;
           this.$emit('connect', room, peer);
           return {
@@ -197,7 +216,6 @@ export default {
     },
 
     async joinRoom() {
-      this.joined = true;
       this.closeJoinDialog();
       this.connected = this.getMediasoupStatus;
       this.listenRoomEvents();
@@ -208,33 +226,35 @@ export default {
       this.peers.forEach((item) => {
         item.close();
       });
-      /*while (this.peers.length > 0) {
-        this.peers.pop();
-      }*/
       this.removeAllPeers();
       return await this.$mediasoup.leaveRoom()
         .then((ele) => {
-          this.connected = false; //this.isMediasoupConnected();
+          this.connected = false;
           this.peer = null;
           this.room = null;
-          //this.peers = [];
           return ele;
         });
     },
 
     listenRoomEvents() {
       this.room.on("joined", async (options, room) => {
-        this.log(`joined : ${room.id}`)
         this.log(options, "DEBUG");
-        this.joined = true;
-        this.peer = room.peer;
         try {
+          this.peer = room.peer;
           await room.enableMic(this.audioStream);
           await room.enableWebcam(this.videoStream);
+          this.log(`joined : ${room.id}`)
+          this.joined = true;
         } catch (e) {
           this.log(e, "ERROR");
           throw e;
         }
+      });
+      this.room.on("closeSock", () => {
+        this.removeAllPeers();
+        this.peer = null;
+        this.room = null;
+        this.connected = false;
       });
       this.room.on("ready", () => {
         this.log("room ready", "DEBUG");
@@ -243,28 +263,41 @@ export default {
         this.joined = false;
         return this.leaveRoom();
       });
+      this.room.on("disableMicrophone", async () => {
+        this.log(`event disableMicrophone`)
+        this.deleteMedias("audio");
+        // event try enable new default microphone
+        await this.room.enableMic();
+        this.setMedia("audio");
+      });
+      this.room.on("activeSpeaker", (peerId, volume) => {
+        this.log(`${peerId} volume : ${volume}`, "DEBUG");
+        let component = this.getPeerComponent(peerId);
+        if (component) {
+          component.volume = volume || -100;
+        }
+        if (volume > -20) {
+          this.getLayout().focusPeer(peerId, volume);
+        }
+      });
       this.room.on("newPeer", (peer) => {
         this.log(`New Peer : ${peer.id}`);
-        this.addPeer(peer);
-        //this.peers.push(peer);
+        this.addRemotePeer(peer);
       });
       this.room.on("peerClosed", (peerId) => {
         this.log(`peerClosed : ${peerId}`)
-        //let peer = this.getPeer(peerId);
         this.removePeer(peerId);
-
-        /*let res = this.peers.findIndex((peer) => {
-          return peer.id === peerId;
-        });
-        if (res !== -1) {
-          this.log(`remove Peer : ${peerId}`)
-          this.peers.splice(res, 1);
-        }*/
       });
-      this.room.on("addProducer", (producer) => {
+      this.room.on("addProducer", async (producer) => {
+        this.log(`addProducer => ${producer.type}`, "DEBUG");
         let component = this.getPeerComponent(this.peer.id);
         this.peer.addProducer(producer);
-        return component.addProducer(producer);
+        await component.addProducer(producer);
+        if (producer.type === "share") {
+          this.getLayout().displayShare(this.peer);
+        } else {
+          this.getLayout().focusPeer(this.peer.id);
+        }
       });
       this.room.on("disableWebcam", (producer) => {
         let component = this.getPeerComponent(this.peer.id);
@@ -272,21 +305,29 @@ export default {
         return component.deleteProducer(producer);
       });
       this.room.on("disableShare", async (room) => {
-        return await room.enableWebcam();
+        await room.enableWebcam();
+        this.deleteMedias("screen");
       });
-      this.room.on("consume", (consumer, peer) => {
+      this.room.on("consume", async (consumer, peer) => {
         this.log(`Consume event : ${peer.id}`);
         peer.addConsumer(consumer);
         // media
         let component = this.getPeerComponent(peer.id);
-        return component.addConsumer(consumer);
+        await component.addConsumer(consumer);
+        if (consumer.appData.share) {
+          this.getLayout().displayShare(peer)
+        }
       });
-      this.room.on("consumerClosed", (consumerId, peerId) => {
+      this.room.on("consumerClosed", (consumerId, peerId, appData) => {
         this.log(`consumerClosed : ${peerId} condumeId =${consumerId} `, "DEBUG");
         try {
-          let peer = this.getPeer(peerId);
-          peer.deleteConsumer(consumerId);
-          this.getPeerComponent(peerId).pauseVideoTag();
+          let peer = this.getRemotePeer(peerId);
+          if (peer) {
+            peer.deleteConsumer(consumerId);
+          }
+          if (appData.share) {
+            this.getLayout().stopDisplayShare(peer)
+          }
         } catch (e) {
           this.log(e, "WARNING");
         }
@@ -333,29 +374,16 @@ export default {
       });
     },
 
-    getPeerComponent(peerId) {
+    getLayout() {
       let layout = null
-      if (this.$refs.grid) {
-        layout = this.$refs.grid.$refs;
+      if (this.grid) {
+        layout = this.$refs.grid;
       }
-      if (this.$refs.focus) {
-        layout = this.$refs.focus.$refs;
+      if (this.focus) {
+        layout = this.$refs.focus;
       }
-      if (!layout) {
-        return null;
-      }
-      if (layout[peerId][0]) {
-        return layout[peerId][0];
-      }
-      return layout[peerId];
+      return layout;
     },
-
-    // application
-    closeDialogJoin() {
-      this.$destroy();
-      //return this.redirect();
-    },
-
     selectLayout(selectedLayout) {
       this.grid = false;
       this.focus = false;
@@ -370,7 +398,23 @@ export default {
           this.grid = true;
       }
     },
+    getPeerComponent(peerId) {
+      let layout = this.getLayout();
+      if (!layout) {
+        return null;
+      }
+      let ref = layout.$refs;
+      if (ref[peerId][0]) {
+        return ref[peerId][0];
+      }
+      return ref[peerId];
+    },
 
+    // application
+    closeDialogJoin() {
+      this.$destroy();
+      //return this.redirect();
+    },
     quit(event) {
       this.openQuitDialog();
       return this.waitQuit(event)

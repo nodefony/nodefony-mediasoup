@@ -1,14 +1,28 @@
 const state = {
-  joined:false
+  room: null
+}
+
+const getters = {
+  // room
+  getRoom(state) {
+    return state.room;
+  },
+  getRoomName() {
+    if (state.room){
+      return state.room.id;
+    }
+    return "";
+  }
 };
-
-const getters = {};
-
-const actions = {};
 
 const mutations = {
-
+  // room
+  setRoom(state, value) {
+    state.room = value;
+  }
 };
+
+const actions = {};
 
 export default {
   state,

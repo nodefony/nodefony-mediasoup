@@ -102,7 +102,7 @@ module.exports = class Mediasoup extends nodefony.Service {
           const usage = await worker.getResourceUsage();
           this.log(`mediasoup Worker resource usage [pid:${worker.pid}]:`, "DEBUG");
           this.log(usage);
-        }, 120000);
+        }, 60 * 1000);
       }
     }
   }

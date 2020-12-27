@@ -1,6 +1,6 @@
 <template>
 <v-container fluid class="pa-0 ma-0">
-  <v-row>
+  <v-row class="pa-0 ma-0">
     <v-expansion-panels multiple accordion v-model="drawer">
       <v-expansion-panel>
         <v-expansion-panel-header>

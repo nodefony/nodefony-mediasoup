@@ -14,16 +14,13 @@ import mediasoupRoom from '../plugins/mediasoup/store/modules/room'
 
 // application store
 import app from './application/index.js'
-import room from './application/room/index.js'
+import appRoom from './application/room/index.js'
 
 
 export default new Vuex.Store({
-  state:{},
-  getters:{},
-  mutations: {},
   modules: {
     app,
-    room,
+    appRoom,
     user,
     auth,
     mediasoup,

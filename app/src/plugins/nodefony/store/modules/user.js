@@ -29,7 +29,8 @@ const getters = {
     if (state.user) {
       return state.user.roles
     }
-    throw new Error('User profile not defined !')
+    return []
+    //throw new Error('User profile not defined !')
   },
   hasRole(state, role) {
     if (state.user) {
@@ -39,7 +40,8 @@ const getters = {
       }
       return false
     }
-    throw new Error('User profile not defined !')
+    return false
+    //throw new Error('User profile not defined !')
   },
   isProfileLoaded: state => state.status === 'success',
   getTrigramme(state){

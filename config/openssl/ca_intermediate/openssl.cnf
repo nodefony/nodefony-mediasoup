@@ -35,7 +35,7 @@ localityName		= Marseille
 organizationName	= nodefony-mediasoup Signing Authority
 organizationalUnitName	= Development
 emailAddress		= ccamensuli@gmail.com
-commonName              = "192.168.0.51"
+commonName              = "localhost"
 
 [ ca_reqext ]
 keyUsage                = critical,keyCertSign,cRLSign

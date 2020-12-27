@@ -1,10 +1,12 @@
 <template>
 <v-toolbar outlined dense flat width="100%" class="ma-0 pa-0" style="top: 0;postion:fixed">
+  <v-app-bar-nav-icon></v-app-bar-nav-icon>
+  <v-toolbar-title>{{ $t("rooms.name")}} {{roomid}}</v-toolbar-title>
   <v-spacer></v-spacer>
   <v-menu :close-on-content-click="false" :nudge-width="200" offset-x>
     <template v-slot:activator="{ on, attrs }">
       <v-btn small class="mx-4" v-bind="attrs" v-on="on" rounded outlined>
-        <v-icon left dark>
+        <v-icon left>
           mdi-page-layout-header-footer
         </v-icon>
         <span>
@@ -41,6 +43,7 @@
       </v-list>
     </v-card>
   </v-menu>
+  <v-app-bar-nav-icon></v-app-bar-nav-icon>
 </v-toolbar>
 </template>
 
@@ -52,6 +55,9 @@ export default {
     selected: {
       type: Number,
       default: 0
+    },
+    roomid: {
+      type: String
     }
   },
   data(vm) {

@@ -2,8 +2,8 @@
 <v-dialog v-model="getJoinDialog" fullscreen hide-overlay transition="dialog-bottom-transition">
 
   <v-card :loading="loading">
-    <v-toolbar dark color="primary" flat>
-      <v-btn icon dark @click="close">
+    <v-toolbar color="" flat dense fixed top>
+      <v-btn icon @click="close">
         <v-icon>mdi-close</v-icon>
       </v-btn>
       <v-toolbar-title>{{ $t("rooms.name")}} {{roomid}}</v-toolbar-title>
@@ -15,12 +15,23 @@
       <v-progress-linear color="deep-purple" height="10" indeterminate></v-progress-linear>
     </template>
 
-    <v-container v-show="room" fluid class="mt-15">
+    <v-container v-show="room" fluid class="mt-5">
       <v-row no-gutters>
         <v-col cols="6" class="pa-3 ma-0">
           <v-row justify="center">
-            <media-card-peer width="500" local spectrum ref="peer" @endsharescreen='endsharescreen' :name="getUser" showOptions>
-              <template slot="peer"></template>
+            <media-card-peer width="" init spectrum ref="peer" @endsharescreen='endsharescreen' :name="getUser" showOptions>
+              <template slot="peer">
+                <v-container fluid class="pa-0">
+                  <v-btn color="primary" fab rounded absolute top left>
+                    {{this.getTrigramme}}
+                  </v-btn>
+                  <v-card-title class="ml-10">
+                    <p class="ml-3">
+                      {{this.getUser}}
+                    </p>
+                  </v-card-title>
+                </v-container>
+              </template>
             </media-card-peer>
           </v-row>
         </v-col>
@@ -128,13 +139,13 @@ export default {
       audio: true,
       video: true,
       screen: false,
-      medias: vm.$store.state.room.medias,
       password: ""
     }
   },
   async mounted() {
     this.loading = true;
     this.peerid = this.getUser;
+    await this.getDevices();
     this.room = await this.getRoom(this.roomid)
       .then((room) => {
         this.loading = false;
@@ -152,24 +163,41 @@ export default {
   },
 
   computed: {
-    ...mapGetters({
-      getUser: "getUser",
-      getProfile: "getProfile",
-      getJoinDialog: "getJoinDialog",
-      isAuthenticated: "isAuthenticated",
-      hasAudio: "hasAudio",
-      hasVideo: "hasVideo",
-      hasScreen: "hasScreen",
-      hasNoise: "hasNoise"
-    })
+    ...mapGetters([
+      "getUser",
+      "getProfile",
+      "getJoinDialog",
+      "isAuthenticated",
+      "hasAudio",
+      "hasVideo",
+      "hasScreen",
+      "hasNoise",
+      'getTrigramme',
+      'getMedias'
+      //'webcam',
+    ]),
+    medias: {
+      get() {
+        return this.getMedias;
+      },
+      set(value) {
+        return this.storeMedias(value);
+      }
+    }
+
   },
   methods: {
     ...mapMutations([
       'closeJoinDialog',
-      'setMedias',
+      'storeMedias',
       'deleteMedias',
       'setAudioStream',
-      'setVideoStream'
+      'setVideoStream',
+      //'changeWebcamResolution',
+      //'changeWebcamDevice'
+    ]),
+    ...mapActions([
+      'getDevices'
     ]),
     // room
     async getRoom(id) {
@@ -189,12 +217,9 @@ export default {
     },
 
     async changeMedia(selected) {
-      this.setMedias(this.medias);
       await this.peer.changeMedia(selected)
         .then(() => {
-          this.setAudioStream(this.peer.audioStream);
-          this.setVideoStream(this.peer.videoStream);
-          this.setMedias(this.medias);
+          this.storeMedias(this.medias);
         })
         .catch(e => {
           if (e.type) {
@@ -221,6 +246,8 @@ export default {
         })
         .then((res) => {
           this.loading = false;
+          this.setAudioStream(this.peer.audioStream);
+          this.setVideoStream(this.peer.videoStream);
           this.$emit("join", res, this);
           //this.$destroy();
           return res;

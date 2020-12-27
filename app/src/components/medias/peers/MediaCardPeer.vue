@@ -1,20 +1,18 @@
 <template>
-<v-card :width="cardWidth" :height="height" class="rounded-lg" :elevation="elevation" :outlined="hover" min-width="250" :loading="loading" rounded @click="toggle">
+<v-card :width="cardWidth" :height="height" class="rounded-lg" :elevation="elevation" :outlined="hover" :min-width="minWidth" :max-width="maxWidth" :max-height="maxHeight" :min-height="minHeight" :loading="loading" rounded @click="toggle">
 
-  <slot name="peer">
-    <v-container v-if="local" fluid class="pa-0">
-      <v-btn color="primary" fab rounded absolute top left>
-        {{this.getTrigramme}}
-      </v-btn>
-      <v-card-title class="ml-10">
-        <p class="ml-3">
-          {{this.getUser}}
-        </p>
-      </v-card-title>
-    </v-container>
-  </slot>
+  <slot name="peer"></slot>
 
   <v-container fluid class="pa-0">
+    <v-btn x-small color="blue-grey" class="ma-4 white--text" fab style="position:absolute;top=0px">
+      <span v-if="local ? hasAudio : audio">
+        <v-icon v-if="this.volume < -50 && this.volume >= -100">mdi-volume-low</v-icon>
+        <v-icon v-if="this.volume >= -50 && this.volume <= -25">mdi-volume-medium</v-icon>
+        <v-icon v-if="this.volume > -25 ">mdi-volume-high</v-icon>
+        <!--v-icon v-if="local ? hasAudio : audio" class="white--text">mdi-volume-high</v-icon-->
+      </span>
+      <v-icon v-else class="white--text">mdi-volume-off</v-icon>
+    </v-btn>
     <!-- VIDEO -->
     <v-row class="pa-0 ma-0">
       <v-hover v-slot="{ hover }" :disabled="hoverDisabled">
@@ -30,9 +28,10 @@
         <v-hover v-slot="{ hover }" :disabled="hoverDisabled">
           <v-container class="pa-0">
             <v-row justify="center" class="">
-              <v-avatar color="primary" size="123">{{getTrigramme}}</v-avatar>
               <div v-if="hover" style="position:absolute;">
-                <slot name="hover"></slot>
+                <slot name="hover">
+                  <v-avatar color="primary" size="123">{{getTrigramme}}</v-avatar>
+                </slot>
               </div>
             </v-row>
           </v-container>
@@ -54,10 +53,10 @@
           <v-subheader>Devices Settings</v-subheader>
           <v-row justify="space-between" class="mt-0">
             <v-col v-if="this.audio" class="d-flex" cols="12" sm="6">
-              <v-select dense :items="audioDevices" label="Audio Devices" outlined></v-select>
+              <v-select v-model="audioDevice" dense :items="getDevicesAudioLabels" label="Audio Devices" outlined v-on:change='changeDevice("audio")'></v-select>
             </v-col>
             <v-col v-if="this.video" class="d-flex" cols="12" sm="6">
-              <v-select dense :items="videoDevices" label="Videos Devices" outlined></v-select>
+              <v-select v-model="videoDevice" dense :items="getDevicesVideoLabels" label="Videos Devices" outlined v-on:change='changeDevice("video")'></v-select>
             </v-col>
           </v-row>
           <v-divider></v-divider>
@@ -75,7 +74,6 @@
 </v-card>
 </template>
 
-
 <script>
 import {
   mapGetters,
@@ -86,7 +84,7 @@ import {
 export default {
   name: 'MediaCardPeer',
   props: {
-    local: {
+    init: {
       type: Boolean,
       default: false
     },
@@ -108,29 +106,46 @@ export default {
     width: {
       type: String
     },
+    minWidth: {
+      type: String,
+      default: "200"
+    },
+    maxWidth: {
+      type: String,
+      default: "100%"
+    },
     height: {
       type: String
+    },
+    minHeight: {
+      type: String,
+      default: "100"
+    },
+    maxHeight: {
+      type: String,
+      default: "100%"
     },
     showOptions: {
       type: Boolean,
       default: false
     }
+
   },
   data(vm) {
     return {
+      local: false,
       message: null,
       loading: false,
       elevation: 4,
       hoverDisabled: false,
       hover: false,
-      resolution: "qvga",
-      audioDevices: [],
-      videoDevices: [],
+      resolution: "hd",
       devices: [],
       audio: null,
       video: null,
       screen: null,
       noise: null,
+      level: -100,
       audioStream: null,
       videoStream: null,
       options: {
@@ -140,49 +155,40 @@ export default {
     }
   },
   async mounted() {
-    if (this.local) {
-      this.audioStream = this.createAudioStream();
-      this.videoStream = this.createVideoStream();
-      await this.getDevices();
-      if (this.hasVideo) {
-        await this.getVideoUserMedia(this.video ? this.$mediasoup.VIDEO_CONSTRAINS[this.resolution] : this.video);
+    console.log(`passs ${this.active}`);
+    if (this.remote) {
+      if (this.remote.local) {
+        this.local = true;
       }
-      if (this.hasAudio) {
-        await this.getAudioUserMedia(this.audio);
-      }
-      if (this.hasScreen) {
-        await this.getUserScreen();
-      }
-      if (this.hasNoise) {
-        await this.getWhiteNoise();
-      }
+    } else {
+      this.local = true;
     }
+
     if (this.remote && this.active) {
       this.log(`initialize remote stream`)
       if (this.remote.audioStream) {
-        if (this.remote.audioStream.mediaElement) {
-          //this.remote.audioStream.mediaElement.srcObject = null;
-        }
         this.audioStream = this.createAudioStream(this.remote.audioStream);
         this.audioStream.mediaElement = this.$refs["preaudio"];
-        this.audioStream.setStream();
       } else {
         this.createAudioStream();
       }
       if (this.remote.videoStream) {
-        if (this.remote.videoStream.mediaElement) {
-          //this.remote.videoStream.mediaElement.srcObject = null
-        }
         this.videoStream = this.createVideoStream(this.remote.videoStream);
         this.videoStream.mediaElement = this.$refs["prevideo"];
-        this.videoStream.setStream();
       } else {
         this.createVideoStream();
       }
-      this.log(this.audioStream, "DEBUG");
-      this.log(this.videoStream, "DEBUG");
+    } else {
+      if (this.init) {
+        await this.initialize();
+        if (this.showOptions) {
+          //this.initDevices();
+        }
+      } else {
+        this.createAudioStream();
+        this.createVideoStream();
+      }
     }
-
   },
   beforeDestroy() {
     this.log(`Try Destroy peer component ${this.name}`, "DEBUG");
@@ -197,31 +203,150 @@ export default {
   },
 
   computed: {
-    ...mapGetters({
-      getTrigramme: 'getTrigramme',
-      getUser: "getUser",
-      hasAudio: "hasAudio",
-      hasVideo: "hasVideo",
-      hasScreen: "hasScreen",
-      hasNoise: "hasNoise"
-    }),
-    cardWidth() {
-      return this.width || this.$mediasoup.VIDEO_CONSTRAINS[this.resolution].width.ideal
+    volume: {
+      set(value) {
+        this.level = value
+      },
+      get() {
+        return this.level;
+      }
+    },
+    ...mapGetters([
+      'getTrigramme',
+      "getUser",
+      "hasAudio",
+      "hasVideo",
+      "hasScreen",
+      "hasNoise",
+      'webcam',
+      'microphone',
+      'webcamDevice',
+      'webcamResolution',
+      'videoDevices',
+      'audioDevices',
+      'getDevicesAudioLabels',
+      'getDevicesVideoLabels',
+      'getAudioDeviceByValue',
+      'getVideoDeviceByValue'
+    ]),
+    cardWidth: {
+      get() {
+        return this.width || this.$mediasoup.VIDEO_CONSTRAINS[this.resolution].width.ideal
+      },
+      set() {}
+    },
+    audioDevice: {
+      get() {
+        if (this.microphone.device) {
+          return {
+            text: this.microphone.device.label,
+            value: this.microphone.device.deviceId
+          }
+        }
+        return null
+      },
+      set(value) {
+        let res = null;
+        if (typeof value === "string") {
+          res = value
+        } else {
+          res = value.label || value.deviceId
+        }
+        let device = this.getAudioDeviceByValue(res);
+        return this.changeAudioDevice(device)
+      }
+    },
+    videoDevice: {
+      get() {
+        if (this.webcam.device) {
+          return {
+            text: this.webcam.device.label,
+            value: this.webcam.device.deviceId
+          }
+        }
+        return null;
+      },
+      set(value) {
+        let res = null;
+        if (typeof value === "string") {
+          res = value
+        } else {
+          res = value.label || value.deviceId
+        }
+        let device = this.getVideoDeviceByValue(res)
+        return this.changeWebcamDevice(device)
+      }
     }
   },
   methods: {
-    ...mapMutations([
-      'setAudioStream',
-      'setVideoStream',
-      'deleteMedias',
+    ...mapGetters([
+
     ]),
+    ...mapMutations([
+      'deleteMedias',
+      'changeWebcamResolution',
+      'changeWebcamDevice',
+      'changeAudioDevice'
+    ]),
+    async initialize() {
+      this.audioStream = this.createAudioStream();
+      this.videoStream = this.createVideoStream();
+      if (this.hasVideo) {
+        let options = null;
+        if (this.webcam.resolution) {
+          options = { ...this.$mediasoup.VIDEO_CONSTRAINS[this.webcam.resolution]
+          }
+        }
+        if (this.webcam.device) {
+          options.deviceId = {
+            ideal: this.webcam.device.deviceId
+          }
+        }
+        await this.getVideoUserMedia(options)
+      }
+      if (this.hasAudio) {
+        let options = {};
+        if (this.microphone.device) {
+          options.deviceId = {
+            ideal: this.microphone.device.deviceId
+          }
+        }
+        await this.getAudioUserMedia(options);
+      }
+      if (this.hasScreen) {
+        await this.getUserScreen();
+      }
+      if (this.hasNoise) {
+        await this.getWhiteNoise();
+      }
+    },
+    async changeDevice(type) {
+      switch (type) {
+        case "audio":
+          await this.getAudioUserMedia({
+            deviceId: {
+              ideal: this.microphone.device.deviceId
+            }
+          });
+          break;
+        case "video":
+          {
+            let options = { ...this.$mediasoup.VIDEO_CONSTRAINS[this.webcam.resolution]
+            }
+            options.deviceId = {
+              ideal: this.webcam.device.deviceId
+            }
+            await this.getVideoUserMedia(options);
+            break;
+          }
+      }
+    },
     createAudioStream(stream) {
       let audioStream = null;
       if (stream) {
         audioStream = stream;
       } else {
         audioStream = new this.$nodefony.client.medias.Stream(this.$refs["preaudio"]);
-        this.setAudioStream(audioStream);
       }
       audioStream.on("onloadedmetadata", () => {
         this.log(`Audio Stream : ${audioStream.streamId} onloadedmetadata`, "DEBUG");
@@ -238,7 +363,6 @@ export default {
         videoStream = stream;
       } else {
         videoStream = new this.$nodefony.client.medias.Stream(this.$refs["prevideo"]);
-        this.setVideoStream(videoStream);
       }
       videoStream.on("onloadedmetadata", () => {
         this.log(`Video Stream : ${videoStream.streamId} onloadedmetadata`, "DEBUG");
@@ -249,16 +373,7 @@ export default {
       });
       return videoStream;
     },
-    async getDevices() {
-      this.devices = await this.$nodefony.client.medias.getDevices()
-      this.audioDevices = this.cleanDevice(this.$nodefony.client.medias.audioDevices)
-      this.videoDevices = this.cleanDevice(this.$nodefony.client.medias.webcams)
-    },
-    cleanDevice(map) {
-      return Array.from(map).map(([name, value]) => {
-        return value.label
-      });
-    },
+
     // mediasoup
     addProducer(producer) {
       return this.addTracks(producer.track);
@@ -275,8 +390,9 @@ export default {
       switch (track.kind) {
         case "audio":
           await this.addAudioTrack(track)
-          this.log(`${this.name} Add audio track ${track.id}`)
+          this.log(`${this.name} Add audio track ${track.id}`);
           if (this.local) {
+            this.audio = true;
             return track;
           }
           return await this.audioStream.attachStream()
@@ -397,12 +513,14 @@ export default {
     },
 
     async getAudioUserMedia(settings) {
+      this.logger(`Change Stream`, settings);
       return await this.audioStream.getUserMedia({
           audio: settings,
           video: false
         }).then(async (stream) => {
+
           this.audio = true;
-          if (!this.local) {
+          if (this.remote) {
             this.audioStream.attachStream();
           }
           if (this.spectrum) {
@@ -412,6 +530,8 @@ export default {
               this.$spectrum = await this.$nodefony.drawSpectrum(this.$refs.canvas, stream, 5);
             }
           }
+          this.log(`Device : ${stream.getAudioTracks()[0].label}`);
+          this.audioDevice = stream.getAudioTracks()[0];
           return stream;
         })
         .catch(e => {
@@ -419,6 +539,7 @@ export default {
           this.log(e, "ERROR");
           throw e;
         });
+
     },
 
     async getVideoUserMedia(settings) {
@@ -428,6 +549,8 @@ export default {
         }).then((stream) => {
           this.video = true;
           this.videoStream.attachStream();
+          this.log(`Device : ${stream.getVideoTracks()[0].label}`);
+          this.videoDevice = stream.getVideoTracks()[0];
           return stream;
         })
         .catch(e => {
@@ -442,8 +565,16 @@ export default {
       this.log(`Change video format ${format}`, "DEBUG");
       if (this.video) {
         this.resolution = format;
+        this.webcam.resolution = format;
         this.cardWidth = this.$mediasoup.VIDEO_CONSTRAINS[format].width.ideal;
-        return await this.getVideoUserMedia(this.$mediasoup.VIDEO_CONSTRAINS[format]);
+        let options = { ...this.$mediasoup.VIDEO_CONSTRAINS[format]
+        }
+        if (this.webcam.device) {
+          options.deviceId = {
+            ideal: this.webcam.device.deviceId
+          }
+        }
+        return await this.getVideoUserMedia(options);
       }
       if (this.screen) {
         return await this.getUserScreen(this.$mediasoup.VIDEO_CONSTRAINS[format]);
@@ -519,7 +650,14 @@ export default {
       }
 
       if (!this.audio && this.hasAudio) {
-        await this.getAudioUserMedia(true)
+        console.log(this.microphone)
+        let options = {};
+        if (this.microphone.device) {
+          options.deviceId = {
+            ideal: this.microphone.device.deviceId
+          }
+        }
+        await this.getAudioUserMedia(options)
           .catch(e => {
             throw {
               type: "audio",
@@ -528,6 +666,7 @@ export default {
           });
       }
       if (!this.noise && this.hasNoise) {
+
         return await this.getWhiteNoise()
           .catch(e => {
             throw {
@@ -546,7 +685,17 @@ export default {
           });
       }
       if (!this.video && this.hasVideo) {
-        return await this.getVideoUserMedia(this.$mediasoup.VIDEO_CONSTRAINS[this.resolution])
+        let options = null;
+        if (this.webcam.resolution) {
+          options = { ...this.$mediasoup.VIDEO_CONSTRAINS[this.webcam.resolution]
+          }
+        }
+        if (this.webcam.device) {
+          options.deviceId = {
+            ideal: this.webcam.device.deviceId
+          }
+        }
+        return await this.getVideoUserMedia(options)
           .catch(e => {
             throw {
               type: "video",
@@ -563,6 +712,18 @@ export default {
         this.elevation = 12;
         this.hover = true;
       }
+    },
+    muteTag() {
+      let tag = this.$refs["preaudio"];
+      this.log(`Mute audio `);
+      tag.muted = true;
+      this.audio = false;
+    },
+    demuteTag() {
+      let tag = this.$refs["preaudio"];
+      this.log(`Demute audio `);
+      tag.muted = false;
+      this.audio = true;
     }
 
   }

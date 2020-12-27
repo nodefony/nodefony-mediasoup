@@ -1,22 +1,12 @@
 <template>
-<v-container fluid class="ma-0 pa-0">
-  <v-sheet class="ma-0 pa-0" outlined tile max-width="100%" max-height="160">
-    <v-slide-group v-model="slide" class="ma-0 pa-0" show-arrows>
-      <v-slide-item v-if="peer" class="mx-2" :key="peer.id" v-slot="{ active, toggle }">
-        <media-card-peer width="200" height="160" max-height="160" max-width="200" class="ma-0 pa-0" :ref="peer.id" :remote="peer" @click.native="tooglePeer(peer, active, toggle, peer.id)" :name="peer.id" :active="layout" />
-      </v-slide-item>
+<v-row v-if="layout" class="ma-0 pa-0">
+  <v-container v-show="!shared" fluid>
+    <media-card-peer v-if="peer" max-width="300" max-height="300" class="ma-3 pa-0" :ref="peer.id" :remote="peer" :key="peer.id" :name="peer.id" spectrum :active="layout" />
 
-      <v-slide-item class="mx-2" v-for="(remotePeer, index) in peers" :key="index" v-slot="{ active, toggle }">
-        <media-card-peer width="200" height="160" max-height="160" max-width="200" class="ma-0 pa-0" :ref="remotePeer.id" :remote="remotePeer" @click.native="tooglePeer(remotePeer, active, toggle, index)" :name="remotePeer.id" :active="layout" />
-      </v-slide-item>
-
-    </v-slide-group>
-  </v-sheet>
-
-  <!--v-container class="ma-0 pa-0" fluid-->
-
+    <media-card-peer v-for="(remotePeer, index) in peers" max-width="300" max-height="300" class="ma-3 pa-0" :ref="remotePeer.id" :remote="remotePeer" :key="index" :name="remotePeer.id" spectrum :active="layout" />
+  </v-container>
   <v-expand-transition>
-    <v-sheet v-show="selectedPeer" tile>
+    <v-sheet v-show="shared" tile>
 
       <v-container fluid class="ma-0 pa-0">
         <v-card elevation="8" outlined class="ma-3">
@@ -37,7 +27,7 @@
 
     </v-sheet>
   </v-expand-transition>
-</v-container>
+</v-row>
 </template>
 
 
@@ -49,27 +39,28 @@ import {
   mapActions
 } from 'vuex';
 export default {
-  name: 'RoomFocusLayout',
+  name: 'RoomGrilleLayout',
   components: {
     "media-card-peer": MediaCardPeer
   },
   props: {
     layout: {
       type: Boolean,
+      default: false
     }
   },
   data(vm) {
     return {
-      slide: null,
       selectedPeer: null,
       shared: false
     }
   },
   mounted() {
     if (this.layout) {
-      this.log(`mounted slide layout`, "DEBUG")
+      this.log(`mounted grid layout`, "DEBUG")
     }
   },
+
   computed: {
     ...mapGetters({
       peer: 'getPeer',
@@ -80,9 +71,15 @@ export default {
       'getRemotePeer'
     ])
   },
+
   methods: {
-    ...mapGetters([]),
     toggle() {},
+    tooglePeer() {},
+    focusPeer(peerid, volume) {},
+    unFocus(peer) {
+      this.selectedPeer = null;
+      this.$refs.prevideo.srcObject = null;
+    },
     play(peer) {
       this.unFocus();
       this.$refs.prevideo.srcObject = peer.videoStream.stream;
@@ -95,41 +92,6 @@ export default {
           this.selectedPeer = null
           this.log(e, "DEBUG")
         });
-    },
-    async tooglePeer(peer, active, toggle, index) {
-      if (toggle) {
-        this.toggle = toggle;
-        toggle();
-      }
-      this.log(`Index : ${index} Active : ${active} Peer : ${peer.id} Slide : ${this.slide} `, "DEBUG");
-      if (!active) {
-        return this.play(peer);
-      } else {
-        this.selectedPeer = null;
-      }
-    },
-
-    focusPeer(peerid, volume) {
-      if (this.shared) {
-        return;
-      }
-      this.log(`Focus peer : ${peerid}`);
-      let peer = this.getRemotePeer(peerid);
-      if (!peer) {
-        if (peerid !== this.peer.id) {
-          return;
-        }
-        peer = this.peer;
-      }
-      if (this.selectedPeer && this.selectedPeer.id === peer.id) {
-        return;
-      }
-
-      return this.play(peer);
-    },
-    unFocus() {
-      this.selectedPeer = null;
-      this.$refs.prevideo.srcObject = null;
     },
     displayShare(peer) {
       if (this.toggle) {
@@ -149,17 +111,18 @@ export default {
       if (this.toggle) {
         this.toggle();
       }
+      this.shared = false;
       setTimeout(() => {
         this.play(peer)
           .then(() => {
-            this.shared = false;
+            this.selectedPeer = null;
           })
           .catch(() => {
             this.shared = false;
           });
       }, 2000);
     }
-  }
+  },
 }
 </script>
 

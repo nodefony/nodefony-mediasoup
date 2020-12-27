@@ -280,7 +280,7 @@ class Room extends nodefony.Service {
           const {
             peerId
           } = consumer.appData;
-          this.fire("consumerClosed", consumerId, peerId);
+          this.fire("consumerClosed", consumerId, peerId, consumer.appData);
           break;
         }
       case 'consumerPaused':
@@ -488,7 +488,7 @@ class Room extends nodefony.Service {
           rtpParameters,
           appData
         }, callback, errback) => {
-          this.on("produce", (id, message) => {
+          this.once("produce", (id, message) => {
             if (message.error) {
               this.log(message.error, "DEBUG");
               return errback(message.error);
@@ -649,9 +649,6 @@ class Room extends nodefony.Service {
       return this.mediasoup.send('pauseConsumer', {
         consumerId: consumer.id
       });
-      //consumer.pause();
-      //store.dispatch(
-      //	stateActions.setConsumerPaused(consumer.id, 'local'));
     } catch (error) {
       this.log('_pauseConsumer() | failed', "ERROR");
       this.log(error, "ERROR");
@@ -666,9 +663,6 @@ class Room extends nodefony.Service {
       return this.mediasoup.send('resumeConsumer', {
         consumerId: consumer.id
       });
-      //consumer.resume();
-      //store.dispatch(
-      //	stateActions.setConsumerResumed(consumer.id, 'local'));
     } catch (error) {
       this.log('resumeConsumer() | failed', "ERROR");
       this.log(error, "ERROR");
@@ -800,8 +794,7 @@ class Room extends nodefony.Service {
     return stream;
   }*/
 
-  async enableMic(stream) {
-    this.log('enableMic()', "DEBUG");
+  async enableMic(stream, microphone) {
     if (this.micProducer) {
       return this.micProducer;
     }
@@ -809,20 +802,41 @@ class Room extends nodefony.Service {
       this.log('enableMic() | cannot produce audio', "ERROR");
       return;
     }
+    this.log('enableMic()', "DEBUG");
     let track;
     try {
       if (!this.externalVideo) {
-        this.log(`enableMic() | calling getUserMedia())`, "DEBUG");
+        this.log(`enableMic()`, "DEBUG");
+        this.microphone = microphone;
         if (!stream) {
+          let options = null;
+          if(!this.microphone){
+            options = true;
+          }else{
+            if( this.microphone.device){
+              options = {
+                deviceId:{
+                  ideal:this.microphone.device.deviceId
+                }
+              }
+            }else{
+              options = true;
+            }
+          }
+          this.log(`enableMic() => calling getUserMedia())`, "DEBUG");
+          this.log(options, "DEBUG")
           stream = await navigator.mediaDevices.getUserMedia({
-            audio: true
+            audio: options
           });
         }
-
         track = stream.getAudioTracks()[0];
       } else {
         const stream = await this.getExternalVideoStream();
         track = stream.getAudioTracks()[0].clone();
+      }
+      if (!track) {
+        this.log(`No Audio track `, "WARNING");
+        return;
       }
       //track = this.mediaStream.getAudioTracks()[0];
       this.micProducer = await this.sendTransport.produce({
@@ -874,6 +888,7 @@ class Room extends nodefony.Service {
       });
       this.micProducer = null;
       this.micProducerId = null;
+      this.fire("disableMicrophone", this.micProducerId);
       return this.micProducer;
     } catch (e) {
       this.micProducer = null;
@@ -927,12 +942,10 @@ class Room extends nodefony.Service {
       this.resumeConsumer(consumer);
     }
   }
-  //async muteAudio() {}
-  //async unmuteAudio() {}
 
   // webcam
-  async enableWebcam(stream) {
-    this.log('enableWebcam()', "DEBUG");
+  async enableWebcam(stream, webcam) {
+
     if (this.webcamProducer) {
       return this.webcamProducer;
     } else if (this.shareProducer) {
@@ -946,7 +959,11 @@ class Room extends nodefony.Service {
     let device;
     try {
       if (!this.externalVideo) {
-        await this.updateWebcams();
+        if (!webcam) {
+          await this.updateWebcams();
+        } else {
+          this.webcam = webcam
+        }
         device = this.webcam.device;
         const {
           resolution
@@ -954,6 +971,7 @@ class Room extends nodefony.Service {
         if (!device) {
           throw new Error('no webcam devices');
         }
+        this.log('enableWebcam()', "DEBUG");
         if (!stream) {
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -965,6 +983,9 @@ class Room extends nodefony.Service {
           });
         }
         track = stream.getVideoTracks()[0];
+        if (track.readyState === "ended") {
+          return this.enableWebcam(null, webcam);
+        }
       } else {
         device = {
           label: 'external video'
@@ -972,6 +993,12 @@ class Room extends nodefony.Service {
         const stream = await this.getExternalVideoStream();
         track = stream.getVideoTracks()[0].clone();
       }
+      if (!track) {
+        this.log(`No video track `, "WARNING");
+        return;
+      }
+
+      // mediasoup options
       let encodings;
       let codec;
       const codecOptions = {
@@ -1287,8 +1314,8 @@ class Room extends nodefony.Service {
         this.shareProducer = null;
       });
       this.shareProducer.on('trackended', () => {
-        this.log(`Share disconnected`, "ERROR");
-        this.fire("error", new Error(`Share disconnected`))
+        this.log(`Share disconnected`, "WARNING");
+        //this.fire("error", new Error(`Share disconnected`))
         this.disableShare()
           .catch(() => {});
       });
