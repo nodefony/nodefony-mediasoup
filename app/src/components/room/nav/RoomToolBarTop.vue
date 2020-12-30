@@ -1,6 +1,6 @@
 <template>
-<v-toolbar outlined dense flat width="100%" class="ma-0 pa-0" style="top: 0;postion:fixed">
-  <v-app-bar-nav-icon></v-app-bar-nav-icon>
+<v-toolbar fixed outlined dense flat width="100%" class="ma-0 pa-0" style="top: 0;position:fixed; z-index:1000">
+  <v-app-bar-nav-icon @click="toogleSlider"></v-app-bar-nav-icon>
   <v-toolbar-title>{{ $t("rooms.name")}} {{roomid}}</v-toolbar-title>
   <v-spacer></v-spacer>
   <v-menu :close-on-content-click="false" :nudge-width="200" offset-x>
@@ -49,6 +49,12 @@
 
 
 <script>
+import {
+  mapGetters,
+  mapMutations,
+  mapActions
+} from 'vuex';
+
 export default {
   name: 'RoomToolBarTop',
   props: {
@@ -71,6 +77,9 @@ export default {
   },
 
   methods: {
+    ...mapMutations([
+      'toogleSlider'
+    ]),
     selectLayout(event) {
       this.$emit("layoutchange", this.selectedLayout, event);
     },

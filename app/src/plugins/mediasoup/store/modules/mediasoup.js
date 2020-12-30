@@ -55,12 +55,12 @@ const getters = {
     let device = null;
     if (state.audioDevices.size) {
       state.audioDevices.forEach((value, key) => {
-        if (!key ){
+        if (!key) {
           device = {
-            label:'Default',
-            deviceId:"default"
+            label: 'Default',
+            deviceId: "default"
           };
-          return ;
+          return;
         }
         if (value.deviceId === id || value.label === id) {
           device = value;
@@ -73,14 +73,14 @@ const getters = {
 
   getDevicesAudioLabels(state) {
     let tab = [];
-    if (state.audioDevices.size) {
+    if (state.audioDevices && state.audioDevices.size) {
       state.audioDevices.forEach((value, key) => {
-        if (!key){
+        if (!key) {
           tab.push({
             text: "Default",
             value: 'default'
           })
-        }else{
+        } else {
           tab.push({
             text: value.label,
             value: value.deviceId
@@ -92,14 +92,14 @@ const getters = {
   },
   getDevicesVideoLabels(state) {
     let tab = [];
-    if (state.videoDevices.size) {
+    if (state.videoDevices && state.videoDevices.size) {
       state.videoDevices.forEach((value, key) => {
-        if (!key){
+        if (!key) {
           tab.push({
             text: "Default",
             value: 'default'
           })
-        }else{
+        } else {
           tab.push({
             text: value.label,
             value: value.deviceId
@@ -113,12 +113,12 @@ const getters = {
     let device = null;
     if (state.videoDevices.size) {
       state.videoDevices.forEach((value, key) => {
-        if (!key ){
+        if (!key) {
           device = {
-            label:'Default',
-            deviceId:"default"
+            label: 'Default',
+            deviceId: "default"
           };
-          return ;
+          return;
         }
         if (value.deviceId === id || value.label === id) {
           device = value;

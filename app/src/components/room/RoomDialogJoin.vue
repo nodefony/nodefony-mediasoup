@@ -22,14 +22,15 @@
             <media-card-peer width="" init spectrum ref="peer" @endsharescreen='endsharescreen' :name="getUser" showOptions>
               <template slot="peer">
                 <v-container fluid class="pa-0">
-                  <v-btn color="primary" fab rounded absolute top left>
-                    {{this.getTrigramme}}
-                  </v-btn>
+                  <!--v-btn color="primary" fab rounded absolute top left>
+                    {{getTrigramme}}
+                  </v-btn-->
                   <v-card-title class="ml-10">
                     <p class="ml-3">
-                      {{this.getUser}}
+                      {{getProfileName}} {{getProfileSurname}}
                     </p>
                   </v-card-title>
+
                 </v-container>
               </template>
             </media-card-peer>
@@ -166,6 +167,8 @@ export default {
     ...mapGetters([
       "getUser",
       "getProfile",
+      'getProfileName',
+      'getProfileSurname',
       "getJoinDialog",
       "isAuthenticated",
       "hasAudio",
@@ -261,8 +264,10 @@ export default {
         })
     },
     close() {
+
       this.$emit("close", this);
       this.closeJoinDialog();
+      this.$destroy();
     }
   }
 }

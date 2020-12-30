@@ -1,18 +1,34 @@
 <template>
-<v-navigation-drawer v-model="drawer" :clipped="$vuetify.breakpoint.lgAndUp" app>
-  <!--v-navigation-drawer v-model="drawer" app-->
+<v-navigation-drawer disable-resize-watcher v-model="drawer" :clipped="false" app>
+  <!-- $vuetify.breakpoint.lgAndUp-->
+  <v-card v-if="isAuthenticated" height="64">
+    <v-list dense>
+      <v-list-item>
+        <v-list-item-avatar color="blue-grey">
+          <!--img src="" alt=""-->
+          <span class="white--text">{{getTrigramme}}</span>
+        </v-list-item-avatar>
+
+        <v-list-item-content>
+          <v-list-item-title>{{getProfileName}}</v-list-item-title>
+          <v-list-item-subtitle>{{getProfileSurname}}</v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
+    </v-list>
+  </v-card>
+
   <v-list nav dense>
-    <v-list-item @click="$router.push({ name: 'Home'})">
+    <v-list-item @click="redirect('Home')">
       <v-list-item-icon>
         <v-icon>mdi-home</v-icon>
       </v-list-item-icon>
       <v-list-item-title @click="$router.resolve({ name: 'About'})">Home</v-list-item-title>
     </v-list-item>
-    <v-list-group :value="false" prepend-icon="mdi-google-classroom">
+    <v-list-group v-if="isAuthenticated" :value="false" prepend-icon="mdi-google-classroom">
       <template v-slot:activator>
         <v-list-item-title>Mettings</v-list-item-title>
       </template>
-      <v-list-item sub-group @click="$router.push({ name: 'Rooms'})">
+      <v-list-item sub-group @click="redirect('Rooms')">
         <v-list-item-title>
           Rooms
         </v-list-item-title>
@@ -30,14 +46,7 @@
           <v-icon>mdi-plus-outline</v-icon>
         </v-list-item-icon>
       </v-list-item>
-      <v-list-item sub-group @click="$router.push({ name: 'RoomLayout'})">
-        <v-list-item-title>
-          Layout
-        </v-list-item-title>
-        <v-list-item-icon>
-          <v-icon>mdi-home</v-icon>
-        </v-list-item-icon>
-      </v-list-item>
+
     </v-list-group>
   </v-list>
   <!--v-list nav dense>
@@ -76,9 +85,15 @@ export default {
     return {}
   },
   computed: {
-    ...mapGetters({
-      getDrawer: 'getDrawer'
-    }),
+    ...mapGetters([
+      'isAuthenticated',
+      'getUser',
+      'getProfile',
+      'getTrigramme',
+      'getDrawer',
+      'getProfileName',
+      'getProfileSurname'
+    ]),
     drawer: {
       get() {
         return this.getDrawer;
@@ -88,8 +103,21 @@ export default {
       }
     }
   },
-  async mounted() {},
+  async mounted() {
+    //console.log(this.$vuetify.breakpoint)
+  },
   async destroyed() {},
-  methods: {}
+  methods: {
+    redirect(route) {
+      return this.$router.push({
+          name: route
+        })
+        .catch(() => {})
+    }
+  }
 }
 </script>
+
+<style scoped lang="scss">
+
+</style>

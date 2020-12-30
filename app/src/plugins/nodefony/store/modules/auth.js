@@ -80,7 +80,8 @@ const mutations = {
   [AUTH_REQUEST]: (state) => {
     state.status = 'loading'
     state.loading = true
-    state.username = window.sessionStorage.removeItem('username')
+    window.sessionStorage.removeItem('username')
+    state.username = null;
   },
   [AUTH_SUCCESS]: (state, resp) => {
     state.status = 'success'
@@ -98,8 +99,17 @@ const mutations = {
     state.token = ''
     state.status = 'logout'
     state.loading = false
-    state.username = window.sessionStorage.removeItem('username')
+    window.sessionStorage.removeItem('username')
+    state.username =null
     state.decodedToken = null
+  },
+  clear(state){
+    state.token = null;
+    state.decodedToken = null
+    state.loading = false;
+    window.sessionStorage.removeItem('username')
+    state.username =null
+    Api.clearToken(true);
   }
 }
 

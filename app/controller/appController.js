@@ -18,7 +18,10 @@ class appController extends nodefony.Controller {
    *    @Route ("/app/*",
    *      name="App")
    */
-  appAction() {
+  async appAction() {
+    if (this.context.originUrl.pathname === "/app/login"){
+      this.session.destroy();
+    }
     return this.render("app::index.html.twig", {
       name: this.kernel.projectName,
       description: this.kernel.package.description

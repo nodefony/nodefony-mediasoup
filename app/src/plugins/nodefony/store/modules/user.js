@@ -13,8 +13,8 @@ import {
 import {
   Api as baseApi
 } from 'nodefony-client';
-const Api = new baseApi("users",{
-  baseUrl:"/api/users"
+const Api = new baseApi("users", {
+  baseUrl: "/api/users"
 });
 
 const state = {
@@ -25,6 +25,11 @@ const state = {
 
 const getters = {
   getProfile: state => state.user,
+  getProfileUsername(state){
+    if (state.user){
+      return state.user.username
+    }
+  },
   getRoles(state) {
     if (state.user) {
       return state.user.roles
@@ -44,10 +49,29 @@ const getters = {
     //throw new Error('User profile not defined !')
   },
   isProfileLoaded: state => state.status === 'success',
-  getTrigramme(state){
-    if (state.user){
+  getTrigramme(state) {
+    if (state.user) {
       let size = state.user.surname.length;
-      return `${state.user.name.substr(0, 1)}${state.user.surname.substr(0, 1)}${state.user.surname.substr(size-1,1)}`;
+      let trg = `${state.user.name.substr(0, 1)}${state.user.surname.substr(0, 1)}${state.user.surname.substr(size-1,1)}`;
+      return trg.toLowerCase();
+    }
+    return "";
+  },
+  getInitials() {
+    if (state.user) {
+      let trg = `${state.user.name.substr(0, 1)}${state.user.surname.substr(0, 1)}`;
+      return trg.toLowerCase();
+    }
+  },
+  getProfileName(state) {
+    if (state.user) {
+      return state.user.name
+    }
+    return "";
+  },
+  getProfileSurname(state) {
+    if (state.user) {
+      return state.user.surname;
     }
     return "";
   }
@@ -62,14 +86,13 @@ const actions = {
     commit(USER_LOADING)
     return Api.http(url)
       .then(resp => {
-        //console.log(resp)
         commit(USER_SUCCESS, resp)
         commit(USER_PROFILE, resp.result)
         return resp
       })
       .catch(e => {
         commit(USER_ERROR, e)
-        throw e ;
+        throw e;
       })
   }
 }

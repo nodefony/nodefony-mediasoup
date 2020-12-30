@@ -14,7 +14,8 @@ const state = {
   dialogJoin: true,
   dialogQuit: false,
   medias: getStorage("medias") || ["audio", "video"],
-  peers: []
+  peers: [],
+  slider: true
 };
 
 const getters = {
@@ -53,8 +54,7 @@ const getters = {
     return state.peers;
   },
   getRemotePeer(state) {
-    return (peerId)=>{
-      console.log(state.peers, peerId)
+    return (peerId) => {
       let find = state.peers.findIndex((peer) => {
         return peer.id === peerId;
       });
@@ -64,8 +64,11 @@ const getters = {
       return null;
       //throw new Error(`No peer found ${peerId}`);
     }
+  },
+  // layouts
+  slider(state) {
+    return state.slider;
   }
-
 }
 
 const mutations = {
@@ -89,7 +92,7 @@ const mutations = {
   closeQuitDialog(state) {
     state.dialogQuit = false;
   },
-  setMedia(state, type){
+  setMedia(state, type) {
     let index = state.medias.indexOf(type);
     if (index < 0) {
       state.medias.push(type);
@@ -125,6 +128,10 @@ const mutations = {
     while (state.peers.length > 0) {
       state.peers.pop();
     }
+  },
+  //layout
+  toogleSlider(state) {
+    state.slider = !state.slider;
   }
 
 }

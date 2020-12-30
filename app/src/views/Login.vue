@@ -1,46 +1,46 @@
 <template>
 <v-container fluid>
-  <v-col cols="12">
-    <v-row align="center" justify="center" class="pt-10">
-      <v-card min-width="600" min-height=">400">
-        <v-row align="center" justify="center">
-          <v-col cols="12" sm="8" md="4">
-            <v-img src="/app/images/app-logo.png" aspect-ratio="1"></v-img>
-          </v-col>
-        </v-row>
-        <v-card-title>Mediasoup {{ $t('signin') }} {{select}} </v-card-title>
-        <v-card-subtitle class="pb-0">
-          <v-text-field v-if="isLoading" color="success" loading disabled>
-          </v-text-field>
-          <notify v-if="message" :pdu="message" type="alert" />
-        </v-card-subtitle>
-        <v-card-text class="text--primary">
+  <!-- v-col cols="12"-->
+  <v-row align="center" justify="center" class="pt-10">
+    <v-card min-width="600" min-height=">400">
+      <v-row align="center" justify="center">
+        <v-col cols="12" sm="8" md="4">
+          <v-img src="/app/images/app-logo.png" aspect-ratio="1"></v-img>
+        </v-col>
+      </v-row>
+      <v-card-title>Mediasoup {{ $t('signin') }} {{select}} </v-card-title>
+      <v-card-subtitle class="pb-0">
+        <v-text-field v-if="isLoading" color="success" loading disabled>
+        </v-text-field>
+        <notify v-if="message" :pdu="message" type="alert" />
+      </v-card-subtitle>
+      <v-card-text class="text--primary">
 
-          <v-form @submit.prevent="submit" ref="form">
-            <v-select v-model="select" :items="items" label="Authencation type" required></v-select>
+        <v-form @submit.prevent="submit" ref="form">
+          <v-select v-model="select" :items="items" label="Authencation type" required></v-select>
 
-            <v-text-field v-model="username" placeholder="username" :counter="50" :rules="nameRules" :label="$t('username')" required prepend-icon="mdi-account-circle" />
+          <v-text-field v-model="username" placeholder="username" :counter="50" :rules="nameRules" :label="$t('username')" required prepend-icon="mdi-account-circle" />
 
-            <v-text-field :label="$t('password')" v-model="password" placeholder="password" prepend-icon="mdi-lock" :type="showPassword ? 'text' : 'password'" :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'" @click:append="showPassword = !showPassword"
-              required />
+          <v-text-field :label="$t('password')" v-model="password" placeholder="password" prepend-icon="mdi-lock" :type="showPassword ? 'text' : 'password'" :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'" @click:append="showPassword = !showPassword"
+            required />
 
-            <v-btn type="submit" class="mr-4" color="success">
-              {{ $t('submit') }}
-            </v-btn>
+          <v-btn type="submit" class="mr-4" color="success">
+            {{ $t('submit') }}
+          </v-btn>
 
-          </v-form>
-        </v-card-text>
-      </v-card>
-    </v-row>
-  </v-col>
+        </v-form>
+      </v-card-text>
+    </v-card>
+  </v-row>
+  <!--/v-col-->
 </v-container>
 </template>
 
 <script>
 import {
   mapGetters,
-  mapActions
-  //mapMutations
+  mapActions,
+  mapMutations
 } from 'vuex';
 
 import notify from '@/plugins/nodefony/components/notify.vue';
@@ -78,7 +78,12 @@ export default {
     ])
   },
   mounted() {
-    console.log("passss")
+    this.clear();
+    this.openNavBar();
+    if (this.$route.name === "Logout") {
+      this.logout()
+    }
+    this.closeDrawer();
   },
   beforeUpdate() {
 
@@ -87,8 +92,14 @@ export default {
 
   },
   methods: {
+    ...mapMutations([
+      'clear',
+      'closeDrawer',
+      'openNavBar'
+    ]),
     ...mapActions({
-      auth: 'AUTH_REQUEST'
+      auth: 'AUTH_REQUEST',
+      logout: 'AUTH_LOGOUT'
     }),
     reset() {
       this.$refs.form.reset();
@@ -123,9 +134,6 @@ export default {
       const form = this.$refs.form;
       if (form.validate()) {
         this.message = null;
-        if (this.$cube) {
-          this.$cube.play();
-        }
         try {
           const {
             username,
@@ -142,15 +150,9 @@ export default {
               return res;
             })
             .catch(e => {
-              if (this.$cube) {
-                this.$cube.pause();
-              }
               this.message = this.parseMessage(this.log(e, 'ERROR'));
             });
         } catch (e) {
-          if (this.$cube) {
-            this.$cube.pause();
-          }
           this.message = this.parseMessage(this.log(e, 'ERROR'));
         } finally {
           form.resetValidation();

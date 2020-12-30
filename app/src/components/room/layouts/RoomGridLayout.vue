@@ -1,5 +1,6 @@
 <template>
-<v-row v-if="layout" class="ma-0 pa-0">
+<v-container v-if="layout" fluid fill-height class="ma-0 pa-0">
+
   <v-container v-show="!shared" fluid>
     <media-card-peer v-if="peer" max-width="300" max-height="300" class="ma-3 pa-0" :ref="peer.id" :remote="peer" :key="peer.id" :name="peer.id" spectrum :active="layout" />
 
@@ -27,7 +28,7 @@
 
     </v-sheet>
   </v-expand-transition>
-</v-row>
+</v-container>
 </template>
 
 

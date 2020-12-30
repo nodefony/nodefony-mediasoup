@@ -945,7 +945,6 @@ class Room extends nodefony.Service {
 
   // webcam
   async enableWebcam(stream, webcam) {
-
     if (this.webcamProducer) {
       return this.webcamProducer;
     } else if (this.shareProducer) {
@@ -965,12 +964,16 @@ class Room extends nodefony.Service {
           this.webcam = webcam
         }
         device = this.webcam.device;
+        if (!device) {
+          if (webcam){
+            await this.updateWebcams();
+          }else{
+            throw new Error('no webcam devices');
+          }
+        }
         const {
           resolution
         } = this.webcam;
-        if (!device) {
-          throw new Error('no webcam devices');
-        }
         this.log('enableWebcam()', "DEBUG");
         if (!stream) {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -983,7 +986,7 @@ class Room extends nodefony.Service {
           });
         }
         track = stream.getVideoTracks()[0];
-        if (track.readyState === "ended") {
+        if (track && track.readyState === "ended") {
           return this.enableWebcam(null, webcam);
         }
       } else {

@@ -36,22 +36,55 @@
 
 
   <router-link :to="{ name: 'About'}" tag="div">
-    <v-btn icon>
+    <v-btn icon v-if="isAuthenticated">
       <v-icon>mdi-apps</v-icon>
     </v-btn>
   </router-link>
-  <v-btn icon>
+  <v-btn icon v-if="isAuthenticated">
     <v-icon>mdi-bell</v-icon>
   </v-btn>
-  <v-btn icon v-if="isAuthenticated">
-    <v-avatar color="blue-grey" size="32">
-      <span class="white--text">{{getTrigramme}}</span>
-    </v-avatar>
+  <v-btn icon v-if="isAuthenticated" class="text-transform-none">
+    <v-menu v-model="account" :close-on-content-click="false" :nudge-width="200" offset-x>
+      <template v-slot:activator="{ on, attrs }">
+        <v-list-item-avatar v-bind="attrs" v-on="on" color="blue-grey">
+          <!--img src="" alt=""-->
+          <span class="white--text">{{getTrigramme}}</span>
+        </v-list-item-avatar>
+      </template>
+      <v-card>
+        <v-list>
+          <v-list-item>
+            <v-list-item-avatar color="blue-grey">
+              <!--img src="" alt=""-->
+              <span class="white--text">{{getTrigramme}}</span>
+            </v-list-item-avatar>
+
+            <v-list-item-content>
+              <v-list-item-title>{{getProfileName}}</v-list-item-title>
+              <v-list-item-subtitle>{{getProfileSurname}}</v-list-item-subtitle>
+            </v-list-item-content>
+
+            <v-list-item-action>
+
+            </v-list-item-action>
+          </v-list-item>
+        </v-list>
+
+        <v-divider></v-divider>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="deconnect">
+            Logout
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-menu>
+
   </v-btn>
 
   <!-- LOGIN -->
   <a v-else :href="$router.resolve({ name: 'Login' }).href">
-    <v-btn rounded color="primary" dark>
+    <v-btn v-if="!isLogging" rounded color="primary" dark>
       Login
     </v-btn>
   </a>
@@ -72,6 +105,7 @@ export default {
   props: {},
   data(vm) {
     return {
+      account: false,
       selectedLang: 0,
       langs: [{
           text: 'francais',
@@ -95,7 +129,9 @@ export default {
       'getUser',
       'getProfile',
       'getTrigramme',
-      'getNavBar'
+      'getNavBar',
+      'getProfileName',
+      'getProfileSurname'
     ]),
     navbar: {
       get() {
@@ -104,19 +140,29 @@ export default {
       set(value) {
         return value
       }
+    },
+    isLogging() {
+      return this.$route.name === "Login";
     }
   },
   destroyed() {},
   async beforeMount() {
+    if (!this.isAuthenticated || this.isLogging) {
+      return;
+    }
     if (!this.getProfile) {
       if (this.getUser && this.isAuthenticated) {
         return await this.getUserProfile(`/api/users/${this.getUser}`)
+          .catch(() => {
+            document.location = `/app/login`;
+          });
       }
     }
   },
   methods: {
     ...mapActions({
-      getUserProfile: 'USER_REQUEST'
+      getUserProfile: 'USER_REQUEST',
+      logout: 'AUTH_LOGOUT'
     }),
     ...mapMutations(['toogleDrawer']),
     changeLang(lang) {
@@ -131,6 +177,19 @@ export default {
       });
       return this.selectedLang
     },
+    async deconnect() {
+      await this.logout()
+        .then((res) => {
+          document.location = `/app/login`;
+          return res;
+        })
+    }
   }
 }
 </script>
+
+<style scoped lang="scss">
+.text-transform-none {
+    text-transform: none !important;
+}
+</style>

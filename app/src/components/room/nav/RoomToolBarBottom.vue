@@ -134,7 +134,7 @@ export default {
         //return this.pauseVideoTag();
         this.deleteMedias("video")
       } else {
-        await this.room.enableWebcam(this.videoStream, this.webcam);
+        await this.room.enableWebcam(null, this.webcam);
         //return this.playVideoTag();
         this.setMedia("video");
       }

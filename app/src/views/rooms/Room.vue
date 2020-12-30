@@ -1,12 +1,26 @@
 <template>
-<v-container fluid class="ma-0 pa-0">
+<v-container fluid fill-height class="ma-0 pa-0">
 
   <room-dialog-join :roomid="roomid" v-on:join="acceptConnect" v-on:close="closeDialogJoin" />
-  <!--room-system-bar /-->
-  <room-tool-bar-top v-on:layoutchange="selectLayout" :roomid="roomid" />
 
-  <v-row v-show="joined" class="pa-0 ma-0">
-    <v-col cols="9" class="pa-0 ma-0">
+  <v-container v-show="joined" fluid fill-height class="pa-0 ma-0">
+
+    <v-flex fill-height>
+
+      <room-tool-bar-top v-on:layoutchange="selectLayout" :roomid="roomid" />
+
+      <room-grid-layout v-show="grid" :layout="grid" ref="grid" />
+
+      <room-focus-layout v-show="focus" :layout="focus" ref="focus" />
+
+      <room-tool-bar-bottom v-on:quit="quit" />
+    </v-flex>
+
+  </v-container>
+
+  <!--v-row v-show="joined" class="pa-0 ma-0">
+    <room-tool-bar-top v-on:layoutchange="selectLayout" :roomid="roomid" />
+    <v-col cols="12" class="pa-0 ma-0">
       <room-grid-layout v-show="grid" :layout="grid" ref="grid" />
       <room-focus-layout v-show="focus" :layout="focus" ref="focus" />
     </v-col>
@@ -14,7 +28,7 @@
       <room-side-bar :peers="peers" />
     </v-col>
     <room-tool-bar-bottom v-on:quit="quit" />
-  </v-row>
+  </v-row-->
 
   <room-dialog-quit v-if="dialogQuit" :roomid="room.id" v-on:response="leave" />
 
@@ -29,7 +43,6 @@ import {
 } from 'vuex';
 import DialogJoin from '../../components/room/RoomDialogJoin';
 import DialogQuit from '../../components/room/RoomDialogQuit';
-import RoomSystemBar from '../../components/room/nav/RoomSystemBar';
 import RoomToolBarTop from '../../components/room/nav/RoomToolBarTop';
 import RoomToolBarBottom from '../../components/room/nav/RoomToolBarBottom';
 import RoomSideBar from '../../components/room/nav/sidebar/RoomSideBar';
@@ -41,22 +54,23 @@ export default {
   components: {
     "room-dialog-join": DialogJoin,
     "room-dialog-quit": DialogQuit,
-    "room-system-bar": RoomSystemBar,
     "room-tool-bar-top": RoomToolBarTop,
     "room-tool-bar-bottom": RoomToolBarBottom,
     "room-side-bar": RoomSideBar,
     "room-focus-layout": RoomFocusLayout,
     "room-grid-layout": RoomGrilleLayout,
   },
+  props: {
+    roomid: {
+      type: String
+    }
+  },
   data(vm) {
     return {
-      //peer: null,
       peerid: null,
-      //room: null,
-      roomid: "webrtc",
       intevalTime: null,
-      grid: true,
-      focus: false,
+      grid: false,
+      focus: true,
       joined: false,
       connected: false
     }
@@ -84,6 +98,7 @@ export default {
     if (this.intevalTime) {
       clearInterval(this.intevalTime);
     }
+
   },
   //beforeMount() {
   async beforeCreate() {},
@@ -100,6 +115,8 @@ export default {
       'getRoom',
       'getPeer',
       'peers',
+      'webcam',
+      'microphone',
       'getRemotePeer',
       'microphone',
       'audioStream',
@@ -163,7 +180,10 @@ export default {
       'deleteMedias',
       'setMedia'
     ]),
-
+    close() {
+      this.$destroy();
+      return this.redirect();
+    },
     // mediasoup
     async acceptConnect() {
       this.loading = true;
@@ -241,8 +261,8 @@ export default {
         this.log(options, "DEBUG");
         try {
           this.peer = room.peer;
-          await room.enableMic(this.audioStream);
-          await room.enableWebcam(this.videoStream);
+          await room.enableMic(this.audioStream, this.microphone);
+          await room.enableWebcam(this.videoStream, /*this.webcam*/ );
           this.log(`joined : ${room.id}`)
           this.joined = true;
         } catch (e) {
@@ -276,9 +296,9 @@ export default {
         if (component) {
           component.volume = volume || -100;
         }
-        if (volume > -20) {
-          this.getLayout().focusPeer(peerId, volume);
-        }
+        //if (volume > -20) {
+        this.getLayout().focusPeer(peerId, volume);
+        //}
       });
       this.room.on("newPeer", (peer) => {
         this.log(`New Peer : ${peer.id}`);
@@ -296,7 +316,7 @@ export default {
         if (producer.type === "share") {
           this.getLayout().displayShare(this.peer);
         } else {
-          this.getLayout().focusPeer(this.peer.id);
+          this.getLayout().focusPeer(this.peer.id, 0);
         }
       });
       this.room.on("disableWebcam", (producer) => {
@@ -412,14 +432,13 @@ export default {
 
     // application
     closeDialogJoin() {
-      this.$destroy();
-      //return this.redirect();
+      this.close();
     },
     quit(event) {
       this.openQuitDialog();
       return this.waitQuit(event)
         .then(() => {
-          return this.redirect();
+          return this.close();
         })
         .catch(() => {
           this.log(`Abort Quit`);
@@ -427,7 +446,7 @@ export default {
     },
     redirect() {
       return this.$router.push({
-        name: 'Rooms'
+        name: 'Home'
       }).catch(() => {})
     },
     leave(res) {

@@ -3,28 +3,42 @@ import VueRouter from 'vue-router'
 import Store from '../store';
 import Login from '../views/Login.vue';
 import Home from '../views/Home.vue';
-import Rooms from '../views/Rooms.vue';
-import Room from '../views/Room.vue';
-import RoomLayout from '../views/layouts/Room.vue';
+import Rooms from '../views/rooms/Rooms.vue';
+import Room from '../views/rooms/Room.vue';
+//import RoomLayout from '../views/layouts/Room.vue';
 
 const ifAuthenticated = (to, from, next) => {
   if (Store.getters.isAuthenticated) {
     next();
     return;
   }
-  next('Login');
-  //document.location = `/app/mediasoup/login`;
+  //next('Login');
+  document.location = `/app/login`;
+};
+
+const allReadyLogin = (to, from, next) => {
+  if (Store.getters.isAuthenticated) {
+    return next('Home');
+  }
+  return next();
 };
 
 Vue.use(VueRouter)
 
 const routes = [{
     path: '/',
+    alias: '/home',
     name: 'Home',
-    component: Home
+    component: Home,
+    beforeEnter: ifAuthenticated
 }, {
     path: '/login',
     name: 'Login',
+    component: Login,
+    beforeEnter: allReadyLogin
+}, {
+    path: '/logout',
+    name: 'Logout',
     component: Login
 }, {
     path: '/about',
@@ -42,10 +56,6 @@ const routes = [{
     props: true,
     component: Room,
     beforeEnter: ifAuthenticated
- },{
-   path: '/layout/room',
-   name: 'RoomLayout',
-   component: RoomLayout,
  }
 ];
 

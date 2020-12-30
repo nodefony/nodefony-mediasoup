@@ -1,44 +1,44 @@
 <template>
-<v-card :width="cardWidth" :height="height" class="rounded-lg" :elevation="elevation" :outlined="hover" :min-width="minWidth" :max-width="maxWidth" :max-height="maxHeight" :min-height="minHeight" :loading="loading" rounded @click="toggle">
+<v-card :width="cardWidth" :height="height" class="rounded-lg" :elevation="elevation" :outlined="hover" :min-width="minWidth" :max-width="maxWidth" :max-height="maxHeight" :min-height="minHeight" :loading="loading" rounded @click="toggle" :class="{ focus: focus}"
+  style="background:transparent;">
+
+  <media-volume-peer v-if="volume" fab rounded absolute top left color="blue-grey" class=" white--text" :volume="this.volume || 0" :muted="local ? !hasAudio : !audio" />
 
   <slot name="peer"></slot>
 
   <v-container fluid class="pa-0">
-    <v-btn x-small color="blue-grey" class="ma-4 white--text" fab style="position:absolute;top=0px">
-      <span v-if="local ? hasAudio : audio">
-        <v-icon v-if="this.volume < -50 && this.volume >= -100">mdi-volume-low</v-icon>
-        <v-icon v-if="this.volume >= -50 && this.volume <= -25">mdi-volume-medium</v-icon>
-        <v-icon v-if="this.volume > -25 ">mdi-volume-high</v-icon>
-        <!--v-icon v-if="local ? hasAudio : audio" class="white--text">mdi-volume-high</v-icon-->
-      </span>
-      <v-icon v-else class="white--text">mdi-volume-off</v-icon>
-    </v-btn>
-    <!-- VIDEO -->
-    <v-row class="pa-0 ma-0">
-      <v-hover v-slot="{ hover }" :disabled="hoverDisabled">
-        <v-container v-show="video || screen || noise" fluid class="pa-0">
-          <video style="width:100%;height:100%" class="pa-0 ma-0" muted playsinline :controls="false" ref="prevideo" />
-          <div v-if="hover" style="position:absolute;">
-            <slot name="hover"></slot>
-          </div>
-        </v-container>
-      </v-hover>
 
-      <v-container v-show="(!video && !screen && !noise)" fluid class="pa-0">
-        <v-hover v-slot="{ hover }" :disabled="hoverDisabled">
-          <v-container class="pa-0">
-            <v-row justify="center" class="">
-              <div v-if="hover" style="position:absolute;">
-                <slot name="hover">
-                  <v-avatar color="primary" size="123">{{getTrigramme}}</v-avatar>
-                </slot>
+    <!-- VIDEO -->
+    <v-hover v-slot="{ hover }" :disabled="hoverDisabled">
+      <v-row class="pa-0 ma-0">
+        <v-container v-show="video || screen || noise" fluid class="pa-0 ma-0">
+
+          <v-container fluid fill-height class="pa-0 ma-0">
+            <v-row justify="center" align="center" class="pa-0 ma-0">
+              <div v-show="hover" style="position:absolute">
+                <v-avatar color="primary" class="white--text" :size="local ? (remote ? 50 : 120) :50">{{local ? getTrigramme : (remote ? remote.id : "") }}</v-avatar>
+              </div>
+              <video style="width:100%;border-radius:8px 8px 0 0;" class="pa-0 ma-0" muted playsinline :controls="false" ref="prevideo" />
+            </v-row>
+          </v-container>
+
+        </v-container>
+
+        <v-container v-show="(!video && !screen && !noise)" fluid class="pa-0">
+
+          <v-container fluid fill-height style="min-height:160px;background-color:grey;opacity:0.3;border-radius:8px 8px 0 0;" class="pa-0 ma-0">
+            <v-row justify="center" align="center">
+              <div style="position:absolute">
+                <v-avatar color="primary" class="white--text" :size="local ? (remote ? 50 : 120) :50">{{local ? getTrigramme : (remote ? remote.id : "") }}</v-avatar>
+                <h1 v-if="hover" style="color:white"></h1>
               </div>
             </v-row>
           </v-container>
-        </v-hover>
-      </v-container>
 
-    </v-row>
+        </v-container>
+
+      </v-row>
+    </v-hover>
     <!-- AUDIO -->
     <audio playsinline :controls="false" style="display:none" :muted="local" ref="preaudio" />
     <!-- CANVAS -->
@@ -80,9 +80,13 @@ import {
   mapMutations,
   mapActions
 } from 'vuex';
+import Volume from '@/components/medias/peers/MediaVolumePeer';
 
 export default {
   name: 'MediaCardPeer',
+  components: {
+    "media-volume-peer": Volume
+  },
   props: {
     init: {
       type: Boolean,
@@ -139,6 +143,7 @@ export default {
       elevation: 4,
       hoverDisabled: false,
       hover: false,
+      focus: false,
       resolution: "hd",
       devices: [],
       audio: null,
@@ -155,7 +160,6 @@ export default {
     }
   },
   async mounted() {
-    console.log(`passs ${this.active}`);
     if (this.remote) {
       if (this.remote.local) {
         this.local = true;
@@ -213,7 +217,6 @@ export default {
     },
     ...mapGetters([
       'getTrigramme',
-      "getUser",
       "hasAudio",
       "hasVideo",
       "hasScreen",
@@ -227,7 +230,8 @@ export default {
       'getDevicesAudioLabels',
       'getDevicesVideoLabels',
       'getAudioDeviceByValue',
-      'getVideoDeviceByValue'
+      'getVideoDeviceByValue',
+
     ]),
     cardWidth: {
       get() {
@@ -513,7 +517,7 @@ export default {
     },
 
     async getAudioUserMedia(settings) {
-      this.logger(`Change Stream`, settings);
+      //this.logger(`Change Stream`, settings);
       return await this.audioStream.getUserMedia({
           audio: settings,
           video: false
@@ -650,7 +654,6 @@ export default {
       }
 
       if (!this.audio && this.hasAudio) {
-        console.log(this.microphone)
         let options = {};
         if (this.microphone.device) {
           options.deviceId = {
@@ -731,5 +734,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-
+.focus {
+    border: 1px solid blue;
+}
 </style>

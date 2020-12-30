@@ -48,7 +48,7 @@ class Mediasoup extends nodefony.Service {
       baseUrl: "/mediasoup/api"
     });
     this.VIDEO_CONSTRAINS = VIDEO_CONSTRAINS;
-    this.init();
+    //this.init();
   }
 
   // hooy plugins vue
