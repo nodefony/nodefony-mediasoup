@@ -5,12 +5,15 @@ import Login from '../views/Login.vue';
 import Home from '../views/Home.vue';
 import Rooms from '../views/rooms/Rooms.vue';
 import Room from '../views/rooms/Room.vue';
+import createRoom from '../views/rooms/createRoom.vue';
+
+import Users from '../views/users/Users.vue';
+import EditUser from '../views/users/EditUser.vue';
 //import RoomLayout from '../views/layouts/Room.vue';
 
 const ifAuthenticated = (to, from, next) => {
   if (Store.getters.isAuthenticated) {
-    next();
-    return;
+    return next();
   }
   //next('Login');
   document.location = `/app/login`;
@@ -49,13 +52,31 @@ const routes = [{
     path: '/rooms',
     name: 'Rooms',
     component: Rooms,
-    beforeEnter: ifAuthenticated
+    beforeEnter: ifAuthenticated,
+    children: []
  }, {
     path: '/room/:roomid',
     name: 'Room',
     props: true,
     component: Room,
+    beforeEnter: ifAuthenticated,
+    children: []
+ }, {
+    path: '/create',
+    name: 'createRoom',
+    component: createRoom,
     beforeEnter: ifAuthenticated
+ }, {
+    path: '/users',
+    name: 'Users',
+    beforeEnter: ifAuthenticated,
+    component: Users
+ }, {
+    path: '/user/:username',
+    name: 'User',
+    props: true,
+    beforeEnter: ifAuthenticated,
+    component: EditUser
  }
 ];
 

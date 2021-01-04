@@ -57,9 +57,12 @@ class apiRomController extends nodefony.Controller {
    */
   async roomsAction() {
     const room = await this.entity.findAndCountAll();
-    return this.api.render(
-      room
-    );
+    if( room){
+      return this.api.render(
+        room
+      );
+    }
+    throw new Error(`Room not exist`);
   }
 
   /**
@@ -86,7 +89,7 @@ class apiRomController extends nodefony.Controller {
    */
   async checkRoomAccessAction(name){
     const room = await this.getRoom(name);
-    if(room.secure){
+    if(room && room.secure){
       return  this.secureAction(name);
     }
     await this.setStykyCookie(name, room);

@@ -62,7 +62,7 @@ class roomEntity extends nodefony.Entity {
         type: DataTypes.BOOLEAN,
         defaultValue: false
       },
-      accees:{
+      access:{
         type:   DataTypes.ENUM,
         values: ['private', 'public'],
         defaultValue: 'private'

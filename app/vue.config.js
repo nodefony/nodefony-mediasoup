@@ -83,5 +83,20 @@ module.exports = {
       localeDir: 'locales',
       enableInSFC: false
     }
-  }
+  },
+
+  pwa: {
+   name: 'nodefony-mediasoup',
+   themeColor: '#4DBA87',
+   msTileColor: '#000000',
+   appleMobileWebAppCapable: 'yes',
+   appleMobileWebAppStatusBarStyle: 'black',
+   // configure the workbox plugin
+   workboxPluginMode: 'InjectManifest',
+   workboxOptions: {
+     // swSrc is required in InjectManifest mode.
+     swSrc: 'src/pwa/registerServiceWorker.js',
+     // ...other Workbox options...
+   }
+ }
 };

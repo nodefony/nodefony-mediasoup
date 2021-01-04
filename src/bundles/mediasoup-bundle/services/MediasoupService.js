@@ -98,11 +98,11 @@ module.exports = class Mediasoup extends nodefony.Service {
       this.log(`run [pid:${worker.pid}] mediasoup Worker...`);
       // Log worker resource usage every X seconds.
       if (this.kernel.debug) {
-        setInterval(async () => {
+        /*setInterval(async () => {
           const usage = await worker.getResourceUsage();
           this.log(`mediasoup Worker resource usage [pid:${worker.pid}]:`, "DEBUG");
           this.log(usage);
-        }, 60 * 1000);
+        }, 60 * 1000);*/
       }
     }
   }

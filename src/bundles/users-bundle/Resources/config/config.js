@@ -50,7 +50,7 @@ module.exports = {
    *      }
    *
    */
-  watch: false,
+  watch: true,
 
   /**
    *
@@ -74,10 +74,10 @@ module.exports = {
   },
   jwt: {
     token: {
-      expiresIn: 900
+      expiresIn: 15*60 // 15 minutes in secondes
     },
     refreshToken: {
-      expiresIn: 3600
+      expiresIn: 24*60*60  // 24 hours in secondes
     }
   },
   swagger: require(path.resolve(__dirname, "..", "swagger", "config.js")),

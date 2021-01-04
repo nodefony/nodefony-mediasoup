@@ -28,6 +28,36 @@ class Nodefony extends nodefony.Kernel {
     this.vueVersion = this.options.VUE_APP_VUE_VERSION;
     this.vuetifyVersion = this.options.VUE_APP_VUETIFY_VERSION;
     this.domain = this.options.VUE_APP_DOMAIN;
+    this.api = new nodefony.Api(this.name, {
+      baseUrl: "/api"
+    });
+  }
+
+  request(...args){
+     return this.api.http(...args)
+     .then((result)=>{
+        if (result.error){
+          throw result.error;
+        }
+        return result;
+     })
+     .catch(async (e) =>{
+       if(e.response ){
+         if (e.response.code === 401) {
+           try {
+             await this.store.dispatch("AUTH_LOGOUT");
+           } catch (e) {
+             this.log(e, "ERROR");
+             throw e.response;
+           } finally {
+             this.router.push("home");
+           }
+         }
+         throw e.response;
+       }else{
+         throw e;
+       }
+     });
   }
 
   // hooy plugins vue
@@ -172,11 +202,7 @@ class Nodefony extends nodefony.Kernel {
         return reject(e);
       }
     });
-
-
   }
-
-
 }
 nodefony.kernel = new Nodefony("VUE",process.env);
 

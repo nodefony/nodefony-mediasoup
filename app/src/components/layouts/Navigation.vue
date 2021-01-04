@@ -18,7 +18,7 @@
   </v-card>
 
   <v-list nav dense>
-    <v-list-item @click="redirect('Home')">
+    <v-list-item class="my-5" @click="redirect('Home')">
       <v-list-item-icon>
         <v-icon>mdi-home</v-icon>
       </v-list-item-icon>
@@ -26,19 +26,38 @@
     </v-list-item>
     <v-list-group v-if="isAuthenticated" :value="false" prepend-icon="mdi-google-classroom">
       <template v-slot:activator>
-        <v-list-item-title>Mettings</v-list-item-title>
+        <v-list-item-title>{{$t('meetings.meetings')}}</v-list-item-title>
       </template>
+
+      <v-list-item sub-group @click="false">
+        <v-list-item-title class="ml-6">
+          {{$t('meetings.live')}}
+        </v-list-item-title>
+        <v-list-item-icon>
+          <v-icon>mdi-video</v-icon>
+        </v-list-item-icon>
+      </v-list-item>
+
+    </v-list-group>
+
+    <v-list-group class="mt-2" v-if="isAuthenticated" :value="false" prepend-icon="mdi-home">
+
+      <template v-slot:activator>
+        <v-list-item-title>{{$t('rooms.name')}}</v-list-item-title>
+      </template>
+
       <v-list-item sub-group @click="redirect('Rooms')">
-        <v-list-item-title>
-          Rooms
+        <v-list-item-title class="ml-6">
+          {{$t('rooms.name')}}
         </v-list-item-title>
         <v-list-item-icon>
           <v-icon>mdi-home</v-icon>
         </v-list-item-icon>
       </v-list-item>
-      <v-list-item sub-group>
+
+      <v-list-item sub-group @click="redirect('createRoom')">
         <v-list-item-content>
-          <v-list-item-title>
+          <v-list-item-title class="ml-6">
             Create Room
           </v-list-item-title>
         </v-list-item-content>
@@ -48,6 +67,25 @@
       </v-list-item>
 
     </v-list-group>
+
+    <v-list-group class="mt-2" v-if="isAuthenticated" :value="false" prepend-icon="mdi-account">
+
+      <template v-slot:activator>
+        <v-list-item-title>{{$t('users.users')}}</v-list-item-title>
+      </template>
+
+      <v-list-item sub-group @click="redirect('Users')">
+        <v-list-item-title class="ml-6">
+          {{$t('users.users')}}
+        </v-list-item-title>
+        <v-list-item-icon>
+          <v-icon>mdi-account</v-icon>
+        </v-list-item-icon>
+      </v-list-item>
+
+
+    </v-list-group>
+
   </v-list>
   <!--v-list nav dense>
     <v-list-item link>

@@ -119,9 +119,10 @@
                  };
                }
                res.rows.map((el) => {
-                 tab.push(el.get({
+                 let user = el.get({
                    plain: true
-                 }));
+                 });
+                 tab.push(user);
                });
                return {
                  page: query.page,
@@ -144,9 +145,10 @@
                };
              }
              res.map((el) => {
-               tab.push(el.get({
+               let user = el.get({
                  plain: true
-               }));
+               });
+               tab.push(user);
              });
              return {
                total: tab.length,
@@ -179,9 +181,10 @@
              if (!el) {
                throw new nodefony.Error(`Username ${username} not found`, 404);
              }
-             return el.get({
+             let user = el.get({
                plain: true
              });
+             return user;
            })
            .catch(e => {
              throw this.sanitizeSequelizeError(e);
@@ -252,8 +255,11 @@
          return this.entity.create(query, {
              transaction: transaction
            })
-           .then((user) => {
+           .then((el) => {
              transaction.commit();
+             let user = el.get({
+               plain: true
+             });
              return user;
            }).catch(e => {
              transaction.rollback();

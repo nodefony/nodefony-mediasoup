@@ -43,12 +43,38 @@ class Mediasoup extends nodefony.Service {
     this.domain = this.options.VUE_APP_DOMAIN;
     this.portHttp = this.options.VUE_APP_HTTP_PORT;
     this.portHttps = this.options.VUE_APP_HTTPS_PORT;
-    // new Api(apiName, options);
+    this.VIDEO_CONSTRAINS = VIDEO_CONSTRAINS;
     this.api = new nodefony.Api(this.name, {
       baseUrl: "/mediasoup/api"
     });
-    this.VIDEO_CONSTRAINS = VIDEO_CONSTRAINS;
     //this.init();
+  }
+
+  request(...args){
+     return this.api.http(...args)
+     .then((result)=>{
+        if (result.error){
+          throw result.error;
+        }
+        return result;
+     })
+     .catch(async (e) =>{
+       if(e.response ){
+         if (e.response.code === 401) {
+           try {
+             await this.store.dispatch("AUTH_LOGOUT");
+           } catch (e) {
+             this.log(e, "ERROR");
+             throw e.response;
+           } finally {
+             this.router.push("home");
+           }
+         }
+         throw e.response;
+       }else{
+         throw e;
+       }
+     });
   }
 
   // hooy plugins vue

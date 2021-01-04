@@ -1,7 +1,7 @@
 <template>
-<v-container v-if="layout" fluid fill-height class="ma-0 pa-0">
+<v-container v-if="layout" fluid fill-height class="mt-15 mx-6 pa-0">
 
-  <v-container v-show="!shared" fluid>
+  <!--v-container v-show="!shared" fluid>
     <media-card-peer v-if="peer" max-width="300" max-height="300" class="ma-3 pa-0" :ref="peer.id" :remote="peer" :key="peer.id" :name="peer.id" spectrum :active="layout" />
 
     <media-card-peer v-for="(remotePeer, index) in peers" max-width="300" max-height="300" class="ma-3 pa-0" :ref="remotePeer.id" :remote="remotePeer" :key="index" :name="remotePeer.id" spectrum :active="layout" />
@@ -27,7 +27,44 @@
       </v-container>
 
     </v-sheet>
+  </v-expand-transition-->
+
+
+  <v-card v-show="!shared" class="d-flex  justify-space-between flex-wrap" color="" flat tile min-height="200">
+
+    <media-card-peer v-if="peer" max-width="300" max-height="300" class="ma-3 pa-0" :ref="peer.id" :remote="peer" :key="peer.id" :name="peer.id" spectrum :active="layout" />
+
+    <media-card-peer v-for="(remotePeer, index) in peers" max-width="300" max-height="300" class="ma-3 pa-0" :ref="remotePeer.id" :remote="remotePeer" :key="index" :name="remotePeer.id" spectrum :active="layout" />
+
+
+    <v-card v-for="n in 30" :elevation="12" width="300" height="200" max-height="200" max-width="300" :key="n" class="my-5 mx-5 pa-0" @click.native="tooglePeer(null, active, toggle, n)" style="margin:2px"></v-card>
+
+
+  </v-card>
+
+  <v-expand-transition>
+    <v-sheet v-show="shared" tile>
+
+      <v-container fluid class="ma-0 pa-0">
+        <v-card elevation="8" outlined class="ma-3">
+          <v-system-bar color="teal lighten-1" lights-out>
+            <v-icon left dark>
+              mdi-video-outline
+            </v-icon>
+            <span v-if="selectedPeer">{{ selectedPeer.id }}</span>
+            <v-spacer></v-spacer>
+            <v-icon>mdi-minus</v-icon>
+            <v-icon>mdi-checkbox-blank-outline</v-icon>
+            <v-icon @click="toggle">mdi-close</v-icon>
+          </v-system-bar>
+
+          <video style="width:100%;height:100%" class="pa-0 ma-0" muted playsinline :controls="false" ref="prevideo" />
+        </v-card>
+      </v-container>
+
+    </v-sheet>
   </v-expand-transition>
+
 </v-container>
 </template>
 

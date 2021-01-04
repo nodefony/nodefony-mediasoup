@@ -25,8 +25,8 @@ const state = {
 
 const getters = {
   getProfile: state => state.user,
-  getProfileUsername(state){
-    if (state.user){
+  getProfileUsername(state) {
+    if (state.user) {
       return state.user.username
     }
   },
@@ -37,16 +37,15 @@ const getters = {
     return []
     //throw new Error('User profile not defined !')
   },
-  hasRole(state, role) {
+  hasRole: (state) => (role) => {
     if (state.user) {
-      const res = state.user.roles.indexOf(role)
-      if (res > 0) {
+      const res = state.user.roles.indexOf(role);
+      if (res >= 0) {
         return true
       }
       return false
     }
     return false
-    //throw new Error('User profile not defined !')
   },
   isProfileLoaded: state => state.status === 'success',
   getTrigramme(state) {

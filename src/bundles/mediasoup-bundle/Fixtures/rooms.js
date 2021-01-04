@@ -3,14 +3,14 @@ const defaultFixtures = [{
   name: "webrtc",
   description:"webrtc Meeting",
   secure: false,
-  accees:"private",
+  access:"private",
   sticky_cookie:null
 }, {
   name: "broadcast",
   description:"Videos Broadcaster",
   secure: true,
   password: "admin",
-  accees:"private",
+  access:"private",
   sticky_cookie:"sticky-room-broadcast"
 }];
 

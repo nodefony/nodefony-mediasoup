@@ -1,8 +1,30 @@
 {
   "traduction": "Traduction",
-  "rooms" : {
-    "name" : "Salle",
-    "description" : "Description",
-    "secure" : "Salle Securisée"
+  "no-specified": "Non renseigné",
+  "rooms": {
+    "name": "Salles",
+    "room": "Salle",
+    "description": "Description",
+    "secure": "Salle Securisée",
+    "access": "Accés",
+    "actions": "Actions",
+    "info": "Informations",
+    "join": "joindre"
+  },
+  "meetings": {
+    "meetings": "Réunions",
+    "meeting": "Réunion",
+    "live": "En cours"
+  },
+  "users": {
+    "users": "Utilisateurs",
+    "user": "Utilisateur",
+    "enabled":"Activé",
+    "name":"Nom",
+    "surname":"Prénom",
+    "locale":"Langue",
+    "email":"Email",
+    "info":"Informations",
+    "roles":"Roles"
   }
 }
