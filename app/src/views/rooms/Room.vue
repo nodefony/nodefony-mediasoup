@@ -69,8 +69,8 @@ export default {
     return {
       peerid: null,
       intevalTime: null,
-      grid: true,
-      focus: false,
+      grid: false,
+      focus: true,
       joined: false,
       connected: false
     }
