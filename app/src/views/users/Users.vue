@@ -86,9 +86,7 @@ export default {
     return next();
   },
   mounted() {
-
     this.getUsers();
-
   },
   computed: {
     ...mapGetters([

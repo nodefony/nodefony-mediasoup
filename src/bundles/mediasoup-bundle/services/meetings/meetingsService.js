@@ -1,9 +1,9 @@
-const Room = require(path.resolve(__dirname, "..", "src", "room.js"))
+const Room = require(path.resolve(__dirname, "..", "..", "src", "room.js"))
 
-class Rooms extends nodefony.Service {
+class Meetings extends nodefony.Service {
 
   constructor(container) {
-    super("Rooms", container);
+    super("Meetings", container);
     this.rooms = new Map();
     if (!this.kernel.ready) {
       this.kernel.once("onReady", () => {
@@ -407,4 +407,4 @@ class Rooms extends nodefony.Service {
   }
 }
 
-module.exports = Rooms;
+module.exports = Meetings;

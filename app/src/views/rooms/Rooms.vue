@@ -113,7 +113,7 @@ export default {
     },
     openRoom(item) {
       return this.$router.push({
-        name: 'Room',
+        name: 'Meeting',
         params: {
           roomid: item.name
         }

@@ -115,7 +115,7 @@ import {
   mapActions
 } from 'vuex';
 
-import MediaCardPeer from '../medias/peers/MediaCardPeer';
+import MediaCardPeer from './medias/peers/MediaCardPeer';
 import notify from '@/plugins/nodefony/components/notify.vue';
 
 export default {

@@ -16,7 +16,7 @@ module.exports = class Mediasoup extends nodefony.Service {
     this.takenPortSet = new Set();
     if (!kernel.ready) {
       this.kernel.once("onReady", () => {
-        this.roomsService = this.get("Rooms");
+        this.meetingsService = this.get("Meetings");
         this.peersService = this.get("Peers");
         this.entity = this.orm.getEntity("room");
         this.runMediasoupWorkers();
@@ -25,7 +25,7 @@ module.exports = class Mediasoup extends nodefony.Service {
         this.closeWorkers();
       });
     } else {
-      this.roomsService = this.get("Rooms");
+      this.meetingsService = this.get("Meetings");
       this.peersService = this.get("Peers");
       this.entity = this.orm.getEntity("room");
     }
@@ -55,12 +55,12 @@ module.exports = class Mediasoup extends nodefony.Service {
     if (!message.roomid && !message.peerid) {
       throw new Error(`Message can be without roomid an/or peerid`);
     }
-    /*if (!this.roomsService.hasRoom(message.roomid)) {
+    /*if (!this.meetingsService.hasRoom(message.roomid)) {
       if (message.method !== "join") {
         throw new Error(`No room : ${message.roomid} found `);
       }
     }*/
-    let room = this.roomsService.getRoom(message.roomid);
+    let room = this.meetingsService.getRoom(message.roomid);
     if (!room) {
       throw new Error(`Room not exit with id ${message.roomid} `);
     }
@@ -68,7 +68,7 @@ module.exports = class Mediasoup extends nodefony.Service {
     if (!peer) {
       throw new Error(`Peer not exit with id ${message.peerid} `);
     }
-    return this.roomsService.handle(room, peer, message, context);
+    return this.meetingsService.handle(room, peer, message, context);
   }
 
   async runMediasoupWorkers() {
@@ -118,12 +118,12 @@ module.exports = class Mediasoup extends nodefony.Service {
   async getOrCreateRoom(
     roomId
   ) {
-    let room = this.roomsService.getRoom(roomId);
+    let room = this.meetingsService.getRoom(roomId);
     // If the Room does not exist create a new one.
     if (!room) {
       this.log(`creating a new Room [roomId:${roomId}]`);
       const worker = this.getMediasoupWorker();
-      room = await this.roomsService.create(
+      room = await this.meetingsService.create(
         worker,
         roomId
       );

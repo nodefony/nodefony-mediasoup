@@ -41,13 +41,13 @@ import {
   mapMutations,
   mapActions
 } from 'vuex';
-import DialogJoin from '../../components/room/RoomDialogJoin';
-import DialogQuit from '../../components/room/RoomDialogQuit';
-import RoomToolBarTop from '../../components/room/nav/RoomToolBarTop';
-import RoomToolBarBottom from '../../components/room/nav/RoomToolBarBottom';
-import RoomSideBar from '../../components/room/nav/sidebar/RoomSideBar';
-import RoomFocusLayout from '../../components/room/layouts/RoomFocusLayout';
-import RoomGrilleLayout from '../../components/room/layouts/RoomGridLayout';
+import DialogJoin from '../../components/meetings/RoomDialogJoin';
+import DialogQuit from '../../components/meetings/RoomDialogQuit';
+import RoomToolBarTop from '../../components/meetings/nav/RoomToolBarTop';
+import RoomToolBarBottom from '../../components/meetings/nav/RoomToolBarBottom';
+import RoomSideBar from '../../components/meetings/nav/sidebar/RoomSideBar';
+import RoomFocusLayout from '../../components/meetings/layouts/RoomFocusLayout';
+import RoomGrilleLayout from '../../components/meetings/layouts/RoomGridLayout';
 
 export default {
   name: 'Layout',

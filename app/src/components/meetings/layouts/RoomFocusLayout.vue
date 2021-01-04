@@ -45,7 +45,7 @@
 
 
 <script>
-import MediaCardPeer from '../../medias/peers/MediaCardPeer';
+import MediaCardPeer from '../medias/peers/MediaCardPeer';
 import {
   mapGetters,
   mapMutations,

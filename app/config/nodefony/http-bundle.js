@@ -65,9 +65,6 @@ module.exports = {
       options: {
         maxAge: 0 //30*24*60*60*1000
       }
-    },
-    vue:{
-      path: path.resolve("app","public")
     }
   },
   sockjs: {

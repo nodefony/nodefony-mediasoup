@@ -3,13 +3,14 @@ import VueRouter from 'vue-router'
 import Store from '../store';
 import Login from '../views/Login.vue';
 import Home from '../views/Home.vue';
+
 import Rooms from '../views/rooms/Rooms.vue';
-import Room from '../views/rooms/Room.vue';
-import createRoom from '../views/rooms/createRoom.vue';
+import EditRoom from '../views/rooms/EditRoom.vue';
+
+import Meeting from '../views/meetings/Meeting.vue';
 
 import Users from '../views/users/Users.vue';
 import EditUser from '../views/users/EditUser.vue';
-//import RoomLayout from '../views/layouts/Room.vue';
 
 const ifAuthenticated = (to, from, next) => {
   if (Store.getters.isAuthenticated) {
@@ -54,19 +55,19 @@ const routes = [{
     component: Rooms,
     beforeEnter: ifAuthenticated,
     children: []
- }, {
-    path: '/room/:roomid',
+ },  {
+    path: '/room',
     name: 'Room',
-    props: true,
-    component: Room,
-    beforeEnter: ifAuthenticated,
-    children: []
- }, {
-    path: '/create',
-    name: 'createRoom',
-    component: createRoom,
+    component: EditRoom,
     beforeEnter: ifAuthenticated
  }, {
+    path: '/meeting/:roomid',
+    name: 'Meeting',
+    props: true,
+    component: Meeting,
+    beforeEnter: ifAuthenticated,
+    children: []
+ },{
     path: '/users',
     name: 'Users',
     beforeEnter: ifAuthenticated,

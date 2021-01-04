@@ -80,7 +80,7 @@ import {
   mapMutations,
   mapActions
 } from 'vuex';
-import Volume from '@/components/medias/peers/MediaVolumePeer';
+import Volume from '@/components/meetings/medias/peers/MediaVolumePeer';
 
 export default {
   name: 'MediaCardPeer',

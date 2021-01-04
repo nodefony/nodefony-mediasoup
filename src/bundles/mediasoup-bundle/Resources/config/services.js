@@ -4,9 +4,9 @@ module.exports = {
     class: nodefony.services.Mediasoup,
     arguments: ["@container", kernel.settings, process.env]
   },
-  Rooms: {
+  Meetings: {
     environment: ["SERVER"],
-    class: nodefony.services.Rooms,
+    class: nodefony.services.Meetings,
     arguments: ["@container"]
   },
   Bot: {

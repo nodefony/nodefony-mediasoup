@@ -1,4 +1,4 @@
-const Peer = require(path.resolve(__dirname, "..", "src", "peer.js"))
+const Peer = require(path.resolve(__dirname, "..", "..", "src", "peer.js"))
 
 class Peers extends nodefony.Service {
 
