@@ -1,6 +1,7 @@
 {
   "traduction": "Traduction",
   "no-specified": "Non renseigné",
+  "close": "Fermer",
   "rooms": {
     "name": "Salles",
     "room": "Salle",
@@ -9,22 +10,24 @@
     "access": "Accés",
     "actions": "Actions",
     "info": "Informations",
-    "join": "joindre"
+    "join": "joindre",
+    "peers": "Participants"
   },
   "meetings": {
     "meetings": "Réunions",
     "meeting": "Réunion",
-    "live": "En cours"
+    "live": "En cours",
+    "status": "Status"
   },
   "users": {
     "users": "Utilisateurs",
     "user": "Utilisateur",
-    "enabled":"Activé",
-    "name":"Nom",
-    "surname":"Prénom",
-    "locale":"Langue",
-    "email":"Email",
-    "info":"Informations",
-    "roles":"Roles"
+    "enabled": "Activé",
+    "name": "Nom",
+    "surname": "Prénom",
+    "locale": "Langue",
+    "email": "Email",
+    "info": "Informations",
+    "roles": "Roles"
   }
 }

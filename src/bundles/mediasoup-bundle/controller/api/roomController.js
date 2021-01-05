@@ -11,7 +11,7 @@ class apiRomController extends nodefony.Controller {
     super(container, context);
     // start session
     //this.startSession();
-    this.roomsService = this.get("Rooms");
+    //this.meetingsService = this.get("Meetings");
     // start session
     this.orm = this.getORM();
     this.entity = this.orm.getEntity("room");

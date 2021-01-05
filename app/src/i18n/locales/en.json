@@ -1,6 +1,7 @@
 {
   "traduction": "Translation",
   "no-specified": "Not specified",
+  "close": "close",
   "rooms": {
     "name": "Rooms",
     "room": "Room",
@@ -9,22 +10,24 @@
     "access": "Access",
     "actions": "Actions",
     "info": "Informations",
-    "join": "join"
+    "join": "join",
+    "peers": "peers"
   },
   "meetings": {
     "meetings": "Meetings",
     "meeting": "Meeting",
-    "live": "On Air"
+    "live": "On Air",
+    "status": "Status"
   },
   "users": {
     "users": "Users",
     "user": "User",
-    "enabled":"enabled",
-    "name":"Name",
-    "surname":"Surname",
-    "locale":"Langage",
-    "email":"Email",
-    "info":"Informations",
-    "roles":"Roles"
+    "enabled": "enabled",
+    "name": "Name",
+    "surname": "Surname",
+    "locale": "Langage",
+    "email": "Email",
+    "info": "Informations",
+    "roles": "Roles"
   }
 }

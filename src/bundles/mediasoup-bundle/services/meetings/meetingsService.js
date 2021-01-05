@@ -381,10 +381,12 @@ class Meetings extends nodefony.Service {
     }
   }
 
-  closeRoom(roomId) {
+  async closeRoom(roomId) {
     if (this.hasRoom(roomId)) {
-      this.getRoom(roomId).close();
+      let room = await this.getRoom(roomId).close();
       this.fire("roomClosed", roomid, room, this);
+      this.deleteRoom(roomId);
+      return room;
     }
     throw new nodefony.Error(`Room : ${roomId} not found`);
   }

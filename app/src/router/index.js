@@ -8,6 +8,8 @@ import Rooms from '../views/rooms/Rooms.vue';
 import EditRoom from '../views/rooms/EditRoom.vue';
 
 import Meeting from '../views/meetings/Meeting.vue';
+import Meetings from '../views/meetings/Meetings.vue';
+import MeetingDetails from '../views/meetings/MeetingDetails.vue';
 
 import Users from '../views/users/Users.vue';
 import EditUser from '../views/users/EditUser.vue';
@@ -55,19 +57,30 @@ const routes = [{
     component: Rooms,
     beforeEnter: ifAuthenticated,
     children: []
- },  {
+ }, {
     path: '/room',
     name: 'Room',
     component: EditRoom,
     beforeEnter: ifAuthenticated
  }, {
-    path: '/meeting/:roomid',
+    path: '/meetings/join/:roomid',
     name: 'Meeting',
     props: true,
     component: Meeting,
     beforeEnter: ifAuthenticated,
     children: []
- },{
+ }, {
+    path: '/meetings',
+    name: 'Meetings',
+    component: Meetings,
+    beforeEnter: ifAuthenticated,
+ }, {
+    path: '/meetings/:roomid',
+    name: 'MeetingDetails',
+    props: true,
+    component: MeetingDetails,
+    beforeEnter: ifAuthenticated,
+ }, {
     path: '/users',
     name: 'Users',
     beforeEnter: ifAuthenticated,

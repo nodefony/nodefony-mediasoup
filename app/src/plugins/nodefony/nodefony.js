@@ -13,16 +13,16 @@ import alert from './notify/alert';
 
 class Nodefony extends nodefony.Kernel {
   constructor(name, settings) {
-    if(typeof settings.VUE_APP_DEBUG === "string"){
-      if (settings.VUE_APP_DEBUG === "false"){
+    if (typeof settings.VUE_APP_DEBUG === "string") {
+      if (settings.VUE_APP_DEBUG === "false") {
         settings.VUE_APP_DEBUG = false;
       }
-      if (settings.VUE_APP_DEBUG === "true"){
+      if (settings.VUE_APP_DEBUG === "true") {
         settings.VUE_APP_DEBUG = true;
       }
     }
     settings.environment = settings.VUE_APP_NODE_ENV;
-    settings.debug = settings.VUE_APP_DEBUG ;
+    settings.debug = settings.VUE_APP_DEBUG;
     settings.version = nodefony.version;
     super(name, settings);
     this.vueVersion = this.options.VUE_APP_VUE_VERSION;
@@ -31,33 +31,34 @@ class Nodefony extends nodefony.Kernel {
     this.api = new nodefony.Api(this.name, {
       baseUrl: "/api"
     });
+    this.notifyTab = new Map();
   }
 
-  request(...args){
-     return this.api.http(...args)
-     .then((result)=>{
-        if (result.error){
+  request(...args) {
+    return this.api.http(...args)
+      .then((result) => {
+        if (result.error) {
           throw result.error;
         }
         return result;
-     })
-     .catch(async (e) =>{
-       if(e.response ){
-         if (e.response.code === 401) {
-           try {
-             await this.store.dispatch("AUTH_LOGOUT");
-           } catch (e) {
-             this.log(e, "ERROR");
-             throw e.response;
-           } finally {
-             this.router.push("home");
-           }
-         }
-         throw e.response;
-       }else{
-         throw e;
-       }
-     });
+      })
+      .catch(async (e) => {
+        if (e.response) {
+          if (e.response.code === 401) {
+            try {
+              await this.store.dispatch("AUTH_LOGOUT");
+            } catch (e) {
+              this.log(e, "ERROR");
+              throw e.response;
+            } finally {
+              this.router.push("home");
+            }
+          }
+          throw e.response;
+        } else {
+          throw e;
+        }
+      });
   }
 
   // hooy plugins vue
@@ -80,9 +81,10 @@ class Nodefony extends nodefony.Kernel {
     this.log(`Add Plugin nodefony : ${this.version}`, "INFO");
     this.log(`Nodefony Domain : ${this.domain}`);
     this.client = nodefony;
+
   }
 
-  parse(pdu, element) {
+  parse(pdu) {
     switch (true) {
     case pdu.severity <= 3:
       pdu.type = 'error';
@@ -111,53 +113,68 @@ class Nodefony extends nodefony.Kernel {
     return pdu;
   }
 
-  notify(pdu, type = "snackBar", element = null, options = {}) {
-    let container = null;
-    if (!element) {
-      container = document.getElementById("container");
-    } else {
+  notify(pdu, options = {
+    top: true,
+    absolute: false,
+    right: true,
+    timeout: 5000
+  }, type = "snackBar", element = null) {
+    let container = this.application.$el;
+    if (element) {
       container = element;
     }
     if (!container) {
       container = document.body;
     }
-    this.parse(pdu);
-    options.pdu = pdu;
     let ComponentClass = null;
     switch (type) {
     case "alert":
-      ComponentClass = this.vue.extend(alert);
+      ComponentClass = this.vue.extend({
+        mixins: [alert],
+        parent: this.application
+      });
       break;
     case "snackBar":
     default:
-      ComponentClass = this.vue.extend(snackBar);
+      ComponentClass = this.vue.extend({
+        mixins: [snackBar],
+        parent: this.application
+      });
     }
+    this.parse(pdu);
+    options.pdu = pdu;
     const component = new ComponentClass({
-      //$i18n: this.i18n,
-      /*data: {
-        pdu: pdu
-      },*/
+      data: {
+        stacked: this.notifyTab.size
+      },
       propsData: options
     });
+    const uuid = this.client.generateId();
+    this.notifyTab.set(uuid, this.notifyTab.size)
+    component.$on("close", () => {
+      this.notifyTab.delete(uuid)
+      console.log(this.notifyTab.size)
+    });
+
     component.$mount();
     container.appendChild(component.$el);
     return component;
   }
 
-  drawSpectrum(canvas, mystream, size, frequency= 60) {
-    return new Promise((resolve, reject)=>{
-      try{
+  drawSpectrum(canvas, mystream, size, frequency = 60) {
+    return new Promise((resolve, reject) => {
+      try {
         const ctx = canvas.getContext('2d');
-        const contextAudio = new (window.AudioContext || window.webkitAudioContext)();
+        const contextAudio = new(window.AudioContext || window.webkitAudioContext)();
         const analyser = contextAudio.createAnalyser();
         const width = canvas.width;
         const height = canvas.height;
-        const draw = ( bar_width=10) => {
+        const draw = (bar_width = 10) => {
           ctx.clearRect(0, 0, width, height);
           const freqByteData = new Uint8Array(analyser.frequencyBinCount);
           analyser.getByteFrequencyData(freqByteData);
           const barCount = Math.round(width / bar_width);
-          for ( let i = 0; i < barCount; i++) {
+          for (let i = 0; i < barCount; i++) {
             const magnitude = freqByteData[i];
             // some values need adjusting to fit on the canvas
             ctx.fillStyle = 'rgb(150,50,250)';
@@ -170,40 +187,40 @@ class Nodefony extends nodefony.Kernel {
           audioNodes.connect(analyser);
           //analyser.connect(contextAudio.destination);
         }
-        if(mystream){
+        if (mystream) {
           loadStream(mystream);
         }
 
         let interval = null;
-        const start = (stream) =>{
-          if(stream){
+        const start = (stream) => {
+          if (stream) {
             audioNodes = null;
             loadStream(stream)
           }
-          return interval = setInterval(()=>{
+          return interval = setInterval(() => {
             draw(size);
           }, frequency);
         };
-        const stop = () =>{
+        const stop = () => {
           clearInterval(interval);
           interval = null;
           clear();
         };
-        const clear = () =>{
+        const clear = () => {
           ctx.clearRect(0, 0, width, height);
         };
         interval = start();
         return resolve({
           stop: stop,
           start: start,
-          clear : clear
+          clear: clear
         });
-      }catch(e){
+      } catch (e) {
         return reject(e);
       }
     });
   }
 }
-nodefony.kernel = new Nodefony("VUE",process.env);
+nodefony.kernel = new Nodefony("VUE", process.env);
 
 export default nodefony.kernel;

@@ -19,6 +19,10 @@ class Bots extends nodefony.Service {
 
     return new Bot(name, transport, dataProducer, this.container);
   }
+
+  close(){
+
+  }
 }
 
 module.exports = Bots;

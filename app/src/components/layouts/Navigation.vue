@@ -29,7 +29,7 @@
         <v-list-item-title>{{$t('meetings.meetings')}}</v-list-item-title>
       </template>
 
-      <v-list-item sub-group @click="false">
+      <v-list-item sub-group @click="redirect('Meetings')">
         <v-list-item-title class="ml-6">
           {{$t('meetings.live')}}
         </v-list-item-title>

@@ -13,7 +13,7 @@ class streamerController extends nodefony.Controller {
     super(container, context);
     // start session
     //this.startSession();
-    this.roomsService = this.get("Rooms");
+    //this.meetingsService = this.get("Meetings");
     // start session
     this.api = new nodefony.api.Json({
       name: "mediasoup-streamer",

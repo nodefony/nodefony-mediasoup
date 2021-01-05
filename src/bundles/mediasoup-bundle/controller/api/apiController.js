@@ -16,7 +16,8 @@ class apiController extends nodefony.Controller {
     super(container, context);
     // start session
     //this.startSession();
-    this.roomsService = this.get("Rooms");
+    this.meetingsService = this.get("Meetings");
+
     // start session
     this.api = new nodefony.api.Json({
       name: "mediasoup-cli-rooms",
@@ -27,7 +28,7 @@ class apiController extends nodefony.Controller {
   }
 
   getRoom(roomId) {
-    return this.roomsService.getRoom(roomId);
+    return this.meetingsService.getRoom(roomId);
   }
 
   /**
@@ -38,7 +39,7 @@ class apiController extends nodefony.Controller {
   async allRoomsAction() {
     try {
       const rooms = [];
-      this.roomsService.rooms.
+      this.meetingsService.rooms.
       forEach((value, key) => {
         rooms.push(key);
       });

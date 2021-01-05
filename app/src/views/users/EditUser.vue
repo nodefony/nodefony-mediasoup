@@ -8,7 +8,7 @@
       <v-toolbar-title v-if="currentUser"> {{ currentUser.username || ""}}
         <v-spacer></v-spacer>
         <!--v-card-subtitle> {{ user.name }} {{ user.surname }}</v-card-subtitle-->
-        <nodefony-notify v-if="message" :pdu="message" type="alert" />
+        <!--nodefony-notify v-if="message" :pdu="message" type="alert" /-->
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -408,6 +408,9 @@ export default {
   updated() {},
   destroyed() {},
   watch: {
+    message(value) {
+      this.notify(value);
+    },
     user() {
       if (this.user && !this.create) {
         this.tab = 0
@@ -567,7 +570,7 @@ export default {
     },
     showErrorField(errors) {
       errors.forEach((error) => {
-        this.message = this.log(error.message)
+        this.message = this.log(error.message, "ERROR")
       });
     },
     close() {

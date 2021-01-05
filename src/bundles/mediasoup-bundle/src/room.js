@@ -162,7 +162,7 @@ class Room extends nodefony.Service {
     if (this.router) {
       await this.router.close();
     }
-    if (this.bot) {
+    if (this.bot && this.bot.close) {
       await this.bot.close();
     }
     if (this.peers.size) {

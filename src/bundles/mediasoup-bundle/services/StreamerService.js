@@ -14,7 +14,7 @@ class Streamer extends nodefony.Service {
     this.workers = new Map();
     if (!kernel.ready) {
       this.kernel.once("onReady", () => {
-        this.roomsService = this.get("Rooms");
+        this.meetingsService = this.get("Meetings");
         this.peersService = this.get("Peers");
         this.kernel.on("onTerminate", async () => {
           for (let worker of this.workers) {
@@ -24,7 +24,7 @@ class Streamer extends nodefony.Service {
         });
       });
     } else {
-      this.roomsService = this.get("Rooms");
+      this.meetingsService = this.get("Meetings");
       this.peersService = this.get("Peers");
     }
   }
@@ -32,7 +32,7 @@ class Streamer extends nodefony.Service {
   async startStream(roomId, file, streamer = "ffmpeg") {
     let worker = null;
     try {
-      const room = this.roomsService.getRoom(roomId);
+      const room = this.meetingsService.getRoom(roomId);
       if (!room) {
         throw new Error(`Room : ${roomId} not found`);
       }

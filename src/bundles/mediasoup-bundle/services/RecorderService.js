@@ -15,7 +15,7 @@ class Recorder extends nodefony.Service {
     this.location = path.resolve(this.bundle.path, "recorded");
     if (!kernel.ready) {
       this.kernel.once("onReady", () => {
-        this.roomsService = this.get("Rooms");
+        this.meetingsService = this.get("Meetings");
         this.peersService = this.get("Peers");
         this.kernel.on("onTerminate", async () => {
           for (let worker of this.workers) {
@@ -25,7 +25,7 @@ class Recorder extends nodefony.Service {
         });
       });
     } else {
-      this.roomsService = this.get("Rooms");
+      this.meetingsService = this.get("Meetings");
       this.peersService = this.get("Peers");
     }
   }
@@ -33,7 +33,7 @@ class Recorder extends nodefony.Service {
   async startRecord(roomId, peerid, location = this.location, recorder = "ffmpeg") {
     let worker = null;
     try {
-      const room = this.roomsService.getRoom(roomId);
+      const room = this.meetingsService.getRoom(roomId);
       if (!room) {
         throw new Error(`Room : ${roomId} not found`);
       }

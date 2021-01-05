@@ -34,5 +34,8 @@ new Vue({
   store,
   vuetify,
   i18n,
+  created: function () {
+    this.$nodefony.application = this;
+  },
   render: h => h(App)
-}).$mount('#app')
+}).$mount('#app');
