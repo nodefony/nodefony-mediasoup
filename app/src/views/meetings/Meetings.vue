@@ -3,7 +3,7 @@
   <v-container fluid class="ma-0 pa-0">
     <v-toolbar fixed outlined width="100%" color="blue-grey" dark flat style="top: 64px;position:fixed;">
 
-      <v-icon class="mr-5">mdi-google-classroom</v-icon>
+      <v-icon class="mr-5">mdi-video</v-icon>
       <v-toolbar-title class="mx-5"> {{$t('meetings.meetings')}}</v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -12,17 +12,17 @@
     <v-layout class="" v-if="layout==='table'" style='margin-top:64px;'>
       <v-container fluid class="ma-5">
         <v-card-title>
-          {{$t('meetings.meetings')}}
+          {{$t('rooms.name')}}
           <v-spacer></v-spacer>
         </v-card-title>
         <v-data-table dense fixed-header height="520" :loading="loading" :headers="headers" :items="meetings" :items-per-page="15" class="elevation-2" :headers-length="30" :search="search">
 
           <template v-slot:item.actions="{ item }">
-            <v-icon v-if="isAdmin" small class="mr-2" @click="closeRoom(item)">
-              mdi-delete
-            </v-icon>
             <v-icon small class="mr-2" @click="selectRoom(item)">
               mdi-eye
+            </v-icon>
+            <v-icon v-if="isAdmin" small class="mr-2" @click="closeRoom(item)">
+              mdi-delete
             </v-icon>
           </template>
 
@@ -126,8 +126,8 @@ export default {
       this.loading = true;
       return this.$mediasoup.request(`meetings/${room.id}`, "DELETE")
         .then((data) => {
-          console.log(data)
           this.loading = false;
+          this.message = this.log(data.result, "INFO");
           return data.result;
         })
         .catch(async (e) => {

@@ -38,6 +38,32 @@ class meetingsController extends nodefony.Controller {
     return ele;
   }
 
+  async getPeersInfo(room){
+    return new Promise(async (resolve , reject)=>{
+      let peers = [];
+      let i = room.peers.size;
+      if(i === 0 ){
+        return resolve(peers);
+      }
+      room.peers.forEach( (peer, key, map)=>{
+        let ele = {};
+        console.log(peer)
+        ele.id = peer.id,
+        ele.transports = peer.transports.size;
+        ele.producers = peer.producers.size;
+        ele.consumers = peer.consumers.size;
+        ele.dataProducers = peer.dataProducers.size;
+        ele.dataConsumers = peer.dataConsumers.size;
+        peers.push(ele);
+        if(i === 1){
+          return resolve(peers);
+        }
+        i--;
+      });
+      return resolve(peers);
+    });
+  }
+
   getRoomsInfos(room) {
     return new Promise(async (resolve , reject)=>{
       try{
@@ -57,7 +83,6 @@ class meetingsController extends nodefony.Controller {
           }
           i--;
         })
-
       }catch(e){
         return reject(e);
       }
@@ -88,7 +113,8 @@ class meetingsController extends nodefony.Controller {
     const room = this.getRoom(roomId);
     return this.api.render({
       roomid: roomId,
-      room: await this.getRoomsInfos(room)
+      room: await this.getRoomsInfos(room),
+      peers:await this.getPeersInfo(room)
     });
   }
 
