@@ -7,12 +7,13 @@
       <v-toolbar-title class="mx-5"> {{$t('users.users')}}</v-toolbar-title>
 
       <v-spacer></v-spacer>
-      <v-btn small @click="selectUser({}, true)">Create</v-btn>
+
     </v-toolbar>
     <v-layout class="" v-if="layout==='table'" style='margin-top:64px;'>
       <v-container fluid class="ma-5">
         <v-card-title>
           {{$t('users.users')}}
+          <v-btn x-small class="ml-5" color="grey" @click="selectUser({}, true)">Create</v-btn>
           <v-spacer></v-spacer>
           <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" single-line hide-details></v-text-field>
         </v-card-title>
@@ -158,8 +159,18 @@ export default {
       return null;
     },
     selectUser(item, create = false) {
-      this.selectedUser = item;
-      this.create = create;
+      if (create) {
+        this.selectedUser = item;
+        this.create = create;
+      } else {
+        return this.$router.push({
+          name: 'User',
+          params: {
+            username: item.username
+          }
+        });
+      }
+
     },
     closeUser() {
       this.selectedUser = null;

@@ -7,6 +7,7 @@ class restController extends nodefony.Controller {
     super(container, context);
     // service entity
     this.usersService = this.get("users");
+    this.Room = this.getEntity("room");
     // api
     this.api = new nodefony.api.OpenApi({
       name: "users-api",
@@ -33,8 +34,8 @@ class restController extends nodefony.Controller {
         throw new nodefony.authorizationError("Unauthorized", 401, this.context);
       }
     }
-    if (query && query.role && query.role.length) {
-      if (query.role.indexOf("ROLE_ADMIN") >= 0 && (!granted)) {
+    if (query && query.roles && query.roles.length) {
+      if (query.roles.indexOf("ROLE_ADMIN") >= 0 && (!granted)) {
         throw new nodefony.authorizationError("Unauthorized Role", 401, this.context);
       }
     }
@@ -73,10 +74,16 @@ class restController extends nodefony.Controller {
     let result = null;
     try {
       if (username) {
+        this.query.include = [{
+          model:this.Room
+        }]
         result = await this.usersService.findOne(username, this.query);
         delete result.password;
         delete result["2fa-token"];
       } else {
+        this.query.include = [{
+          model:this.Room
+        }]
         result = await this.usersService.find(this.query.query, this.query);
         result.rows.map((user) => {
           delete user.password;
@@ -102,6 +109,7 @@ class restController extends nodefony.Controller {
    *    @Route ( "",name="api-users-post")
    */
   async postAction() {
+    this.checkAuthorisation(null, this.query);
     let user = null;
     let error = null;
     if (!this.query.password || !this.query.confirm) {
@@ -115,7 +123,6 @@ class restController extends nodefony.Controller {
       throw error;
     }
     try {
-      this.checkAuthorisation(null, this.query);
       user = await this.usersService.create(this.query);
       if (user) {
         delete user.password;
@@ -238,6 +245,29 @@ class restController extends nodefony.Controller {
     return this.renderResponse(JSON.stringify(this.request.request.headers, null, " "), 200, {
       "Content-Type": "message/http"
     });
+  }
+
+  /**
+   *    @Method ({"PUT"})
+   *    @Route ( "/{username}/room",name="api-user-room-set")
+   */
+  async addRoomAction(username){
+    this.checkAuthorisation();
+    let result = await this.usersService.addRoom(username, this.query.roomid);
+    return this.api.render({
+      rooms:result.rooms
+    })
+  }
+  /**
+   *    @Method ({"DELETE"})
+   *    @Route ( "/{username}/room",name="api-user-room-delete")
+   */
+  async deleteRoomAction(username){
+    this.checkAuthorisation();
+    let result = await this.usersService.deleteRoom(username, this.query.roomid);
+    return this.api.render({
+      rooms:result.rooms
+    })
   }
 
 }

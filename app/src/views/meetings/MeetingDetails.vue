@@ -218,7 +218,6 @@ export default {
       return this.$mediasoup.request(`meetings/${roomid}`, "GET")
         .then((data) => {
           this.loading = false;
-          console.log(data.result.room)
           this.peers = data.result.peers;
           return data.result.room;
         })

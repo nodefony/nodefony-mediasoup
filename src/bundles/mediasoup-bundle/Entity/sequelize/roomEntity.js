@@ -20,8 +20,14 @@ class roomEntity extends nodefony.Entity {
      *   @param connection name
      */
     super(bundle, "room", "sequelize", "nodefony");
-    /*this.orm.on("onOrmReady", ( orm ) => {
-    });*/
+    this.orm.on("onOrmReady", ( orm ) => {
+      let User = this.orm.getEntity("user");
+      let Room = this.orm.getEntity("room");
+      //Room.hasMany(User, {as: 'Users'})
+      //User.hasMany(Room, {as:'Rooms'})
+      Room.belongsToMany(User, {through: 'UserRoom'});
+      User.belongsToMany(Room, {through: 'UserRoom'});
+    });
   }
 
   getSchema() {
@@ -35,6 +41,17 @@ class roomEntity extends nodefony.Entity {
           is: {
             args: /[^\w]|_|-|./g,
             msg: `name allow alphanumeric and ( _ | - | . ) characters`
+          }
+        }
+      },
+      type: {
+        type: DataTypes.ENUM,
+        values: ['WEBRTC'],
+        allowNull: false,
+        validate: {
+          is: {
+            args: /^WEBRTC$/g,
+            msg: `description allow WEBRTC`
           }
         }
       },
@@ -70,8 +87,7 @@ class roomEntity extends nodefony.Entity {
       sticky_cookie:{
         type: DataTypes.STRING(256),
         allowNull: true
-      },
-      image: DataTypes.STRING
+      }
     };
   }
 

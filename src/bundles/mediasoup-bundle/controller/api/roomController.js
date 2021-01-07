@@ -11,10 +11,10 @@ class apiRomController extends nodefony.Controller {
     super(container, context);
     // start session
     //this.startSession();
-    //this.meetingsService = this.get("Meetings");
     // start session
     this.orm = this.getORM();
     this.entity = this.orm.getEntity("room");
+    this.User = this.orm.getEntity("user");
     this.api = new nodefony.api.Json({
       name: "mediasoup-rooms",
       version: this.bundle.version,
@@ -56,8 +56,13 @@ class apiRomController extends nodefony.Controller {
    *    @Method ({"GET"})
    */
   async roomsAction() {
-    const room = await this.entity.findAndCountAll();
+    const room = await this.entity.findAndCountAll({
+      include: [{
+        model: this.User
+      }]
+    });
     if( room){
+      //console.log(room.rows[0].getUsers())
       return this.api.render(
         room
       );

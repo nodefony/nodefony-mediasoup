@@ -146,7 +146,11 @@ export default {
   },
   watch: {
     message(value) {
-      this.notify(value);
+      if (value) {
+        this.notify(value);
+        return
+      }
+      this.log("empty log", "WARNING");
     }
   }
 }

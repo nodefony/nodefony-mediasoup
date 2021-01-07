@@ -15,6 +15,7 @@
 
    initialize() {
      this.entity = this.orm.getEntity("user");
+     this.Room = this.orm.getEntity("room");
    }
 
    sanitizeSequelizeError(error) {
@@ -164,19 +165,21 @@
      }
    }
 
-   findOne(username) {
+   findOne(username, query) {
      try {
+       query = nodefony.extend(true, query, {
+         username: username
+       });
        switch (this.ormName) {
        case "mongoose":
-         return this.entity.findOne({
-           username: username
-         });
+         return this.entity.findOne(query);
        case "sequelize":
-         return this.entity.findOne({
-             where: {
-               username: username
-             }
-           })
+         query = nodefony.extend(true, query, {
+           where: {
+             username: username
+           }
+         });
+         return this.entity.findOne(query)
            .then((el) => {
              if (!el) {
                throw new nodefony.Error(`Username ${username} not found`, 404);
@@ -362,6 +365,50 @@
          throw this.sanitizeSequelizeError(e);
        }
      }
+   }
+   addRoom(username, room){
+     return this.entity.findOne({
+         where: {
+           username: username
+         }
+       })
+       .then(async (el) => {
+         await el.addRoom(room);
+         return this.entity.findOne({
+            include:[{
+              model:this.Room
+            }],
+             where: {
+               username: username
+             }
+           })
+       });
+   }
+   deleteRoom(username, roomid){
+     return this.entity.findOne({
+         where: {
+           username: username
+         },
+         include:[{
+           model:this.Room
+         }]
+       })
+       .then(async (el) => {
+         for( let i = 0 ; i<el.rooms.length;i++){
+           let room = el.rooms[i];
+           if (room.name === roomid ){
+             await room.UserRoom.destroy();
+           }
+         }
+         return this.entity.findOne({
+          include:[{
+            model:this.Room
+          }],
+           where: {
+             username: username
+           }
+         })
+     });
    }
  }
 

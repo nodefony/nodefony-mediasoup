@@ -10,8 +10,8 @@
         </v-list-item-avatar>
 
         <v-list-item-content>
-          <v-list-item-title>{{getProfileName}}</v-list-item-title>
-          <v-list-item-subtitle>{{getProfileSurname}}</v-list-item-subtitle>
+          <v-list-item-title>{{getProfileUsername}}</v-list-item-title>
+          <v-list-item-subtitle>{{getProfileName}} {{getProfileSurname}}</v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
     </v-list>
@@ -130,7 +130,8 @@ export default {
       'getTrigramme',
       'getDrawer',
       'getProfileName',
-      'getProfileSurname'
+      'getProfileSurname',
+      'getProfileUsername'
     ]),
     drawer: {
       get() {
