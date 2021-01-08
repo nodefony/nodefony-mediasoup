@@ -13,7 +13,7 @@
       <v-container fluid class="ma-5">
         <v-card-title>
           {{$t('users.users')}}
-          <v-btn x-small class="ml-5" color="grey" @click="selectUser({}, true)">Create</v-btn>
+          <v-btn v-if="isAdmin" x-small class="ml-5" color="grey" @click="selectUser({}, true)">Create</v-btn>
           <v-spacer></v-spacer>
           <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" single-line hide-details></v-text-field>
         </v-card-title>
