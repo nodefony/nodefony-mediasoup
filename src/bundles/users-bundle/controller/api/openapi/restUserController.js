@@ -75,14 +75,14 @@ class restController extends nodefony.Controller {
     try {
       if (username) {
         this.query.include = [{
-          model:this.Room
-        }]
+          model: this.Room
+        }];
         result = await this.usersService.findOne(username, this.query);
         delete result.password;
         delete result["2fa-token"];
       } else {
         this.query.include = [{
-          model:this.Room
+          model: this.Room
         }]
         result = await this.usersService.find(this.query.query, this.query);
         result.rows.map((user) => {
@@ -251,22 +251,22 @@ class restController extends nodefony.Controller {
    *    @Method ({"PUT"})
    *    @Route ( "/{username}/room",name="api-user-room-set")
    */
-  async addRoomAction(username){
+  async addRoomAction(username) {
     this.checkAuthorisation();
     let result = await this.usersService.addRoom(username, this.query.roomid);
     return this.api.render({
-      rooms:result.rooms
+      rooms: result.rooms
     })
   }
   /**
    *    @Method ({"DELETE"})
    *    @Route ( "/{username}/room",name="api-user-room-delete")
    */
-  async deleteRoomAction(username){
+  async deleteRoomAction(username) {
     this.checkAuthorisation();
     let result = await this.usersService.deleteRoom(username, this.query.roomid);
     return this.api.render({
-      rooms:result.rooms
+      rooms: result.rooms
     })
   }
 

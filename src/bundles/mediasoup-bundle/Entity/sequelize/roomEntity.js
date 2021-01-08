@@ -23,8 +23,6 @@ class roomEntity extends nodefony.Entity {
     this.orm.on("onOrmReady", ( orm ) => {
       let User = this.orm.getEntity("user");
       let Room = this.orm.getEntity("room");
-      //Room.hasMany(User, {as: 'Users'})
-      //User.hasMany(Room, {as:'Rooms'})
       Room.belongsToMany(User, {through: 'UserRoom'});
       User.belongsToMany(Room, {through: 'UserRoom'});
     });
