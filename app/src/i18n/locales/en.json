@@ -2,11 +2,13 @@
   "traduction": "Translation",
   "no-specified": "Not specified",
   "close": "close",
+  "name": "Name",
   "rooms": {
     "name": "Rooms",
     "room": "Room",
     "description": "Description",
     "secure": "Secure Room",
+    "unsecure": "Unsecure Room",
     "access": "Access",
     "actions": "Actions",
     "info": "Informations",

@@ -58,9 +58,10 @@ const routes = [{
     beforeEnter: ifAuthenticated,
     children: []
  }, {
-    path: '/room',
+    path: '/room/:roomid',
     name: 'Room',
     component: EditRoom,
+    props: true,
     beforeEnter: ifAuthenticated
  }, {
     path: '/meetings/join/:roomid',
