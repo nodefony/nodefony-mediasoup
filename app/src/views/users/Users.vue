@@ -35,6 +35,11 @@
               {{ role }}
             </v-chip>
           </template>
+          <template v-slot:item.rooms="{ item }">
+            <v-chip x-small v-for="room in item.rooms" :key="room.name" dark>
+              {{ room.name }}
+            </v-chip>
+          </template>
           <template v-slot:no-data>
           </template>
         </v-data-table>
@@ -117,8 +122,8 @@ export default {
         text: this.$t("users.roles"),
         value: 'roles'
       }, {
-        text: this.$t("users.email"),
-        value: 'email'
+        text: this.$t("rooms.name"),
+        value: 'rooms'
       }, {
         text: "",
         value: 'actions',
