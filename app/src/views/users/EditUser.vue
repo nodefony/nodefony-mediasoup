@@ -4,11 +4,12 @@
 
     <v-toolbar extended prominent color="blue-grey" dark>
       <v-icon x-large class="mr-5">mdi-account</v-icon>
-
       <v-toolbar-title v-if="currentUser"> {{ currentUser.username || ""}}
+        <v-btn v-if="(hasRoleAdmin || isMe)" class="ml-10" small @click="editing=!editing;tab =0" color="teal">
+          <v-icon small left>mdi-pencil</v-icon>
+          Edit
+        </v-btn>
         <v-spacer></v-spacer>
-        <!--v-card-subtitle> {{ user.name }} {{ user.surname }}</v-card-subtitle-->
-        <!--nodefony-notify v-if="message" :pdu="message" type="alert" /-->
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -16,40 +17,44 @@
         <v-icon @click="close">mdi-close</v-icon>
       </v-btn>
       <template v-slot:extension>
-        <v-tabs v-model="tab" align-with-title>
+        <v-tabs v-model="tab" align-with-title v-on:change="editing=false">
           <v-tabs-slider color="yellow"></v-tabs-slider>
-          <v-tab :disabled="creating" ref="user">
-            {{ $t(`users.user`) }}
-          </v-tab>
-          <v-tab :disabled="creating" ref="danger">
-            ZONE DANGER
-          </v-tab>
-          <v-tab :disabled="creating" ref="rooms">
-            ZONE ROOMS
-          </v-tab>
-          <v-tab :disabled=" (!hasRoleAdmin && !isMe)" ref="info">
+          <v-tab :disabled="false" ref="user" @click="editing=false">
             {{ $t(`users.info`) }}
           </v-tab>
-
+          <v-tab v-if="!creating && (hasRoleAdmin || isMe)" :disabled="creating" ref="danger">
+            ZONE DANGER
+          </v-tab>
+          <v-tab v-if="!creating && hasRoleAdmin" :disabled="creating" ref="rooms">
+            ZONE ROOMS
+          </v-tab>
         </v-tabs>
       </template>
     </v-toolbar>
+
     <v-progress-linear indeterminate v-if="loading" value="18"></v-progress-linear>
 
     <v-tabs-items v-model="tab">
       <v-tab-item>
         <v-card flat tile>
+          <v-container fluid>
+            <v-list v-if="currentUser && !creating && !editing">
 
-          <v-container v-if="currentUser" fluid>
-            <v-list>
-              <v-list-item>
+              <v-list-item v-if="currentUser">
+                <v-list-item-content>
+                  <v-list-item-title>{{currentUser.username}}</v-list-item-title>
+                  <v-list-item-subtitle>{{$t("users.user")}}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item v-if="currentUser">
                 <v-list-item-content>
                   <v-list-item-title>{{currentUser.name}}</v-list-item-title>
                   <v-list-item-subtitle>{{$t("users.name")}}</v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
 
-              <v-list-item>
+              <v-list-item v-if="currentUser">
                 <v-list-item-content>
                   <v-list-item-title>{{currentUser.surname}}</v-list-item-title>
                   <v-list-item-subtitle>{{$t("users.surname")}}</v-list-item-subtitle>
@@ -58,7 +63,7 @@
 
               <v-divider></v-divider>
 
-              <v-list-item>
+              <v-list-item v-if="currentUser">
                 <v-list-item-icon>
                   <v-icon color="indigo">
                     mdi-email
@@ -72,6 +77,32 @@
               </v-list-item>
 
               <v-list-item>
+                <v-list-item-icon>
+                  <v-icon color="indigo">
+                    mdi-phone
+                  </v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>{{$t('no-specified')}}</v-list-item-title>
+                  <v-list-item-subtitle>Mobile</v-list-item-subtitle>
+                </v-list-item-content>
+
+              </v-list-item>
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon color="indigo">
+                    mdi-map-marker
+                  </v-icon>
+                </v-list-item-icon>
+
+                <v-list-item-content>
+                  <v-list-item-title>{{$t('no-specified')}}</v-list-item-title>
+                  <v-list-item-subtitle>Adress</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+              <v-divider></v-divider>
+
+              <v-list-item v-if="currentUser">
                 <v-list-item-icon>
                   <v-icon color="indigo">
                     mdi-shield-account
@@ -88,152 +119,29 @@
                 </v-list-item-content>
               </v-list-item>
 
-              <!--v-list-item>
-              <v-list-item-icon>
-                <v-icon color="indigo">
-                  mdi-phone
-                </v-icon>
-              </v-list-item-icon>
-              <v-list-item-content>
-                <v-list-item-title>{{$t('no-specified')}}</v-list-item-title>
-                <v-list-item-subtitle>Mobile</v-list-item-subtitle>
-              </v-list-item-content>
-              <v-list-item-icon>
-                <v-icon>mdi-message-text</v-icon>
-              </v-list-item-icon>
-            </v-list-item>
-            <v-divider inset></v-divider>
-            <v-list-item>
-              <v-list-item-icon>
-                <v-icon color="indigo">
-                  mdi-map-marker
-                </v-icon>
-              </v-list-item-icon>
+              <v-list-item v-if="currentUser">
+                <v-list-item-icon>
+                  <v-icon color="indigo">
+                    mdi-shield-account
+                  </v-icon>
+                </v-list-item-icon>
 
-              <v-list-item-content>
-                <v-list-item-title>{{$t('no-specified')}}</v-list-item-title>
-                <v-list-item-subtitle></v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item-->
+                <v-list-item-content>
+                  <v-list-item-title>
+                    <v-chip x-small v-for="room in currentUser.rooms" :key="`${room.name}-chip`">
+                      {{ room.name }}
+                    </v-chip>
+                  </v-list-item-title>
+                  <v-list-item-subtitle>Rooms</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+
             </v-list>
           </v-container>
-        </v-card>
-      </v-tab-item>
-
-      <!-- DANGER ZONE -->
-      <v-tab-item>
-        <v-card tile>
-          <v-container v-if='currentUser && (hasRoleAdmin || isMe)' fluid class="pa-0 ma-0 my-3">
-            <v-card-title class="red--text">Danger Zone</v-card-title>
-
-            <v-alert v-if="(currentUser && !currentUser.enabled)" class="mx-10 mt-10 px-5" icon="mdi-account" border="bottom" prominent colored-border type="warning" elevation="2">
-              <v-card-title>
-                User Disabled
-              </v-card-title>
-              <v-card-subtitle>
-                This user has been disabled! Login accesss has been revoked.
-              </v-card-subtitle>
-              <v-btn @click="enableUser(currentUser.username)">
-                <v-icon @click="true">mdi-account-check</v-icon>
-                enable
-              </v-btn>
-            </v-alert>
-            <v-banner v-if='(hasRoleAdmin && userHasRoleAdmin) || (isMe && userHasRoleAdmin)' single-line tile>
-              Remove Admin access to {{ currentUser.username }}
-              <template v-slot:actions>
-                <v-btn color="white--text red accent-4" @click="changeRole(currentUser.username, currentUser.roles)">
-                  <v-icon left dark>
-                    mdi-security
-                  </v-icon>
-                  Remove Admin access
-                </v-btn>
-              </template>
-            </v-banner>
-
-            <v-banner v-if='hasRoleAdmin' two-line tile>
-              Delete the user {{ currentUser.username}}
-              <template v-slot:actions>
-                <v-btn color="white--text red accent-4" @click="deleteUser(currentUser.username)">
-                  <v-icon left dark>
-                    mdi-delete
-                  </v-icon>
-                  Delete
-                </v-btn>
-              </template>
-            </v-banner>
 
 
-            <v-banner v-if='hasRoleAdmin || isMe' two-line>
-              <form autocomplete="on">
-                Change Passsword {{ currentUser.username}}
-                <v-row>
-                  <v-col cols="3">
-                    <v-subheader>New Password</v-subheader>
-                  </v-col>
-                  <v-col cols="9">
-                    <v-text-field v-model="password" autocomplete="new-password" :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'" :rules="[rules.required, rules.min]" :type="show1 ? 'text' : 'password'" name="newpassword" label="New Password" hint="At least 8 characters"
-                      counter @click:append="show1 = !show1"></v-text-field>
-                  </v-col>
-                </v-row>
-                <v-row>
-                  <v-col cols="3">
-                    <v-subheader>Old Password</v-subheader>
-                  </v-col>
-                  <v-col cols="9">
-                    <v-text-field v-model="oldPassword" autocomplete="new-password" :append-icon="show2 ? 'mdi-eye' : 'mdi-eye-off'" :rules="[rules.required, rules.min]" :type="show2 ? 'text' : 'password'" name="oldpassword" label="Old Password"
-                      hint="At least 8 characters" counter @click:append="show2 = !show2"></v-text-field>
-                  </v-col>
-                </v-row>
-              </form>
-              <template v-slot:actions>
-                <v-btn color="white--text red accent-4" @click="changePassword(currentUser.username, password, oldPassword)">
-                  <v-icon left dark>
-                    mdi-delete
-                  </v-icon>
-                  Change
-                </v-btn>
-              </template>
-            </v-banner>
-          </v-container>
-        </v-card>
-      </v-tab-item>
-
-      <!-- ROOM ZONE -->
-      <v-tab-item>
-        <v-card tile>
-          <v-container fluid>
-            <v-list-item>
-              <v-list-item-icon>
-                <v-icon color="indigo">
-                  mdi-home
-                </v-icon>
-              </v-list-item-icon>
-
-              <v-list-item-content>
-                <v-list-item-title>Rooms
-                </v-list-item-title>
-                <v-list-item-subtitle>Rooms Adminstration</v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-
-            <v-banner v-if='hasRoleAdmin' two-line>
-              <v-select v-model="resultRooms" :items="rooms" chips label="Select Rooms" multiple prepend-icon="mdi-shield-account" v-on:input="changeRooms" item-text="name">
-                <template v-slot:selection="{ attrs, item, select, selected }">
-                  <v-chip v-bind="attrs" :input-value="selected" @click="select" @click:close="deleteRoom(item.name)">
-                    <strong>{{ item.name }}</strong>&nbsp;
-                  </v-chip>
-                </template>
-              </v-select>
-              <v-progress-circular v-if="loading" :size="15" color="primary" indeterminate></v-progress-circular>
-            </v-banner>
-          </v-container>
-        </v-card>
-      </v-tab-item>
-
-      <!-- FORM ZONE -->
-      <v-tab-item>
-        <v-card tile>
-          <v-container fluid>
+          <!-- edit -->
+          <v-container v-if="(creating || editing) && (hasRoleAdmin || isMe)" fluid>
             <form autocomplete="on">
               <!--v-card-text-->
               <v-row class="mt-3">
@@ -360,7 +268,116 @@
                 Save
               </v-btn>
             </v-card-actions>
+          </v-container>
+        </v-card>
+      </v-tab-item>
 
+      <!-- DANGER ZONE -->
+      <v-tab-item>
+        <v-card tile>
+          <v-container v-if='currentUser && (hasRoleAdmin || isMe)' fluid class="pa-0 ma-0 my-3">
+            <v-card-title class="red--text">Danger Zone</v-card-title>
+
+            <v-alert v-if="(currentUser && !currentUser.enabled)" class="mx-10 mt-10 px-5" icon="mdi-account" border="bottom" prominent colored-border type="warning" elevation="2">
+              <v-card-title>
+                User Disabled
+              </v-card-title>
+              <v-card-subtitle>
+                This user has been disabled! Login accesss has been revoked.
+              </v-card-subtitle>
+              <v-btn @click="enableUser(currentUser.username)">
+                <v-icon @click="true">mdi-account-check</v-icon>
+                enable
+              </v-btn>
+            </v-alert>
+            <v-banner v-if='(hasRoleAdmin && userHasRoleAdmin) || (isMe && userHasRoleAdmin)' single-line tile>
+              Remove Admin access to {{ currentUser.username }}
+              <template v-slot:actions>
+                <v-btn color="white--text red accent-4" @click="changeRole(currentUser.username, currentUser.roles)">
+                  <v-icon left dark>
+                    mdi-security
+                  </v-icon>
+                  Remove Admin access
+                </v-btn>
+              </template>
+            </v-banner>
+
+            <v-banner v-if='hasRoleAdmin' two-line tile>
+              Delete the user {{ currentUser.username}}
+              <template v-slot:actions>
+                <v-btn color="white--text red accent-4" @click="deleteUser(currentUser.username)">
+                  <v-icon left dark>
+                    mdi-delete
+                  </v-icon>
+                  Delete
+                </v-btn>
+              </template>
+            </v-banner>
+
+
+            <v-banner v-if='hasRoleAdmin || isMe' two-line>
+              <form autocomplete="on">
+                Change Passsword {{ currentUser.username}}
+                <v-row>
+                  <v-col cols="3">
+                    <v-subheader>New Password</v-subheader>
+                  </v-col>
+                  <v-col cols="9">
+                    <v-text-field v-model="password" autocomplete="new-password" :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'" :rules="[rules.required, rules.min]" :type="show1 ? 'text' : 'password'" name="newpassword" label="New Password" hint="At least 8 characters"
+                      counter @click:append="show1 = !show1"></v-text-field>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="3">
+                    <v-subheader>Old Password</v-subheader>
+                  </v-col>
+                  <v-col cols="9">
+                    <v-text-field v-model="oldPassword" autocomplete="new-password" :append-icon="show2 ? 'mdi-eye' : 'mdi-eye-off'" :rules="[rules.required, rules.min]" :type="show2 ? 'text' : 'password'" name="oldpassword" label="Old Password"
+                      hint="At least 8 characters" counter @click:append="show2 = !show2"></v-text-field>
+                  </v-col>
+                </v-row>
+              </form>
+              <template v-slot:actions>
+                <v-btn color="white--text red accent-4" @click="changePassword(currentUser.username, password, oldPassword)">
+                  <v-icon left dark>
+                    mdi-delete
+                  </v-icon>
+                  Change
+                </v-btn>
+              </template>
+            </v-banner>
+          </v-container>
+        </v-card>
+      </v-tab-item>
+
+      <!-- ROOM ZONE -->
+      <v-tab-item v-if="hasRoleAdmin">
+        <v-card tile>
+          <v-container fluid>
+            <v-list-item>
+              <v-list-item-icon>
+                <v-icon color="indigo">
+                  mdi-home
+                </v-icon>
+              </v-list-item-icon>
+
+              <v-list-item-content>
+                <v-list-item-title>Rooms
+                </v-list-item-title>
+                <v-list-item-subtitle>Rooms Adminstration</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-banner v-if='hasRoleAdmin' two-line>
+              <v-select v-model="resultRooms" :items="rooms" chips label="Select Rooms" multiple prepend-icon="mdi-shield-account" v-on:input="changeRooms" item-text="name">
+                <template v-slot:selection="{ attrs, item, select, selected }">
+                  <v-chip v-bind="attrs" :input-value="selected" @click="select" @click:close="deleteRoom(item.name)">
+                    <strong>{{ item.name }}</strong>&nbsp;
+                  </v-chip>
+                </template>
+              </v-select>
+              <v-progress-circular v-if="loading" :size="15" color="primary" indeterminate></v-progress-circular>
+            </v-banner>
           </v-container>
         </v-card>
       </v-tab-item>
@@ -402,6 +419,7 @@ export default {
     loading: false,
     message: null,
     creating: false,
+    editing: false,
     tab: null,
     panel: [1, 0, 0],
     show1: false,
@@ -616,7 +634,8 @@ export default {
     },
     async save() {
       this.loading = true;
-      await this.updateUser(this.results)
+      await this.updateUser(this.results);
+      this.editing = false;
     },
     async addUser() {
       this.loading = true;

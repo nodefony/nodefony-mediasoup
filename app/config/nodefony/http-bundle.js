@@ -84,7 +84,7 @@ module.exports = {
     use_only_cookies: true,
     referer_check: false,
     cookie: {
-      maxAge: "1d", // like cookie_lifetime php  => secondes or ms style ('1d', "1h")
+      maxAge: "1d", // secondes or ms style ('1d', "1h")
       secure: true, // Set true for https site only see https://developer.mozilla.org/fr/docs/Web/HTTP/Headers/Set-Cookie
       httpOnly: true,
       sameSite:"lax"

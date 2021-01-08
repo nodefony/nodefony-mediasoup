@@ -12,6 +12,7 @@
       <v-row justify="center" align="center" class="mt-10">
 
         <img alt="Vue logo" src="../assets/nodefony.png">
+        <div class="text-h2"> Meetings </div>
       </v-row>
     </v-col>
 
