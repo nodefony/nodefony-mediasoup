@@ -23,7 +23,7 @@
               <v-expansion-panel-header>{{$t('rooms.info')}}</v-expansion-panel-header>
               <v-expansion-panel-content>
 
-                <v-list three-line>
+                <v-list>
                   <v-list-item>
                     <v-list-item-content>
                       <v-list-item-title>{{room.name}}</v-list-item-title>
@@ -35,6 +35,13 @@
                     <v-list-item-content>
                       <v-list-item-title>{{room.description}}</v-list-item-title>
                       <v-list-item-subtitle>{{$t("rooms.description")}}</v-list-item-subtitle>
+                    </v-list-item-content>
+                  </v-list-item>
+
+                  <v-list-item>
+                    <v-list-item-content>
+                      <v-list-item-title>{{formatAccessLabel(room.access)}}</v-list-item-title>
+                      <v-list-item-subtitle>{{$t("rooms.access")}}</v-list-item-subtitle>
                     </v-list-item-content>
                   </v-list-item>
 
@@ -75,6 +82,31 @@
                   <v-text-field dense label="Description" v-model="formData.description"></v-text-field>
                 </v-col>
               </v-row>
+              <v-row>
+                <v-col cols="3">
+                  <v-subheader>{{$t('rooms.access')}}</v-subheader>
+                </v-col>
+                <v-col cols="9">
+                  <v-switch v-model="formData.access" :false-value="`private`" :true-value="`public`" :label="formatAccessLabel(formData.access)"></v-switch>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col cols="3">
+                  <v-subheader>{{formData.secure ? $t('rooms.secure') : $t('rooms.unsecure')}}</v-subheader>
+                </v-col>
+                <v-col cols="9">
+                  <v-switch v-model="formData.secure" :label="`Secure`"></v-switch>
+                </v-col>
+              </v-row>
+              <v-row v-if="formData.secure">
+                <v-col cols="3">
+                  <v-subheader>Password</v-subheader>
+                </v-col>
+                <v-col cols="9">
+                  <v-text-field v-model="formData.password" autocomplete="password" :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'" :rules="[rules.min]" :type="showPassword ? 'text' : 'password'" name="password" label="Change Password"
+                    hint="At least 8 characters. Leave empty for unchanged." counter @click:append="showPassword = !showPassword"></v-text-field>
+                </v-col>
+              </v-row>
             </form>
             <v-card-actions>
               <v-spacer></v-spacer>
@@ -113,17 +145,20 @@ export default {
   data: () => ({
     tab: null,
     creating: false,
+    showPassword: false,
+    rules: {
+      min: v => !v || v.length >= 8 || 'Min 8 characters',
+    },
     panel: [1, 0, 0],
-    formData: {},
-    items: [
-      'room', 'info',
-    ]
+    formData: {
+      password: ""
+     }
   }),
   async mounted() {
     if (this.room) {
       console.log("mounted", this.room)
     }
-    this.formData = { ...this.room };
+    this.formData = { ...this.room, ...this.formData };
   },
   destroyed() {
     //console.log("destroyed", this.room.name)
@@ -135,6 +170,9 @@ export default {
 
   },
   methods: {
+    formatAccessLabel(label) {
+      return label == 'private' ? 'Private' : 'Public';
+    },
     async deleteRoom() {
       console.log("remove")
     },
@@ -150,7 +188,7 @@ export default {
           }
         })
         .then((data) => {
-          this.room = data.result.room;
+          Object.assign(this.room, data.result.room);
           this.loading = false;
           if (data.message) {
             this.message = this.log(data.message, "INFO");
@@ -174,7 +212,7 @@ export default {
         })
         .then((response) => {
           this.creating = false;
-          this.room = response.result.room;
+          Object.assign(this.room, data.result.room);
           this.loading = false;
           if (response.message) {
             this.message = this.log(response.message, "INFO");
