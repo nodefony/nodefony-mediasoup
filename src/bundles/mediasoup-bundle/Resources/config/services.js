@@ -9,6 +9,11 @@ module.exports = {
     class: nodefony.services.Meetings,
     arguments: ["@container"]
   },
+  Rooms: {
+    environment: ["SERVER"],
+    class: nodefony.services.Rooms,
+    arguments: ["@container"]
+  },
   Bot: {
     environment: ["SERVER"],
     class: nodefony.services.Bots,

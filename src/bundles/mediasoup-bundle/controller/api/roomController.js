@@ -9,11 +9,11 @@ class apiRomController extends nodefony.Controller {
 
   constructor(container, context) {
     super(container, context);
-    // start session
-    //this.startSession();
-    // start session
+    // TODO move to service
     this.orm = this.getORM();
     this.entity = this.orm.getEntity("room");
+    // service entity
+    this.roomsService = this.get("Rooms");
     this.User = this.orm.getEntity("user");
     this.api = new nodefony.api.Json({
       name: "mediasoup-rooms",
@@ -78,12 +78,35 @@ class apiRomController extends nodefony.Controller {
    */
   async roomAction(name) {
     const room =  await this.getRoom(name || this.query.room.name);
-    if( room){
+    if (room) {
       return this.api.render(
         room
       );
     }
     throw new Error(`Room not exist`);
+  }
+
+  /**
+   *  API PUT
+   *    @Route ("/room/{name}",
+   *      name="route-room")
+   *    @Method ({"PUT"})
+   */
+  async putRoomAction(name) {
+    const room =  await this.getRoom(name || this.query.name);
+    if (!this.query.password) {
+      this.query.password_pure = room.password;
+    }
+    return this.roomsService.update(room, this.query)
+    .then(async (room) => {
+      const message = `Update Room ${this.query.name} OK`;
+      this.log(message, "INFO");
+      const newRoom = await this.getRoom(this.query.name);
+      return this.api.render({
+        query: this.query,
+        room: newRoom
+      });
+    });
   }
 
   /**

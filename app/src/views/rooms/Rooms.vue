@@ -17,7 +17,7 @@
       <v-container fluid class="ma-5">
         <v-data-table :loading="loading" :headers="headers" :items="rooms" :items-per-page="10" class="elevation-2">
           <template v-slot:item.actions="{ item }">
-            <v-btn small class="mr-2" @click="openRoom(item)">
+            <v-btn small class="mr-2" @click="joinMeetingOnRoom(item)">
               {{$t('rooms.join')}}
             </v-btn>
             <v-icon small class="mr-2" @click="selectRoom(item)">
@@ -36,7 +36,7 @@
       <h1>TODO</h1>
     </v-layout>
   </v-container>
-  <v-container v-show="selectedRoom" style="background-color:#f2f5f8">
+  <v-container v-if="selectedRoom" style="background-color:#f2f5f8">
     <room-edit :room="selectedRoom" class="mt-5" ref="selectedRoom" v-on:close="closeRoom" />
   </v-container>
 </v-window>
@@ -111,7 +111,7 @@ export default {
           throw e
         })
     },
-    openRoom(item) {
+    joinMeetingOnRoom(item) {
       return this.$router.push({
         name: 'Meeting',
         params: {
