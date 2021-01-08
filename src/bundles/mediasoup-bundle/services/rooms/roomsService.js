@@ -15,7 +15,13 @@ class Rooms extends nodefony.Service {
   init() {
     this.orm = this.kernel.getORM();
     this.entity = this.orm.getEntity("room");
-    this.log("Rooms service OK");
+  }
+
+  sanitizeSequelizeError(error) {
+    if (nodefony.Error.isError(error) === "SequelizeError") {
+      return new nodefony.Error(error);
+    }
+    return error;
   }
 
   async update(room, value) {

@@ -93,10 +93,13 @@ class apiRomController extends nodefony.Controller {
    *    @Method ({"PUT"})
    */
   async putRoomAction(name) {
-    const room =  await this.getRoom(name || this.query.room.name);
+    const room =  await this.getRoom(name || this.query.name);
+    if (!this.query.password) {
+      this.query.password_pure = room.password;
+    }
     return this.roomsService.update(room, this.query)
-    .then(async (user) => {
-      const message = `Update Room ${this.query.username} OK`;
+    .then(async (room) => {
+      const message = `Update Room ${this.query.name} OK`;
       this.log(message, "INFO");
       const newRoom = await this.getRoom(this.query.name);
       return this.api.render({

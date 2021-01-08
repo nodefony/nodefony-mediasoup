@@ -65,13 +65,7 @@ class roomEntity extends nodefony.Entity {
       },
       password: {
         type: DataTypes.STRING(256),
-        allowNull: true,
-        validate: {
-          min: {
-            args: [[4]],
-            msg: `password  allow 4 characters min  `
-          }
-        }
+        allowNull: true
       },
       secure: {
         type: DataTypes.BOOLEAN,
@@ -90,41 +84,57 @@ class roomEntity extends nodefony.Entity {
   }
 
   validPassword(value) {
+    if (!value) {
+      return false;
+    }
     let valid = validator.isLength(value, {
-      min: 4,
+      min: 8,
       max: undefined
     });
     if (!valid) {
-      throw new nodefony.Error("password must have 4 characters min");
+      throw new nodefony.Error("password must have 8 characters min");
     }
-    return value;
+    return true;
+  }
+
+  updateRoomBeforeSave(room) {
+    if (!room.sticky_cookie){
+      room.sticky_cookie = `sticky-room-${room.name}`;
+    }
+
+    if (room.secure) {
+      if (!this.validPassword(room.password)) {
+        room.password = room.password_pure;
+        return room;
+      }
+      return this.encode(room.password)
+        .then(hash => {
+          room.password = hash;
+          return room;
+        })
+        .catch(err => {
+          this.logger(err, "ERROR");
+          throw err;
+        });
+    }
+    return room;
   }
 
   registerModel(db) {
     class MyModel extends Model {}
+    let self = this;
     MyModel.init(this.getSchema(), {
       sequelize: db,
       modelName: this.name,
       hooks: {
         beforeCreate: (room) => {
-          if (room.secure) {
-            this.validPassword(room.password);
-            return this.encode(room.password)
-              .then(hash => {
-                room.password = hash;
-                return room;
-              })
-              .catch(err => {
-                this.logger(err, "ERROR");
-                throw err;
-              });
-          }
-          if( ! room.sticky_cookie){
-            room.sticky_cookie = `sticky-room-${room.name}`;
-          }
-          return room;
+          return self.updateRoomBeforeSave(room);
+        },
+        beforeValidate(room, options) {
+          return self.updateRoomBeforeSave(room);
         },
         beforeBulkUpdate: (roomUpate) => {
+          this.log(roomUpate);
           if ("password" in roomUpate.attributes) {
             if (roomUpate.secure) {
               this.validPassword(roomUpate.attributes.password);
