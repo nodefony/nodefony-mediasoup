@@ -189,7 +189,7 @@ class apiRomController extends nodefony.Controller {
 
   /**
    *    @Method ({"PUT"})
-   *    @Route ( "/userroom/{username}",name="api-user-room-set")
+   *    @Route ( "/userroom/{username}",name="api-room-user-set")
    */
   async addUserRoomAction(username) {
     this.checkAuthorisation();
@@ -200,7 +200,7 @@ class apiRomController extends nodefony.Controller {
   }
   /**
    *    @Method ({"DELETE"})
-   *    @Route ( "/userroom/{username}",name="api-user-room-delete")
+   *    @Route ( "/userroom/{username}",name="api-room-user-delete")
    */
   async deleteUserRoomAction(username) {
     this.checkAuthorisation();
