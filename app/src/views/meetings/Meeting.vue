@@ -1,7 +1,7 @@
 <template>
 <v-container fluid fill-height class="ma-0 pa-0">
 
-  <room-home-meeting v-if="home" :roomid="roomid" v-on:connect="joining= true;home=flase" />
+  <room-home-meeting v-if="home" :roomid="roomid" v-on:connect="joining= true;home=false" />
 
   <room-join-meeting v-if="joining" :roomid="roomid" v-on:join="acceptConnect" v-on:close="closeDialogJoin" />
 

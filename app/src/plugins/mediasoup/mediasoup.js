@@ -104,20 +104,6 @@ class Mediasoup extends nodefony.Service {
     })
   }
 
-  async getWssServer() {
-    return this.api.http("/mediasoup/api/servers")
-    .then((result)=>{
-      return result.result.domain.name ;
-    });
-  }
-
-  getWssUrl(){
-    return `https://${this.domain}:${this.portHttps}/mediasoup/ws` ;
-  }
-  getWsUrl(){
-    return `http://${this.domain}:${this.portHttp}/mediasoup/ws` ;
-  }
-
   send(method, data = {}) {
     let message = JSON.stringify({
       method: method,
@@ -128,6 +114,58 @@ class Mediasoup extends nodefony.Service {
     return this.sock.send(message);
   }
 
+  async getWssServer() {
+    return this.api.http("/mediasoup/api/servers")
+    .then((result)=>{
+      return result.result.domain.name ;
+    });
+  }
+
+  getWssUrl(){
+    return `wss://${this.domain}:${this.portHttps}/mediasoup/ws` ;
+  }
+
+  getWssWaitingUrl(){
+    return `wss://${this.domain}:${this.portHttps}/mediasoup/waiting` ;
+  }
+
+  // websocket waiting
+  waiting(roomid = null, peerid = null){
+    return new Promise(async (resolve, reject) => {
+      this.domain = await this.getWssServer();
+      const url = `wss://${this.domain}:5152/mediasoup/waiting?roomId=${roomid}&peerId=${peerid}`;
+      this.sock = new WebSocket(url);
+      this.sock.onopen = (event) => {
+        this.log(`Mediasoup Websocket Waiting  connection peer ${peerid} room : ${roomid}`);
+        this.fire("waiting", this.sock );
+        return resolve(this.sock);
+      }
+      this.sock.onmessage = (event) => {
+        let message = null;
+        try {
+          message = JSON.parse(event.data);
+        } catch (e) {
+          this.log(e, "ERROR");
+          this.log(event.data, "ERROR");
+          throw new Error(`Bad Json Message`);
+        }
+      };
+      this.sock.onerror = (error) => {
+        this.log(error, "ERROR");
+        return reject(error);
+      };
+      this.sock.onclose = () => {
+
+        this.sock = null ;
+        return ;
+      };
+
+    });
+  }
+
+
+
+  // websocket connect
   connect(roomid = null, peerid = null, options = {}) {
     return new Promise(async (resolve, reject) => {
       this.domain = await this.getWssServer();

@@ -1,18 +1,46 @@
 <template>
 <v-window class="nodefony--background">
 
-  <v-container v-if="room" fluid>
+  <v-row v-if="room" justify="center" align="center" class="mt-10">
+    <div class="text-h2 teal--text text--lighten-3"> Meetings {{room.name}}</div>
+  </v-row>
+
+  <v-row v-if="room" justify="center" align="center" class="mt-10">
+    <div class="text-h5 teal--text text--lighten-1"> {{room.description}}</div>
+  </v-row>
+
+  <v-container v-if="waiting" fluid class="mt-15">
     <v-row justify="center" align="center" class="mt-10">
-      <div class="text-h1 teal--text text--lighten-3"> Meetings {{room.name}}</div>
+      <div v-if="progress" class="text-h4 blue-grey--text text--lighten-1"> {{progress}}</div>
     </v-row>
     <v-row justify="center" align="center" class="mt-10">
-      <div class="text-h4 teal--text text--lighten-1"> {{room.description}}</div>
+      <div style="min-height: 4px; width:100%">
+        <v-progress-linear :active="waiting" :indeterminate="true" :query="true"></v-progress-linear>
+      </div>
+    </v-row>
+    <v-row justify="center" align="center" class="mt-10">
+      <v-btn small :loading="loading" :disabled="loading" color="blue-grey" class="ma-2 white--text" @click="quit">
+        Stop
+        <v-icon right dark>
+          mdi-home
+        </v-icon>
+      </v-btn>
+    </v-row>
+  </v-container>
+
+
+  <v-container v-if="room && !waiting" fluid>
+
+    <v-row v-if="room" justify="center" align="center" class="mt-15">
+      <v-col cols="12" sm="6">
+        <v-text-field :disabled="usernamedisabled" :rules="[rules.required]" class="teal--text text--lighten-3" type="text" dense dark v-model="username" :label="$t('users.user')" outlined :hint="`${username} access`"></v-text-field>
+      </v-col>
     </v-row>
 
-    <v-row v-if="room.secure" justify="center" align="center" class="mt-15">
+    <v-row v-if="room.secure" justify="center" align="center" class="mt-5">
       <v-col cols="12" sm="6">
-        <v-text-field :rules="[rules.required, rules.min]" class="teal--text text--lighten-3" :append-icon="show ? 'mdi-eye' : 'mdi-eye-off'" :type="show ? 'text' : 'password'" dense dark v-model="password" label="Enter Room password" outlined
-          clearable :hint="`The room ${room.name} has restricted access`" @click:append="show = !show"></v-text-field>
+        <v-text-field min-width="200px" :rules="[rules.required, rules.min]" class="teal--text text--lighten-3" :append-icon="show ? 'mdi-eye' : 'mdi-eye-off'" :type="show ? 'text' : 'password'" dense dark v-model="password" label="Enter Room password"
+          outlined clearable :hint="`The room ${room.name} has restricted access`" @click:append="show = !show"></v-text-field>
       </v-col>
     </v-row>
 
@@ -36,7 +64,6 @@ import {
   mapMutations
 } from 'vuex';
 
-
 export default {
   name: 'HomeMeeting',
   props: {
@@ -45,9 +72,13 @@ export default {
     }
   },
   data: () => ({
+    waiting: false,
     message: null,
+    progress: null,
     room: null,
     password: "",
+    username: "",
+    usernamedisabled: true,
     show: false,
     rules: {
       required: value => !!value || 'Required.',
@@ -60,11 +91,18 @@ export default {
         this.loading = false;
         if (room.access === "public") {
           //
+          if (this.isAuthenticated) {
+            this.username = this.getProfileUsername;
+          } else {
+            this.usernamedisabled = false;
+          }
         } else {
           if (!this.isAuthenticated) {
             this.$router.push({
               name: 'Login'
             }).catch(() => {})
+          } else {
+            this.username = this.getProfileUsername;
           }
         }
         return room;
@@ -120,9 +158,15 @@ export default {
           }
         })
         .then((response) => {
+          this.password = "";
           this.loading = false;
-          this.$emit("connect", response);
-          return response;
+          if (this.room.waitingconnect) {
+            this.progress = this.log(`Try Connection`);
+            return this.connectWaiting();
+          } else {
+            this.$emit("connect", response);
+            return response;
+          }
         })
         .catch(e => {
           this.loading = false;
@@ -134,13 +178,44 @@ export default {
           }
 
         })
+    },
+    connectWaiting() {
+      this.waiting = true;
+      return this.$mediasoup.waiting()
+        .then((sock) => {
+          this.sock = sock;
+          let pdu = this.log(`Waiting for Room Manager`);
+          this.progress = pdu.payload;
+          this.message = pdu;
+          return sock;
+        })
+        .catch((e) => {
+          this.log(e, "ERROR");
+          this.waiting = false;
+          let pdu = this.log(`Room ${this.room.name} can't be join !!!!`);
+          this.message = pdu;
+          this.progress = pdu.payload;
+        })
+    },
+    quit() {
+      try {
+        if (this.sock) {
+          this.sock.close();
+        }
+      } catch (e) {
+        this.log(e, "ERROR");
+      }
+      this.waiting = false;
     }
-
   }
 }
 </script>
 
 <style scoped lang="scss">
+.v-text-field {
+    width: 600px;
+}
+
 .nodefony--background {
     position: relative;
     height: 100vh;

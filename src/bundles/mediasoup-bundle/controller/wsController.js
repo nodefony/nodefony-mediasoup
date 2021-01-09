@@ -32,6 +32,27 @@ class wsController extends nodefony.Controller {
         throw new nodefony.Error("Bad request");
     }
   }
+
+  /**
+   *    @Route ("/waiting",
+   *      name="route-mediasoup-realtime-waiting")
+   */
+  waitingAction(message) {
+    switch (this.method) {
+      case "WEBSOCKET":
+        if (message) {
+          let info = `websocket message type :  ${message.type}`;
+          this.log(info, "DEBUG");
+          this.mediasoup.handleConnection(JSON.parse(message.utf8Data), this.context);
+        } else {
+          this.mediasoup.handShakeConnection(this.query, this.context);
+        }
+        break;
+      default:
+        throw new nodefony.Error("Bad request");
+    }
+  }
+
 }
 
 module.exports = wsController;

@@ -10,7 +10,7 @@ const defaultFixtures = [{
   secure: true,
   password: "12345678",
   access: "private",
-  sticky_cookie: "sticky-room-broadcast"
+  sticky_cookie: "sticky-room-room2"
 }, {
   name: "room3",
   type: "WEBRTC",
@@ -18,15 +18,19 @@ const defaultFixtures = [{
   secure: true,
   password: "12345678",
   access: "public",
-  sticky_cookie: "sticky-room-broadcast"
-},{
+}, {
   name: "room4",
   description: "Webrtc Meeting Secure waiting",
   secure: true,
   password: "12345678",
   access: "private",
-  waitingconnect:"true",
-  sticky_cookie: "sticky-room-broadcast"
+  waitingconnect: "true"
+}, {
+  name: "room5",
+  description: "Webrtc Meeting Waiting",
+  secure: false,
+  access: "private",
+  waitingconnect: "true"
 }];
 
 module.exports.default = defaultFixtures;

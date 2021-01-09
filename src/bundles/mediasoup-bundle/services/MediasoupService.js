@@ -31,6 +31,29 @@ module.exports = class Mediasoup extends nodefony.Service {
     }
   }
 
+  // websocket waiting 
+  async handShakeConnection(query, context) {
+    if (query.roomId ) {
+      let info = `websocket handshake waiting connection :
+      [roomId:${query.roomId}, address:${context.remoteAddress}, origin:${context.origin}]`;
+      this.log(info);
+      let message = {
+        query,
+        method: "handshakeConnection",
+        roomid: query.roomId,
+        peerid: query.peerId
+      };
+      return context.send(JSON.stringify(message));
+    }else {
+      throw new nodefony.Error("Connection request without roomId", 5006);
+    }
+  }
+
+  async handleConnection(query, context) {
+
+  }
+
+  // websocket connect
   async handShake(query, context) {
     if (query.roomId && query.peerId) {
       let info = `websocket handshake connection :
