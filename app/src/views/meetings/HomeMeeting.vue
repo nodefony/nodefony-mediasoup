@@ -1,5 +1,5 @@
 <template>
-<v-window class="background">
+<v-window class="nodefony--background">
 
   <v-container v-if="room" fluid>
     <v-row justify="center" align="center" class="mt-10">
@@ -137,7 +137,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.background {
+.nodefony--background {
     position: relative;
     height: 100vh;
     width: 100%;
@@ -149,7 +149,7 @@ export default {
     overflow: hidden;
 }
 
-.background::before {
+.nodefony--background::before {
     content: "";
     position: absolute;
     top: 0;
