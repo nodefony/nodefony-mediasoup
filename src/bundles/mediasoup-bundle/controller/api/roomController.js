@@ -149,7 +149,7 @@ class apiRomController extends nodefony.Controller {
    *    @Firewall ({bypass:true})
    */
   async checkRoomAccessAction(name) {
-    const room = await this.getRoom(name);
+    const room = await this.roomsService.findOne(name);
     if (room && room.secure) {
       return this.secureAction(name);
     }

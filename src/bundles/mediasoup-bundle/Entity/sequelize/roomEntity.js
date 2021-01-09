@@ -106,29 +106,6 @@ class roomEntity extends nodefony.Entity {
     return true;
   }
 
-  updateRoomBeforeSave(roomUpdate) {
-    /*if (!room.sticky_cookie){
-      room.sticky_cookie = `sticky-room-${room.name}`;
-    }
-
-    if (room.secure) {
-      if (!this.validPassword(room.password)) {
-        room.password = room.password_pure;
-        return room;
-      }
-      return this.encode(room.password)
-        .then(hash => {
-          room.password = hash;
-          return room;
-        })
-        .catch(err => {
-          this.logger(err, "ERROR");
-          throw err;
-        });
-    }
-    return room;*/
-  }
-
   registerModel(db) {
     class MyModel extends Model {}
     let self = this;
@@ -148,12 +125,14 @@ class roomEntity extends nodefony.Entity {
                 throw err;
               });
           }
+          if (!room.sticky_cookie){
+            room.sticky_cookie = `sticky-room-${room.name}`;
+          }
         },
         beforeValidate(room, options) {
           //return self.updateRoomBeforeSave(room);
         },
         beforeBulkUpdate: (roomUpate) => {
-          this.log(roomUpate);
           if ("password" in roomUpate.attributes) {
             if (roomUpate.secure) {
               this.validPassword(roomUpate.attributes.password);
