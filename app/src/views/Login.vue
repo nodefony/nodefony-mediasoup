@@ -1,8 +1,9 @@
 <template>
-<v-container fluid>
+<v-container class="nodefony--background" fluid>
   <!-- v-col cols="12"-->
-  <v-row align="center" justify="center" class="pt-10">
-    <v-card min-width="600" min-height=">400">
+  <v-row justify="center" align="center">
+    <!--v-col cols="12" sm="12"-->
+    <v-card min-width="600" min-height="400">
       <v-row align="center" justify="center">
         <v-col cols="12" sm="8" md="4">
           <v-img src="/app/images/app-logo.png" aspect-ratio="1"></v-img>
@@ -31,6 +32,7 @@
         </v-form>
       </v-card-text>
     </v-card>
+    <!--/v-col-->
   </v-row>
   <!--/v-col-->
 </v-container>
@@ -164,7 +166,11 @@ export default {
 </script>
 
 <style scoped lang="scss">
-
+.nodefony--background {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 </style>
 
 <i18n>

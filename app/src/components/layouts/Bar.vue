@@ -1,7 +1,7 @@
 <template>
 <!--v-app-bar /*:clipped-left="$vuetify.breakpoint.lgAndUp"*/ app-->
 <v-app-bar v-if="navbar" app>
-  <v-app-bar-nav-icon @click.stop="toogleDrawer"></v-app-bar-nav-icon>
+  <v-app-bar-nav-icon v-if="!hiddeDrawder" @click.stop="toogleDrawer"></v-app-bar-nav-icon>
   <v-toolbar-title style="width: 300px" class="ml-0 pl-4">
     <router-link :to="{ name: 'Home'}" tag="div">
       <v-btn text>
@@ -106,6 +106,7 @@ export default {
   data(vm) {
     return {
       account: false,
+      hiddeDrawder: false,
       selectedLang: 0,
       langs: [{
           text: 'francais',
@@ -122,6 +123,11 @@ export default {
   },
   mounted() {
     this.getLang();
+    if (this.$route.name === "Login") {
+      this.hiddeDrawder = true;
+    } else {
+      this.hiddeDrawder = false;
+    }
   },
   computed: {
     ...mapGetters([

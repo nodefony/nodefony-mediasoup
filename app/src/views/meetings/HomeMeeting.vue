@@ -11,8 +11,8 @@
 
     <v-row v-if="room.secure" justify="center" align="center" class="mt-15">
       <v-col cols="12" sm="6">
-        <v-text-field class="teal--text text--lighten-3" :append-icon="show ? 'mdi-eye' : 'mdi-eye-off'" :type="show ? 'text' : 'password'" dense dark v-model="password" label="Enter Room password" outlined clearable :hint="`The room ${room.name} has restricted access`"
-          @click:append="show = !show"></v-text-field>
+        <v-text-field :rules="[rules.required, rules.min]" class="teal--text text--lighten-3" :append-icon="show ? 'mdi-eye' : 'mdi-eye-off'" :type="show ? 'text' : 'password'" dense dark v-model="password" label="Enter Room password" outlined
+          clearable :hint="`The room ${room.name} has restricted access`" @click:append="show = !show"></v-text-field>
       </v-col>
     </v-row>
 
@@ -48,7 +48,11 @@ export default {
     message: null,
     room: null,
     password: "",
-    show: false
+    show: false,
+    rules: {
+      required: value => !!value || 'Required.',
+      min: v => v.length >= 8 || 'Min 8 characters'
+    }
   }),
   async mounted() {
     this.room = await this.getRoom(this.roomid)

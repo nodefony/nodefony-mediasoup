@@ -71,7 +71,7 @@ export default {
 }
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .nodefony--background {
     position: relative;
     height: 100vh;
