@@ -1,7 +1,9 @@
 <template>
 <v-container fluid fill-height class="ma-0 pa-0">
 
-  <room-dialog-join :roomid="roomid" v-on:join="acceptConnect" v-on:close="closeDialogJoin" />
+  <room-home-meeting v-if="home" :roomid="roomid" v-on:connect="joining= true;home=flase" />
+
+  <room-join-meeting v-if="joining" :roomid="roomid" v-on:join="acceptConnect" v-on:close="closeDialogJoin" />
 
   <v-container v-show="joined" fluid fill-height class="pa-0 ma-0">
 
@@ -19,18 +21,13 @@
   </v-container>
 
   <!--v-row v-show="joined" class="pa-0 ma-0">
-    <room-tool-bar-top v-on:layoutchange="selectLayout" :roomid="roomid" />
-    <v-col cols="12" class="pa-0 ma-0">
-      <room-grid-layout v-show="grid" :layout="grid" ref="grid" />
-      <room-focus-layout v-show="focus" :layout="focus" ref="focus" />
-    </v-col>
     <v-col cols="3" class="pa-0 ma-0">
       <room-side-bar :peers="peers" />
     </v-col>
     <room-tool-bar-bottom v-on:quit="quit" />
   </v-row-->
 
-  <room-dialog-quit v-if="dialogQuit" :roomid="room.id" v-on:response="leave" />
+  <room-quit-meeting v-if="dialogQuit" :roomid="room.id" v-on:response="leave" />
 
 </v-container>
 </template>
@@ -41,6 +38,7 @@ import {
   mapMutations,
   mapActions
 } from 'vuex';
+import HomeMeeting from '@/views/meetings/HomeMeeting';
 import DialogJoin from '../../components/meetings/RoomDialogJoin';
 import DialogQuit from '../../components/meetings/RoomDialogQuit';
 import RoomToolBarTop from '../../components/meetings/nav/RoomToolBarTop';
@@ -52,8 +50,9 @@ import RoomGrilleLayout from '../../components/meetings/layouts/RoomGridLayout';
 export default {
   name: 'Layout',
   components: {
-    "room-dialog-join": DialogJoin,
-    "room-dialog-quit": DialogQuit,
+    "room-home-meeting": HomeMeeting,
+    "room-join-meeting": DialogJoin,
+    "room-quit-meeting": DialogQuit,
     "room-tool-bar-top": RoomToolBarTop,
     "room-tool-bar-bottom": RoomToolBarBottom,
     "room-side-bar": RoomSideBar,
@@ -67,6 +66,8 @@ export default {
   },
   data(vm) {
     return {
+      home: true,
+      joining: false,
       peerid: null,
       intevalTime: null,
       grid: false,
@@ -75,14 +76,25 @@ export default {
       connected: false
     }
   },
-  beforeRouteLeave() {
-    this.openDrawer();
+  beforeRouteLeave(to, from, next) {
+    //this.openDrawer();
     this.openNavBar();
+    return next()
   },
   mounted() {
-    this.openJoinDialog();
     this.closeDrawer();
     this.closeNavBar();
+    if (!this.home) {
+      return this.openJoinDialog();
+    }
+    if (this.home && !this.isAuthenticated) {
+      //
+    }
+    if (this.joining && this.isAuthenticated) {
+      //
+    }
+
+
     /*this.intevalTime = setInterval(() => {
       //this.setClock();
     }, 1000);*/
@@ -112,6 +124,7 @@ export default {
       clock: 'getClock',
     }),
     ...mapGetters([
+      "isAuthenticated",
       'getRoom',
       'getPeer',
       'peers',

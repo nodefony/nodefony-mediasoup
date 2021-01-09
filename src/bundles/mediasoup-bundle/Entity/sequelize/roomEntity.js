@@ -20,11 +20,15 @@ class roomEntity extends nodefony.Entity {
      *   @param connection name
      */
     super(bundle, "room", "sequelize", "nodefony");
-    this.orm.on("onOrmReady", ( orm ) => {
+    this.orm.on("onOrmReady", (orm) => {
       let User = this.orm.getEntity("user");
       let Room = this.orm.getEntity("room");
-      Room.belongsToMany(User, {through: 'UserRoom'});
-      User.belongsToMany(Room, {through: 'UserRoom'});
+      Room.belongsToMany(User, {
+        through: 'UserRoom'
+      });
+      User.belongsToMany(Room, {
+        through: 'UserRoom'
+      });
     });
   }
 
@@ -45,6 +49,7 @@ class roomEntity extends nodefony.Entity {
       type: {
         type: DataTypes.ENUM,
         values: ['WEBRTC'],
+        defaultValue: "WEBRTC",
         allowNull: false,
         validate: {
           is: {
@@ -71,12 +76,16 @@ class roomEntity extends nodefony.Entity {
         type: DataTypes.BOOLEAN,
         defaultValue: false
       },
-      access:{
-        type:   DataTypes.ENUM,
+      access: {
+        type: DataTypes.ENUM,
         values: ['private', 'public'],
         defaultValue: 'private'
       },
-      sticky_cookie:{
+      waitingconnect: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+      },
+      sticky_cookie: {
         type: DataTypes.STRING(256),
         allowNull: true
       }
@@ -97,8 +106,8 @@ class roomEntity extends nodefony.Entity {
     return true;
   }
 
-  updateRoomBeforeSave(room) {
-    if (!room.sticky_cookie){
+  updateRoomBeforeSave(roomUpdate) {
+    /*if (!room.sticky_cookie){
       room.sticky_cookie = `sticky-room-${room.name}`;
     }
 
@@ -117,7 +126,7 @@ class roomEntity extends nodefony.Entity {
           throw err;
         });
     }
-    return room;
+    return room;*/
   }
 
   registerModel(db) {
@@ -128,10 +137,20 @@ class roomEntity extends nodefony.Entity {
       modelName: this.name,
       hooks: {
         beforeCreate: (room) => {
-          return self.updateRoomBeforeSave(room);
+          if (room.secure) {
+            this.validPassword(room.password);
+            return this.encode(room.password)
+              .then(hash => {
+                room.password = hash;
+              })
+              .catch(err => {
+                this.logger(err, "ERROR");
+                throw err;
+              });
+          }
         },
         beforeValidate(room, options) {
-          return self.updateRoomBeforeSave(room);
+          //return self.updateRoomBeforeSave(room);
         },
         beforeBulkUpdate: (roomUpate) => {
           this.log(roomUpate);

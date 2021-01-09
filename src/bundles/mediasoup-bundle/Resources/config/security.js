@@ -36,6 +36,24 @@ module.exports = {
       wss_area: {
         pattern: /^\/mediasoup\/ws$/,
         crossDomain: cors
+      },
+      mediasoup_area: {
+        pattern: /^\/mediasoup\/api/,
+        redirectHttps: true,
+        stateless: true,
+        "passport-jwt": {
+          algorithms: "RS256",
+          //secretOrKey:"Les sanglots longs Des violons De l’automne Blessent mon cœur D’une langueur Monotone."
+          certificats: {
+            private: path.resolve("config", "certificates", "ca", "private", "ca.key.pem"),
+            public: path.resolve("config", "certificates", "ca", "public", "public.key.pem")
+          },
+          jwtFromRequest: { // fromCookie or fromHeader
+            extractor: "fromHeader",
+            params: ["jwt"]
+          }
+        },
+        crossDomain: cors
       }
     },
     encoders: {

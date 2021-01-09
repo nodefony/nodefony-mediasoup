@@ -167,11 +167,11 @@
 
    findOne(username, query) {
      try {
-       query = nodefony.extend(true, query, {
-         username: username
-       });
        switch (this.ormName) {
        case "mongoose":
+         query = nodefony.extend(true, query, {
+           username: username
+         });
          return this.entity.findOne(query);
        case "sequelize":
          query = nodefony.extend(true, query, {

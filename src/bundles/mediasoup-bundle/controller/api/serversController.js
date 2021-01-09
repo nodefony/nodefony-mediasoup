@@ -22,6 +22,7 @@ class serversController extends nodefony.Controller {
    *  API GET resource that returns the mediasoup Router RTP capabilities of the room
    *  @Route ("/servers",
    *      name="route-mediasoup-servers")
+   *  @Firewall ({bypass:true})
    */
   getServerAction() {
     return this.api.render({

@@ -1,19 +1,32 @@
-
 const defaultFixtures = [{
-  name: "webrtc",
-  type:"WEBRTC",
-  description:"webrtc Meeting",
+  name: "room1",
+  description: "Webrtc Meeting",
   secure: false,
-  access:"private",
-  sticky_cookie:null
+  access: "private",
+  sticky_cookie: null
 }, {
-  name: "broadcast",
-  type:"WEBRTC",
-  description:"Videos Broadcaster",
+  name: "room2",
+  description: "Webrtc Meeting Secure",
   secure: true,
-  password: "admin",
-  access:"private",
-  sticky_cookie:"sticky-room-broadcast"
+  password: "12345678",
+  access: "private",
+  sticky_cookie: "sticky-room-broadcast"
+}, {
+  name: "room3",
+  type: "WEBRTC",
+  description: "Webrtc Public Meeting Secure",
+  secure: true,
+  password: "12345678",
+  access: "public",
+  sticky_cookie: "sticky-room-broadcast"
+},{
+  name: "room4",
+  description: "Webrtc Meeting Secure waiting",
+  secure: true,
+  password: "12345678",
+  access: "private",
+  waitingconnect:"true",
+  sticky_cookie: "sticky-room-broadcast"
 }];
 
 module.exports.default = defaultFixtures;
