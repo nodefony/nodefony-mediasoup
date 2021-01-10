@@ -185,6 +185,11 @@ export default {
         sortable: true,
         value: 'id'
       }, {
+        text: "status",
+        align: 'start',
+        sortable: true,
+        value: 'status'
+      }, {
         text: "producers",
         align: 'start',
         sortable: true,

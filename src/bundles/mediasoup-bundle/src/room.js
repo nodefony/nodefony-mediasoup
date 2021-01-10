@@ -185,7 +185,7 @@ class Room extends nodefony.Service {
       sctpCapabilities
     } = message.data;
     // Store client data into the protoo Peer data object.
-    peer.joined = true;
+    //peer.joined = true;
     peer.displayName = displayName;
     peer.device = device;
     peer.rtpCapabilities = rtpCapabilities;
@@ -197,15 +197,17 @@ class Room extends nodefony.Service {
     this.log(peer.rtpCapabilities ,"DEBUG", `${peer.id} rtpCapabilities`)
     this.log(peer.sctpCapabilities ,"DEBUG", `${peer.id} sctpCapabilities`)
     // Reply now the request with the list of joined peers (all but the new one).
+    // Mark the new Peer as joined.
+    peer.joined = true;
+    peer.status = "joined";
     const peerInfos = joinedPeers
       .filter((joinedPeer) => joinedPeer.id !== peer.id)
       .map((joinedPeer) => ({
         id: joinedPeer.id,
         displayName: joinedPeer.displayName,
-        device: joinedPeer.device
+        device: joinedPeer.device,
+        status:joinedPeer.status
       }));
-    // Mark the new Peer as joined.
-    peer.joined = true;
     return peerInfos;
   }
 

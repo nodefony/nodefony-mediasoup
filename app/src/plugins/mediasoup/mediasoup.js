@@ -131,7 +131,7 @@ class Mediasoup extends nodefony.Service {
 
   // websocket waiting
   waiting(roomid = null, peerid = null){
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async  (resolve, reject) => {
       this.domain = await this.getWssServer();
       const url = `wss://${this.domain}:5152/mediasoup/waiting?roomId=${roomid}&peerId=${peerid}`;
       this.sock = new WebSocket(url);
@@ -144,6 +144,7 @@ class Mediasoup extends nodefony.Service {
         let message = null;
         try {
           message = JSON.parse(event.data);
+          this.fire("waitingMessage", message, this);
         } catch (e) {
           this.log(e, "ERROR");
           this.log(event.data, "ERROR");
@@ -155,7 +156,7 @@ class Mediasoup extends nodefony.Service {
         return reject(error);
       };
       this.sock.onclose = () => {
-
+        this.fire("closeWaiting", this.sock );
         this.sock = null ;
         return ;
       };

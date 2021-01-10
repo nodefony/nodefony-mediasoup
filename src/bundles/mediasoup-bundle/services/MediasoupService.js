@@ -17,6 +17,7 @@ module.exports = class Mediasoup extends nodefony.Service {
     if (!kernel.ready) {
       this.kernel.once("onReady", () => {
         this.meetingsService = this.get("Meetings");
+        this.roomsService = this.get("Rooms");
         this.peersService = this.get("Peers");
         this.entity = this.orm.getEntity("room");
         this.runMediasoupWorkers();
@@ -26,24 +27,56 @@ module.exports = class Mediasoup extends nodefony.Service {
       });
     } else {
       this.meetingsService = this.get("Meetings");
+      this.roomsService = this.get("Rooms");
       this.peersService = this.get("Peers");
       this.entity = this.orm.getEntity("room");
     }
   }
 
-  // websocket waiting 
+  // websocket waiting
   async handShakeConnection(query, context) {
     if (query.roomId ) {
-      let info = `websocket handshake waiting connection :
+      let peer = null ;
+      let room = null ;
+      let mdroom = null;
+      let message =null;
+      let info = `Waiting connection :
       [roomId:${query.roomId}, address:${context.remoteAddress}, origin:${context.origin}]`;
       this.log(info);
-      let message = {
-        query,
-        method: "handshakeConnection",
-        roomid: query.roomId,
-        peerid: query.peerId
-      };
-      return context.send(JSON.stringify(message));
+      try{
+        mdroom = await this.getOrCreateRoom(query.roomId);
+        peer = await mdroom.createPeer(query.peerId, context);
+        peer.status = "waiting";
+        context.once('onClose', ()=>{
+          //clean mediasoup events
+          if(peer){
+            peer.status = "disconnected";
+          }
+        })
+        // check administrator
+        room = await this.roomsService.getUserRoom(query.roomId);
+        if( room.users.length === 0){
+          setTimeout(()=>{
+            context.close("1008", "Room managers not found");
+          },2000);
+        }
+        message = `Waiting Authorisation`;
+        let tosend = {
+          query,
+          method: "handshakeConnection",
+          room: room,
+          peerid: query.peerId,
+          message:message
+        };
+        return context.send(JSON.stringify(tosend));
+      }catch(e){
+        if(peer){
+          peer.status = "disconnected";
+        }
+        this.log(e, "ERROR")
+        context.close("1008", "Room can't be create");
+        throw e;
+      }
     }else {
       throw new nodefony.Error("Connection request without roomId", 5006);
     }
@@ -164,6 +197,7 @@ module.exports = class Mediasoup extends nodefony.Service {
   }
 
   // ports management
+  // TODO:
   async getPort() {
     let port = this.getRandomPort();
     while (this.takenPortSet.has(port)) {

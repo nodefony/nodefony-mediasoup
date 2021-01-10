@@ -10,6 +10,7 @@ class Peer extends nodefony.Service {
     }
     this.consume = null;
     this.joined = false;
+    this.status = "disconnected"; // connected | waiting  | joined | disconnected
     this.displayName = null;
     this.device = null;
     this.rtpCapabilities = null;

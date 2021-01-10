@@ -139,7 +139,6 @@ class Rooms extends nodefony.Service {
 
   }
 
-
   // UserRoom n:n
   addUserRoom(username, room) {
     return this.usersService.findOne({
@@ -186,6 +185,21 @@ class Rooms extends nodefony.Service {
         })
       });
   }
+
+  getUserRoom(roomid){
+    return this.findOne(roomid, {
+        where: {
+          name: roomid
+        },
+        include: [{
+          model: this.User
+        }]
+      })
+      .then( (room) => {
+        return room;
+      });
+  }
+
 }
 
 module.exports = Rooms;

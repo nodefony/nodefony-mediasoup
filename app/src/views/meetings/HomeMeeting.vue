@@ -26,6 +26,42 @@
         </v-icon>
       </v-btn>
     </v-row>
+
+    <div v-if="administrators">
+      <v-row class="spacer mt-10" no-gutters>
+        <v-col cols="12" sm="12">
+          <v-simple-table dense fixed-header dark height="200px">
+            <template v-slot:default>
+              <thead>
+                <tr>
+                  <th class="text-left">
+                    Room Managers
+                  </th>
+                  <th class="text-left">
+                    Name
+                  </th>
+                  <th class="text-left">
+                    Surname
+                  </th>
+                  <th class="text-left">
+                    Email
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="administrator in administrators" :key="administrator.username">
+                  <td>{{ administrator.username }}</td>
+                  <td>{{ administrator.name }}</td>
+                  <td>{{ administrator.surname }}</td>
+                  <td>{{ administrator.email }}</td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
+
+        </v-col>
+      </v-row>
+    </div>
   </v-container>
 
 
@@ -76,6 +112,7 @@ export default {
     message: null,
     progress: null,
     room: null,
+    administrators: null,
     password: "",
     username: "",
     usernamedisabled: true,
@@ -180,10 +217,26 @@ export default {
         })
     },
     connectWaiting() {
-      this.waiting = true;
-      return this.$mediasoup.waiting()
+      return this.$mediasoup.waiting(this.roomid, this.username)
         .then((sock) => {
           this.sock = sock;
+          this.sock.onclose = (event) => {
+            if (event.reason) {
+              let pdu = this.log(event.reason);
+              this.progress = event.reason;
+              this.message = pdu;
+            }
+            this.waiting = false;
+          }
+          this.$mediasoup.on("waitingMessage", (response) => {
+            let pdu = this.log(response, "DEBUG");
+            this.progress = response.message;
+            console.log(response)
+            if (response.room && response.room.users) {
+              this.administrators = response.room.users;
+            }
+          });
+          this.waiting = true;
           let pdu = this.log(`Waiting for Room Manager`);
           this.progress = pdu.payload;
           this.message = pdu;

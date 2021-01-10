@@ -145,7 +145,8 @@ class Meetings extends nodefony.Service {
           otherPeer.notify(room, 'newPeer', {
             id: peer.id,
             displayName: peer.displayName,
-            device: peer.device
+            device: peer.device,
+            status:peer.status
           });
         }
         break;

@@ -33,7 +33,7 @@ class meetingsController extends nodefony.Controller {
     let ele = {};
     ele.id = room.id;
     ele.status = await room.logStatus();
-    ele.closed = ele.status.closed ? "closed" : "active";
+    ele.closed = ele.status.closed ? true : false;
     ele.RouterRtpCapabilities = room.getRouterRtpCapabilities();
     return ele;
   }
@@ -47,8 +47,8 @@ class meetingsController extends nodefony.Controller {
       }
       room.peers.forEach( (peer, key, map)=>{
         let ele = {};
-        console.log(peer)
-        ele.id = peer.id,
+        ele.id = peer.id;
+        ele.status = peer.status;
         ele.transports = peer.transports.size;
         ele.producers = peer.producers.size;
         ele.consumers = peer.consumers.size;
