@@ -194,7 +194,7 @@ export default {
       'setMedia'
     ]),
     close() {
-      this.$destroy();
+      //this.$destroy();
       return this.redirect();
     },
     // mediasoup
@@ -458,9 +458,16 @@ export default {
         })
     },
     redirect() {
+      this.home = true;
       return this.$router.push({
-        name: 'Home'
-      }).catch(() => {})
+          name: 'Meeting',
+          params: {
+            roomid: this.roomid
+          }
+        }).then(() => {
+
+        })
+        .catch(() => {})
     },
     leave(res) {
       this.$emit("quit", res);

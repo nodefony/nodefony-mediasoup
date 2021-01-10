@@ -50,31 +50,31 @@ class Mediasoup extends nodefony.Service {
     //this.init();
   }
 
-  request(...args){
-     return this.api.http(...args)
-     .then((result)=>{
-        if (result.error){
+  request(...args) {
+    return this.api.http(...args)
+      .then((result) => {
+        if (result.error) {
           throw result.error;
         }
         return result;
-     })
-     .catch(async (e) =>{
-       if(e.response ){
-         if (e.response.code === 401) {
-           try {
-             await this.store.dispatch("AUTH_LOGOUT");
-           } catch (e) {
-             this.log(e, "ERROR");
-             throw e.response;
-           } finally {
-             this.router.push("home");
-           }
-         }
-         throw e.response;
-       }else{
-         throw e;
-       }
-     });
+      })
+      .catch(async (e) => {
+        if (e.response) {
+          if (e.response.code === 401) {
+            try {
+              await this.store.dispatch("AUTH_LOGOUT");
+            } catch (e) {
+              this.log(e, "ERROR");
+              throw e.response;
+            } finally {
+              this.router.push("home");
+            }
+          }
+          throw e.response;
+        } else {
+          throw e;
+        }
+      });
   }
 
   // hooy plugins vue
@@ -93,15 +93,15 @@ class Mediasoup extends nodefony.Service {
     this.log(`https://${this.domain}:${this.portHttps}`)
   }
 
-  async init(){
+  async init() {
     return await this.api.http("/mediasoup/api/servers")
-    .then((response)=>{
+      .then((response) => {
         nodefony.extend(this.options, response.result);
         return response;
-    })
-    .catch(e=>{
-      throw e;
-    })
+      })
+      .catch(e => {
+        throw e;
+      })
   }
 
   send(method, data = {}) {
@@ -116,28 +116,28 @@ class Mediasoup extends nodefony.Service {
 
   async getWssServer() {
     return this.api.http("/mediasoup/api/servers")
-    .then((result)=>{
-      return result.result.domain.name ;
-    });
+      .then((result) => {
+        return result.result.domain.name;
+      });
   }
 
-  getWssUrl(){
-    return `wss://${this.domain}:${this.portHttps}/mediasoup/ws` ;
+  getWssUrl() {
+    return `wss://${this.domain}:${this.portHttps}/mediasoup/ws`;
   }
 
-  getWssWaitingUrl(){
-    return `wss://${this.domain}:${this.portHttps}/mediasoup/waiting` ;
+  getWssWaitingUrl() {
+    return `wss://${this.domain}:${this.portHttps}/mediasoup/waiting`;
   }
 
   // websocket waiting
-  waiting(roomid = null, peerid = null){
-    return new Promise(async  (resolve, reject) => {
+  waiting(roomid = null, peerid = null) {
+    return new Promise(async (resolve, reject) => {
       this.domain = await this.getWssServer();
       const url = `wss://${this.domain}:5152/mediasoup/waiting?roomId=${roomid}&peerId=${peerid}`;
       this.sock = new WebSocket(url);
       this.sock.onopen = (event) => {
         this.log(`Mediasoup Websocket Waiting  connection peer ${peerid} room : ${roomid}`);
-        this.fire("waiting", this.sock );
+        this.fire("waitingHandshake", this.sock);
         return resolve(this.sock);
       }
       this.sock.onmessage = (event) => {
@@ -155,10 +155,10 @@ class Mediasoup extends nodefony.Service {
         this.log(error, "ERROR");
         return reject(error);
       };
-      this.sock.onclose = () => {
-        this.fire("closeWaiting", this.sock );
-        this.sock = null ;
-        return ;
+      this.sock.onclose = (event) => {
+        this.fire("waitingClose", event, this.sock);
+        this.sock = null;
+        return;
       };
 
     });
@@ -249,7 +249,7 @@ class Mediasoup extends nodefony.Service {
       this.sock.onclose = () => {
         this.fire("closeSock", this);
         this.store.commit('setConnected', false);
-        this.sock = null ;
+        this.sock = null;
         return this.leaveRoom();
       };
     });
@@ -266,17 +266,17 @@ class Mediasoup extends nodefony.Service {
   async leaveRoom() {
     this.removeAllListeners();
     try {
-      if( this.peer){
+      if (this.peer) {
         this.peer.close();
       }
-      if( this.room){
+      if (this.room) {
         await this.room.close();
       }
-      delete this.room ;
-      delete this.peer ;
+      delete this.room;
+      delete this.peer;
       this.room = null;
       this.peer = null;
-      if( this.sock){
+      if (this.sock) {
         this.sock.close();
       }
       return this;

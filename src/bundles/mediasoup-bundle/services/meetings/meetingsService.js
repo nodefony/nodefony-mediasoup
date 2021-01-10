@@ -110,6 +110,7 @@ class Meetings extends nodefony.Service {
         peer.send(room, "join", {
           peers: peerInfos
         });
+        this.fire("joinPeer", room, peerInfos);
         const joinedPeers = [
 					...room.getJoinedPeers(),
 					...room.broadcasters.values()

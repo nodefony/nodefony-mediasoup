@@ -1,83 +1,30 @@
 <template>
 <v-window class="nodefony--background">
 
-  <v-row v-if="room" justify="center" align="center" class="mt-10">
-    <div class="text-h2 teal--text text--lighten-3"> Meetings {{room.name}}</div>
-  </v-row>
+  <v-container>
 
-  <v-row v-if="room" justify="center" align="center" class="mt-10">
-    <div class="text-h5 teal--text text--lighten-1"> {{room.description}}</div>
-  </v-row>
-
-  <v-container v-if="waiting" fluid class="mt-15">
-    <v-row justify="center" align="center" class="mt-10">
-      <div v-if="progress" class="text-h4 blue-grey--text text--lighten-1"> {{progress}}</div>
-    </v-row>
-    <v-row justify="center" align="center" class="mt-10">
-      <div style="min-height: 4px; width:100%">
-        <v-progress-linear :active="waiting" :indeterminate="true" :query="true"></v-progress-linear>
-      </div>
-    </v-row>
-    <v-row justify="center" align="center" class="mt-10">
-      <v-btn small :loading="loading" :disabled="loading" color="blue-grey" class="ma-2 white--text" @click="quit">
-        Stop
-        <v-icon right dark>
-          mdi-home
-        </v-icon>
-      </v-btn>
+    <v-row v-if="room" justify="center" align="center" class="mt-10">
+      <div class="text-h2 teal--text text--lighten-3"> Meetings {{room.name}}</div>
     </v-row>
 
-    <div v-if="administrators">
-      <v-row class="spacer mt-10" no-gutters>
-        <v-col cols="12" sm="12">
-          <v-simple-table dense fixed-header dark height="200px">
-            <template v-slot:default>
-              <thead>
-                <tr>
-                  <th class="text-left">
-                    Room Managers
-                  </th>
-                  <th class="text-left">
-                    Name
-                  </th>
-                  <th class="text-left">
-                    Surname
-                  </th>
-                  <th class="text-left">
-                    Email
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="administrator in administrators" :key="administrator.username">
-                  <td>{{ administrator.username }}</td>
-                  <td>{{ administrator.name }}</td>
-                  <td>{{ administrator.surname }}</td>
-                  <td>{{ administrator.email }}</td>
-                </tr>
-              </tbody>
-            </template>
-          </v-simple-table>
+    <v-row v-if="room" justify="center" align="center" class="mt-10">
+      <div class="text-h5 teal--text text--lighten-1"> {{room.description}}</div>
+    </v-row>
 
-        </v-col>
-      </v-row>
-    </div>
+    <v-row justify="center" align="center" class="mt-15" style="height:50px">
+      <div v-show="progress" class="text-h4 blue-grey--text text--lighten-1"> {{progress}}</div>
+    </v-row>
   </v-container>
 
-
-  <v-container v-if="room && !waiting" fluid>
+  <v-container v-if="room && !waiting">
 
     <v-row v-if="room" justify="center" align="center" class="mt-15">
-      <v-col cols="12" sm="6">
-        <v-text-field :disabled="usernamedisabled" :rules="[rules.required]" class="teal--text text--lighten-3" type="text" dense dark v-model="username" :label="$t('users.user')" outlined :hint="`${username} access`"></v-text-field>
-      </v-col>
+      <v-text-field style="min-width:200px ;max-width:350px" :disabled="usernamedisabled" :rules="[rules.required]" class="teal--text text--lighten-3" type="text" dense dark v-model="username" :label="$t('users.user')" outlined :hint="`${username} access`"></v-text-field>
     </v-row>
 
     <v-row v-if="room.secure" justify="center" align="center" class="mt-5">
-      <v-col cols="12" sm="6">
-        <v-text-field min-width="200px" :rules="[rules.required, rules.min]" class="teal--text text--lighten-3" :append-icon="show ? 'mdi-eye' : 'mdi-eye-off'" :type="show ? 'text' : 'password'" dense dark v-model="password" label="Enter Room password"
-          outlined clearable :hint="`The room ${room.name} has restricted access`" @click:append="show = !show"></v-text-field>
-      </v-col>
+      <v-text-field style="min-width:200px ;max-width:350px" :rules="[rules.required, rules.min]" class="teal--text text--lighten-3" :append-icon="show ? 'mdi-eye' : 'mdi-eye-off'" :type="show ? 'text' : 'password'" dense dark v-model="password"
+        label="Enter Room password" outlined clearable :hint="`The room ${room.name} has restricted access`" @click:append="show = !show"></v-text-field>
     </v-row>
 
     <v-row justify="center" align="center" :class="room.secure ? 'mt-5' :'mt-15'">
@@ -89,6 +36,96 @@
       </v-btn>
     </v-row>
   </v-container>
+
+  <v-container v-if="waiting" class="mt-5">
+    <v-row justify="center" align="center" class="mt-10">
+      <div style="min-height: 4px ;max-width:500px;width:100%">
+        <v-progress-linear :active="waiting" :indeterminate="true" :query="true"></v-progress-linear>
+      </div>
+    </v-row>
+    <v-row justify="center" align="center" class="mt-10">
+      <v-btn small :loading="loading" :disabled="loading" color="blue-grey" class="ma-2 white--text" @click="quit">
+        Stop
+        <v-icon right dark>
+          mdi-home
+        </v-icon>
+      </v-btn>
+    </v-row>
+  </v-container>
+
+  <v-container v-if="waiting" fluid width="100%">
+    <v-row class=" mt-10" justify="space-around">
+      <v-col v-if="administrators" cols="auto" class="ml-5">
+        <v-simple-table dense fixed-header dark height="200px">
+          <template v-slot:top>
+            <v-icon class="mx-5 my-3">mdi-security</v-icon> Room Managers
+          </template>
+          <template v-slot:default>
+            <thead>
+              <tr>
+                <th class="text-left">
+                  Room Managers
+                </th>
+                <th class="text-left">
+                  Name
+                </th>
+                <th class="text-left">
+                  Surname
+                </th>
+                <th class="text-left">
+                  Email
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="administrator in administrators" :key="administrator.username">
+                <td>{{ administrator.username }}</td>
+                <td>{{ administrator.name }}</td>
+                <td>{{ administrator.surname }}</td>
+                <td>{{ administrator.email }}</td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
+      </v-col>
+      <v-col v-if="peers" cols="auto">
+        <v-simple-table dense fixed-header dark height="200px">
+          <template v-slot:top>
+            <v-icon class="mx-5 my-3">mdi-account</v-icon> Room Participants
+          </template>
+          <template v-slot:default>
+            <thead>
+              <tr>
+                <th class="text-left">
+                  Participants
+                </th>
+                <th class="text-left">
+                  Name
+                </th>
+                <th class="text-left">
+                  Surname
+                </th>
+                <th class="text-left">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="peer in peers" :key="peer.username">
+                <td>{{ peer.id }}</td>
+                <td>{{ peer.status }}</td>
+                <td>{{ peer.name }}</td>
+                <td>{{ peer.displayName }}</td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
+
+      </v-col>
+    </v-row>
+  </v-container>
+
+
 
 </v-window>
 </template>
@@ -112,7 +149,9 @@ export default {
     message: null,
     progress: null,
     room: null,
+    socket: null,
     administrators: null,
+    peers: null,
     password: "",
     username: "",
     usernamedisabled: true,
@@ -152,7 +191,10 @@ export default {
       });
   },
   destroyed() {
-    //console.log("destroyed", this.room.name)
+    this.log(`destroy home room component `, "DEBUG");
+    if (this.socket) {
+      this.socket.close("1000");
+    }
   },
   watch: {
     message(message) {
@@ -188,6 +230,7 @@ export default {
         room: this.room.name
       }
       this.loading = true;
+      this.progress = this.log(`Try Connection`).payload;
       return this.$mediasoup.api.post(`access/room/${this.room.name}`, {
           body: JSON.stringify(body),
           headers: {
@@ -198,7 +241,6 @@ export default {
           this.password = "";
           this.loading = false;
           if (this.room.waitingconnect) {
-            this.progress = this.log(`Try Connection`);
             return this.connectWaiting();
           } else {
             this.$emit("connect", response);
@@ -207,6 +249,7 @@ export default {
         })
         .catch(e => {
           this.loading = false;
+          this.progress = null;
           if (e.response) {
             // log error
             this.message = this.log(e.response.message, "ERROR")
@@ -219,27 +262,41 @@ export default {
     connectWaiting() {
       return this.$mediasoup.waiting(this.roomid, this.username)
         .then((sock) => {
-          this.sock = sock;
-          this.sock.onclose = (event) => {
+          this.socket = sock;
+          this.$mediasoup.on("waitingMessage", (message) => {
+            let pdu = this.log(message.message, "DEBUG");
+            this.progress = message.message;
+            this.message = pdu;
+            if (message.room && message.room.users) {
+              this.administrators = message.room.users;
+            }
+            switch (message.status) {
+              case 'wait':
+                console.log(message);
+                if (message.peers) {
+                  this.peers = message.peers;
+                }
+                break;
+              case 'authorised':
+                this.$emit("connect", message);
+                this.quit();
+                break;
+            }
+            //let pdu = this.log(`Waiting for Room Manager`);
+            //this.progress = pdu.payload;
+            //this.message = pdu;
+          });
+          this.$mediasoup.once("waitingClose", (event) => {
             if (event.reason) {
               let pdu = this.log(event.reason);
               this.progress = event.reason;
               this.message = pdu;
             }
             this.waiting = false;
-          }
-          this.$mediasoup.on("waitingMessage", (response) => {
-            let pdu = this.log(response, "DEBUG");
-            this.progress = response.message;
-            console.log(response)
-            if (response.room && response.room.users) {
-              this.administrators = response.room.users;
-            }
+            this.$mediasoup.removeAllListeners("waitingMessage");
           });
+
           this.waiting = true;
-          let pdu = this.log(`Waiting for Room Manager`);
-          this.progress = pdu.payload;
-          this.message = pdu;
           return sock;
         })
         .catch((e) => {
@@ -248,12 +305,14 @@ export default {
           let pdu = this.log(`Room ${this.room.name} can't be join !!!!`);
           this.message = pdu;
           this.progress = pdu.payload;
+
         })
     },
     quit() {
+      this.progress = null;
       try {
-        if (this.sock) {
-          this.sock.close();
+        if (this.socket) {
+          this.socket.close();
         }
       } catch (e) {
         this.log(e, "ERROR");
@@ -273,9 +332,9 @@ export default {
     position: relative;
     height: 100vh;
     width: 100%;
-    display: flex;
+    /*display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: center;*/
     background-image: url("../../assets/chateau-if.jpg");
     background-size: cover;
     overflow: hidden;

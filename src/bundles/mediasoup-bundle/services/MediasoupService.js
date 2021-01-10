@@ -35,55 +35,116 @@ module.exports = class Mediasoup extends nodefony.Service {
 
   // websocket waiting
   async handShakeConnection(query, context) {
-    if (query.roomId ) {
-      let peer = null ;
-      let room = null ;
+    if (query.roomId) {
+      let peer = null;
+      let room = null;
       let mdroom = null;
-      let message =null;
+      let message = null;
       let info = `Waiting connection :
       [roomId:${query.roomId}, address:${context.remoteAddress}, origin:${context.origin}]`;
       this.log(info);
-      try{
+      let status = "wait";
+      try {
+        // get mediasoup room
         mdroom = await this.getOrCreateRoom(query.roomId);
+        // events room
+        const close = () => {
+          setTimeout(() => {
+            context.close("1008", "Room Close try reconnect");
+          }, 1000);
+        }
+        mdroom.once("close", close);
+
+        const newPeer = (peer) => {
+          const tosend = {
+            peers: mdroom.getPeers(),
+            room: room,
+            peerid: query.peerId,
+            status: status,
+            message: "peer joined"
+          };
+          return context.send(JSON.stringify(tosend));
+        };
+        mdroom.on("join", newPeer);
+
+        const peerUnjoin =(peer)=>{
+          const tosend = {
+            peers: mdroom.getPeers(),
+            room: room,
+            peerid: query.peerId,
+            status: status,
+            message: "peer unJoined"
+          };
+          return context.send(JSON.stringify(tosend));
+        }
+        mdroom.on("peerUnjoin", peerUnjoin);
+        // peer
         peer = await mdroom.createPeer(query.peerId, context);
         peer.status = "waiting";
-        context.once('onClose', ()=>{
+        // socket
+        context.once('onClose', () => {
           //clean mediasoup events
-          if(peer){
+          if (peer) {
             peer.status = "disconnected";
           }
-        })
-        // check administrator
+          mdroom.removeListener("join", newPeer);
+          mdroom.removeListener("close", close);
+          mdroom.removeListener("peerUnjoin", peerUnjoin);
+        });
+
+        // get administrators
         room = await this.roomsService.getUserRoom(query.roomId);
-        if( room.users.length === 0){
-          setTimeout(()=>{
-            context.close("1008", "Room managers not found");
-          },2000);
-        }
         message = `Waiting Authorisation`;
+
         let tosend = {
           query,
           method: "handshakeConnection",
+          peers: mdroom.getPeers(),
           room: room,
           peerid: query.peerId,
-          message:message
+          peer: null,
+          admin: null,
+          message: message
         };
+        if (room.users.length === 0) {
+          setTimeout(() => {
+            context.close("1008", "Room managers not found");
+          }, 2000);
+          return;
+        } else {
+          // is administrator
+          let filter = room.users.filter((user) => {
+            if (user.username === query.peerId) {
+              return user
+            }
+          });
+          if (filter.length) {
+            let admin = filter[0];
+            status = "authorised";
+            tosend.admin = admin;
+            tosend.message = `${admin.username} authorised`;
+            tosend.status = "authorised";
+          } else {
+            status = "wait"
+            tosend.status = "wait";
+          }
+        }
         return context.send(JSON.stringify(tosend));
-      }catch(e){
-        if(peer){
+      } catch (e) {
+        if (peer) {
           peer.status = "disconnected";
         }
         this.log(e, "ERROR")
         context.close("1008", "Room can't be create");
         throw e;
       }
-    }else {
+    } else {
       throw new nodefony.Error("Connection request without roomId", 5006);
     }
   }
 
   async handleConnection(query, context) {
-
+    // stop connect
   }
 
   // websocket connect

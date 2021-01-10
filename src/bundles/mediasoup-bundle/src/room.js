@@ -95,6 +95,7 @@ class Room extends nodefony.Service {
         await this.close();
       }
       this.deletePeer(peerid);
+      this.fire("peerUnjoin", peer);
     });
     this.setPeer(peerid, peer);
     return peer;
@@ -114,6 +115,19 @@ class Room extends nodefony.Service {
 
   deletePeer(peerid) {
     this.peers.delete(peerid);
+  }
+
+  getPeers(){
+    let peers = [];
+    for (const peer of this.peers) {
+      peers.push({
+        id: peer[1].id,
+        status: peer[1].status,
+        joined: peer[1].joined,
+        displayName: peer[1].displayName,
+      });
+    }
+    return peers;
   }
 
   hasBroadcaster(peerid) {
@@ -200,6 +214,7 @@ class Room extends nodefony.Service {
     // Mark the new Peer as joined.
     peer.joined = true;
     peer.status = "joined";
+    this.fire("join", peer);
     const peerInfos = joinedPeers
       .filter((joinedPeer) => joinedPeer.id !== peer.id)
       .map((joinedPeer) => ({
