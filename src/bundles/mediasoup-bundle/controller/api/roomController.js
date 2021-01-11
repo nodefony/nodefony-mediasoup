@@ -152,6 +152,36 @@ class apiRomController extends nodefony.Controller {
   }
 
   /**
+   *  API POST
+   *    @Route ("/room/{name}",
+   *      name="route-room-post")
+   *    @Method ({"POST"})
+   */
+  async postRoomAction(name) {
+    this.checkAuthorisation();
+    let value = {
+      name: this.query.name || null,
+      description: this.query.description,
+      secure: this.query.secure,
+      access: this.query.access,
+      password: this.query.password
+    };
+
+    return this.roomsService.create(value)
+      .then(async (room) => {
+        const message = `Save Room ${this.query.name} OK`;
+        this.log(message, "INFO");
+        const newRoom = await this.getRoom(this.query.name);
+        return this.api.render({
+          query: this.query,
+          room: newRoom
+        });
+      }).catch(e =>{
+        this.log(e, "ERROR");
+      })
+  }
+
+  /**
    *  API
    *    @Route ("/access/room/{name}",
    *      name="route-rooms-access")

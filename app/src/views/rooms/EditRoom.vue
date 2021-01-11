@@ -5,7 +5,7 @@
       <v-icon class="mr-5">mdi-home</v-icon>
       <v-toolbar-title>
         {{ $t('rooms.room') }} {{room ? room.name : ""}}
-        <v-btn class="ml-10" small @click="editing=!editing;tab =0" color="teal">
+        <v-btn v-if="!creating" class="ml-10" small @click="editing=!editing;tab =0" color="teal">
           <v-icon small left>mdi-pencil</v-icon>
           Edit
         </v-btn>
@@ -23,7 +23,7 @@
     <v-tabs-items v-model="tab">
       <v-tab-item>
         <v-card flat tile>
-          <v-container v-if="!editing">
+          <v-container fluid v-if="!editing && !creating">
             <v-list>
               <v-list-item>
                 <v-list-item-content>
@@ -58,7 +58,7 @@
               </v-list-item>
             </v-list>
           </v-container>
-          <v-container fluid v-if="editing">
+          <v-container fluid v-if="editing || creating">
             <v-card flat tile>
               <form autocomplete="on">
                 <v-row>
@@ -136,12 +136,15 @@ export default {
     room: {
       type: Object,
       default: null
+    },
+    creating: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
     tab: null,
     editing: false,
-    creating: false,
     showPassword: false,
     rules: {
       min: v => !v || v.length >= 8 || 'Min 8 characters',
@@ -153,7 +156,7 @@ export default {
   }),
   async mounted() {
     if (this.room) {
-      console.log("mounted", this.room)
+      console.log("mounted", this.room);
     }
     this.formData = { ...this.room, ...this.formData };
   },
@@ -208,7 +211,6 @@ export default {
           }
         })
         .then((response) => {
-          this.creating = false;
           Object.assign(this.room, data.result.room);
           this.loading = false;
           if (response.message) {
@@ -217,9 +219,10 @@ export default {
             this.message = this.log(`create ${this.room.name}`, "INFO");
           }
           this.$router.replace({
-            name: 'Rooms',
+            name: 'Room',
             params: {
-              roomid: this.room.name
+              room: this.room,
+              creating: false
             },
             force: true
           });
