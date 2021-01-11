@@ -100,13 +100,10 @@
                   Participants
                 </th>
                 <th class="text-left">
-                  Name
-                </th>
-                <th class="text-left">
-                  Surname
-                </th>
-                <th class="text-left">
                   Status
+                </th>
+                <th class="text-left">
+                  display name
                 </th>
               </tr>
             </thead>
@@ -114,7 +111,6 @@
               <tr v-for="peer in peers" :key="peer.username">
                 <td>{{ peer.id }}</td>
                 <td>{{ peer.status }}</td>
-                <td>{{ peer.name }}</td>
                 <td>{{ peer.displayName }}</td>
               </tr>
             </tbody>
@@ -158,7 +154,12 @@ export default {
     show: false,
     rules: {
       required: value => !!value || 'Required.',
-      min: v => v.length >= 8 || 'Min 8 characters'
+      min: (v) => {
+        if (v) {
+          return v.length >= 8 || 'Min 8 characters'
+        }
+        return false
+      }
     }
   }),
   async mounted() {
@@ -270,15 +271,20 @@ export default {
             if (message.room && message.room.users) {
               this.administrators = message.room.users;
             }
+            console.log(message)
             switch (message.status) {
               case 'wait':
-                console.log(message);
                 if (message.peers) {
                   this.peers = message.peers;
                 }
                 break;
               case 'authorised':
+                this.progress = message.message;
                 this.$emit("connect", message);
+                this.quit();
+                break;
+              case 'unauthorised':
+                this.progress = message.message;
                 this.quit();
                 break;
             }

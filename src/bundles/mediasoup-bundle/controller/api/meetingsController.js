@@ -23,8 +23,15 @@ class meetingsController extends nodefony.Controller {
       version: mediasoup.version,
       description: "Mediasoup Mettings Api",
     }, this.context);
-
   }
+
+  checkAuthorisation(username, room) {
+    let granted = this.is_granted("ROLE_ADMIN");
+    if (!granted) {
+      throw new nodefony.authorizationError("Unauthorized", 401, this.context);
+    }
+  }
+
   getRoom(roomId) {
     return this.meetingsService.getRoom(roomId);
   }
@@ -111,13 +118,16 @@ class meetingsController extends nodefony.Controller {
    */
   async meetingAction(roomId) {
     const room = this.getRoom(roomId);
-    return this.api.render({
-      roomid: roomId,
-      room: await this.getRoomsInfos(room),
-      peers:await this.getPeersInfo(room)
-    });
-  }
+    if( room){
+      return this.api.render({
+        roomid: roomId,
+        room: await this.getRoomsInfos(room),
+        peers:await this.getPeersInfo(room)
+      });
+    }
+    throw new Error(`Room ${roomId} not found`)
 
+  }
 
   /**
    *
@@ -133,6 +143,54 @@ class meetingsController extends nodefony.Controller {
     return this.api.render({
       room: roomId,
       status: "deleted"
+    });
+  }
+
+  /**
+   *
+   *    @Route ("/{roomId}/{peerid}/authorise",
+   *      name="route-mediasoup-meetings-peer-authorise")
+   *    @Method ({"PUT"})
+   */
+  async authoriseAction(roomId, peerid) {
+    const room = this.getRoom(roomId);
+    if (!room) {
+      return this.api.renderError(new Error(`Room ${roomId} not found`), 404);
+    }
+    const peer = room.getPeer(peerid);
+    if (! peer){
+      return this.api.renderError(new Error(`Room ${peerid} not found`), 404);
+    }
+    let status = room.authorisePeer(peer);
+    return this.api.render({
+      room: roomId,
+      peer: peerid,
+      status: status,
+      authorised:true
+    });
+  }
+
+  /**
+   *
+   *    @Route ("/{roomId}/{peerid}/unauthorise",
+   *      name="route-mediasoup-meetings-peer-unauthorise")
+   *    @Method ({"PUT"})
+   */
+  async unauthoriseAction(roomId, peerid) {
+    const room = this.getRoom(roomId);
+    if (!room) {
+      return this.api.renderError(new Error(`Room ${roomId} not found`), 404);
+    }
+    const peer = room.getPeer(peerid);
+    if (! peer){
+      return this.api.renderError(new Error(`Room ${peerid} not found`), 404);
+    }
+    const status = room.unauthorisePeer(peer);
+    return this.api.render({
+      room: roomId,
+      peer: peerid,
+      status: status,
+      authorised:false
     });
   }
 

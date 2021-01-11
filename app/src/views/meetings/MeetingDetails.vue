@@ -12,11 +12,11 @@
       <template v-slot:extension>
         <v-tabs v-model="tab" align-with-title>
           <v-tabs-slider color="yellow"></v-tabs-slider>
-          <v-tab ref="room">
-            {{ $t(`rooms.room`) }}
-          </v-tab>
           <v-tab ref="peers">
             {{ $t(`rooms.peers`) }}
+          </v-tab>
+          <v-tab ref="room">
+            {{ $t(`rooms.room`) }}
           </v-tab>
           <v-tab ref="worker">
             Worker
@@ -35,10 +35,33 @@
 
     </v-toolbar>
 
+
     <v-tabs-items v-model="tab">
+
+      <v-tab-item class="mx-5 my-3">
+        <v-card flat>
+          <v-data-table dense fixed-header height="520" :headers="peersHeaders" :items="peers" :items-per-page="15" class="elevation-2" :headers-length="30" :search="search" show-expand :single-expand="true">
+            <template v-slot:item.id="{ item }">
+              <v-chip x-small dark @click="$router.push({ name: 'User', params:{username:item.id}})">
+                {{ item.id }}
+              </v-chip>
+            </template>
+            <template v-slot:expanded-item="{ headers, item }">
+              <td :colspan="headers.length">
+                More info about {{ item.id }}
+              </td>
+            </template>
+            <template v-slot:item.actions="{ item }">
+              <v-btn dark v-if="item.status == 'waiting'" x-small @click="authorise(item)">Authorised</v-btn>
+            </template>
+            <template v-slot:no-data>
+            </template>
+          </v-data-table>
+        </v-card>
+      </v-tab-item>
+
       <v-tab-item>
         <v-card flat>
-
           <v-list two-line>
             <v-list-item>
               <v-list-item-content>
@@ -50,25 +73,6 @@
         </v-card>
       </v-tab-item>
 
-      <v-tab-item class="mx-5 my-3">
-        <v-card flat>
-          <v-data-table dense fixed-header height="520" :headers="peersHeaders" :items="peers" :items-per-page="15" class="elevation-2" :headers-length="30" :search="search" show-expand :single-expand="true">
-            <template v-slot:item.id="{ item }">
-              <v-chip x-small :key="item" dark @click="$router.push({ name: 'User', params:{username:item.id}})">
-                {{ item.id }}
-              </v-chip>
-            </template>
-            <template v-slot:expanded-item="{ headers, item }">
-              <td :colspan="headers.length">
-                More info about {{ item.id }}
-              </td>
-            </template>
-            <template v-slot:no-data>
-            </template>
-          </v-data-table>
-        </v-card>
-      </v-tab-item>
-
       <v-tab-item>
         <v-list>
           <v-list-item>
@@ -77,7 +81,6 @@
               <v-list-item-subtitle v-for="(item, index) in currentRoom.status.worker.usage" :key="index">
                 {{workerUsage[index]}} ( {{index}} ) : {{item }}
               </v-list-item-subtitle>
-
             </v-list-item-content>
           </v-list-item>
         </v-list>
@@ -214,6 +217,11 @@ export default {
         align: 'start',
         sortable: true,
         value: 'dataConsumers'
+      }, {
+        text: "",
+        align: 'center',
+        sortable: true,
+        value: "actions"
       }];
     }
   },
@@ -234,6 +242,17 @@ export default {
     closeRoom(room) {
       this.loading = true;
       return this.$mediasoup.request(`meetings/${room.id}`, "DELETE")
+        .then((data) => {
+          this.loading = false;
+          return data.result;
+        })
+        .catch(async (e) => {
+          this.loading = false;
+          this.message = this.log(e.message, "ERROR");
+        });
+    },
+    authorise(peer) {
+      return this.$mediasoup.request(`meetings/${this.currentRoom.id}/${peer.id}/authorise`, "PUT")
         .then((data) => {
           this.loading = false;
           return data.result;

@@ -87,7 +87,7 @@ export default {
         sortable: true,
         value: 'id'
       }, {
-        text: this.$t("meetings.status"),
+        text: "Closed",
         value: 'closed'
       }, {
         text: this.$t("rooms.peers"),

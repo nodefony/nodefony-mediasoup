@@ -33,7 +33,7 @@ module.exports = class Mediasoup extends nodefony.Service {
     }
   }
 
-  // websocket waiting
+  // websocket waiting home
   async handShakeConnection(query, context) {
     if (query.roomId) {
       let peer = null;
@@ -45,9 +45,26 @@ module.exports = class Mediasoup extends nodefony.Service {
       this.log(info);
       let status = "wait";
       try {
+        if (!query.roomId) {
+          context.close("1006", "closed no roomId ");
+        }
+        if (!query.peerId) {
+          context.close("1006", "closed no peerId ");
+        }
         // get mediasoup room
         mdroom = await this.getOrCreateRoom(query.roomId);
+        if (!mdroom) {
+          context.close("1006", "closed can't create room");
+        }
+
+        // peer
+        peer = await mdroom.createPeer(query.peerId, context);
+        peer.status = "waiting";
+        if (!peer) {
+          ontext.close("1006", "closed can't create peer");
+        }
         // events room
+        // close
         const close = () => {
           setTimeout(() => {
             context.close("1008", "Room Close try reconnect");
@@ -55,6 +72,7 @@ module.exports = class Mediasoup extends nodefony.Service {
         }
         mdroom.once("close", close);
 
+        // event peer join
         const newPeer = (peer) => {
           const tosend = {
             peers: mdroom.getPeers(),
@@ -67,7 +85,33 @@ module.exports = class Mediasoup extends nodefony.Service {
         };
         mdroom.on("join", newPeer);
 
-        const peerUnjoin =(peer)=>{
+        // authorise
+        const authorise = (peer) =>{
+          console.log( peer.id , query.peerId)
+          if (peer.id === query.peerId){
+            const tosend = {
+              room: room,
+              peerid: query.peerId,
+              status: peer.status,
+              message: "peer accepted"
+            };
+            return context.send(JSON.stringify(tosend));
+          }
+        }
+        mdroom.on("authorise", authorise);
+        // unauthorise
+        const unauthorise = (peer) =>{
+          const tosend = {
+            room: room,
+            peerid: query.peerId,
+            status: peer.status,
+            message: "peer unaccepted"
+          };
+          return context.send(JSON.stringify(tosend));
+        }
+        mdroom.on("unauthorise", unauthorise);
+
+        const peerUnjoin = (peer) => {
           const tosend = {
             peers: mdroom.getPeers(),
             room: room,
@@ -78,9 +122,7 @@ module.exports = class Mediasoup extends nodefony.Service {
           return context.send(JSON.stringify(tosend));
         }
         mdroom.on("peerUnjoin", peerUnjoin);
-        // peer
-        peer = await mdroom.createPeer(query.peerId, context);
-        peer.status = "waiting";
+
         // socket
         context.once('onClose', () => {
           //clean mediasoup events
@@ -90,6 +132,8 @@ module.exports = class Mediasoup extends nodefony.Service {
           mdroom.removeListener("join", newPeer);
           mdroom.removeListener("close", close);
           mdroom.removeListener("peerUnjoin", peerUnjoin);
+          mdroom.removeListener("unauthorise", unauthorise);
+          mdroom.removeListener("authorise", authorise);
         });
 
         // get administrators

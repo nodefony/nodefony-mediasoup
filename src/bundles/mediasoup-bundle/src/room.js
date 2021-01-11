@@ -188,6 +188,21 @@ class Room extends nodefony.Service {
     return this.fire("close", this);
   }
 
+  authorisePeer(peer){
+    if( peer.status === 'waiting'){
+      peer.status = "authorised";
+      this.fire("authorise", peer, this);
+      return peer.status;
+    }
+  }
+  unauthorisePeer(peer){
+    if( peer.status === 'waiting'){
+      peer.status = "unauthorised";
+      this.fire("unauthorise", peer, this);
+      return peer.status;
+    }
+  }
+
   async join(peer, message) {
     if (peer.joined) {
       throw new Error('Peer already joined');

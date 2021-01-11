@@ -464,8 +464,6 @@ export default {
           params: {
             roomid: this.roomid
           }
-        }).then(() => {
-
         })
         .catch(() => {})
     },
