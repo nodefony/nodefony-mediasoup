@@ -102,6 +102,31 @@ class Rooms extends nodefony.Service {
       });
   }
 
+  async create(query) {
+    let transaction = null;
+    try {
+      transaction = await this.orm.startTransaction("room");
+      return this.entity.create(query, {
+          transaction: transaction
+        })
+        .then((el) => {
+          transaction.commit();
+          let room = el.get({
+            plain: true
+          });
+          return room;
+        }).catch(e => {
+          transaction.rollback();
+          throw this.sanitizeSequelizeError(e);
+        });
+    } catch (e) {
+      if (transaction) {
+        transaction.rollback();
+      }
+      throw this.sanitizeSequelizeError(e);
+    }
+  }
+
   async update(room, value) {
     let transaction = null;
     try {
