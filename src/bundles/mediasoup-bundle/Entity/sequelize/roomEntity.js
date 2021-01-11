@@ -108,7 +108,6 @@ class roomEntity extends nodefony.Entity {
 
   registerModel(db) {
     class MyModel extends Model {}
-    let self = this;
     MyModel.init(this.getSchema(), {
       sequelize: db,
       modelName: this.name,
@@ -129,22 +128,17 @@ class roomEntity extends nodefony.Entity {
             room.sticky_cookie = `sticky-room-${room.name}`;
           }
         },
-        beforeValidate(room, options) {
-          //return self.updateRoomBeforeSave(room);
-        },
         beforeBulkUpdate: (roomUpate) => {
-          if ("password" in roomUpate.attributes) {
-            if (roomUpate.secure) {
-              this.validPassword(roomUpate.attributes.password);
-              return this.encode(roomUpate.attributes.password)
-                .then(hash => {
-                  roomUpate.attributes.password = hash;
-                })
-                .catch(err => {
-                  this.logger(err, "ERROR");
-                  throw err;
-                });
-            }
+          if (("password" in roomUpate.attributes) && roomUpate.attributes.secure) {
+            this.validPassword(roomUpate.attributes.password);
+            return this.encode(roomUpate.attributes.password)
+              .then(hash => {
+                roomUpate.attributes.password = hash;
+              })
+              .catch(err => {
+                this.logger(err, "ERROR");
+                throw err;
+              });
           }
         }
       },
@@ -159,7 +153,7 @@ class roomEntity extends nodefony.Entity {
 
   logger(pci /*, sequelize*/ ) {
     const msgid = "Entity " + this.name;
-    return super.log(pci, "DEBUG", msgid);
+    return super.logger(pci, "DEBUG", msgid);
   }
 }
 
