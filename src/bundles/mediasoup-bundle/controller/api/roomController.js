@@ -121,13 +121,23 @@ class apiRomController extends nodefony.Controller {
    *      name="route-room-put")
    *    @Method ({"PUT"})
    */
-   //// TODO: checkAuthorisation
   async putRoomAction(name) {
+    this.checkAuthorisation();
     const room = await this.roomsService.findOne(name);
-    if (!this.query.password) {
-      this.query.password_pure = room.password;
+    let value = {
+      name: this.query.name || null,
+      type: this.query.type,
+      description: this.query.description,
+      secure: this.query.secure,
+      access: this.query.access,
+      waitingconnect: this.query.waitingconnect,
+      sticky_cookie: this.query.sticky_cookie
+    };
+
+    if (this.query.password) {
+      value.password = this.query.password;
     }
-    return this.roomsService.update(room, this.query)
+    return this.roomsService.update(room, value)
       .then(async (room) => {
         const message = `Update Room ${this.query.name} OK`;
         this.log(message, "INFO");
