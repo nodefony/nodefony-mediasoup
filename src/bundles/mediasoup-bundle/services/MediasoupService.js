@@ -87,7 +87,6 @@ module.exports = class Mediasoup extends nodefony.Service {
 
         // authorise
         const authorise = (peer) =>{
-          console.log( peer.id , query.peerId)
           if (peer.id === query.peerId){
             const tosend = {
               room: room,

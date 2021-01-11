@@ -194,7 +194,6 @@ class meetingsController extends nodefony.Controller {
     });
   }
 
-
 }
 
 module.exports = meetingsController;
