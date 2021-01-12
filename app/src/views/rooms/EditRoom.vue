@@ -9,13 +9,17 @@
           <v-icon small left>mdi-pencil</v-icon>
           Edit
         </v-btn>
+        <v-btn v-if='!creating' color="white--text accent-4" @click="deleteRoom(room.name)">
+          <v-icon small left>mdi-delete</v-icon>
+          Delete
+        </v-btn>
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <template v-slot:extension>
         <v-tabs v-model="tab" align-with-title v-on:change="editing=false">
           <v-tabs-slider color="yellow"></v-tabs-slider>
           <v-tab :disabled="false" ref="user" @click="editing=false">
-            {{ $t(`users.info`) }}
+            {{ $t(`rooms.info`) }}
           </v-tab>
         </v-tabs>
       </template>
@@ -152,13 +156,16 @@ export default {
     panel: [1, 0, 0],
     formData: {
       password: ""
-     }
+    }
   }),
   async mounted() {
     if (this.room) {
-      console.log("mounted", this.room);
+      this.room.access = this.room.access || "private";
+      this.room.secure = (typeof this.room.secure === "undefined" ? false : this.room.secure);
+      this.room.waitingconnect = (typeof this.room.waitingconnect === "undefined" ? false : this.room.waitingconnect);
+      this.formData = { ...this.room, ...this.formData };
+      console.log("mounted", this.formData);
     }
-    this.formData = { ...this.room, ...this.formData };
   },
   destroyed() {
     //console.log("destroyed", this.room.name)
@@ -172,9 +179,6 @@ export default {
   methods: {
     formatAccessLabel(label) {
       return label == 'private' ? 'Private' : 'Public';
-    },
-    async deleteRoom() {
-      console.log("remove")
     },
     saveRoom() {
       const form = this.formData;
@@ -201,6 +205,26 @@ export default {
           this.loading = false;
           this.message = this.log(e.message, "ERROR");
         })
+    },
+    deleteRoom(name) {
+      this.loading = true;
+      name = name || this.room.name;
+      return this.$mediasoup.request(`room/${name}`, "DELETE")
+        .then((response) => {
+          this.loading = false;
+          if (response.message) {
+            this.message = this.log(response.message, "INFO");
+          } else {
+            this.message = this.log(`Delete ${response.result.room.name} ok`, "INFO");
+          }
+          this.$emit("remove", response.result.room);
+          this.close();
+          return response.result.room;
+        })
+        .catch(async (e) => {
+          this.loading = false;
+          this.message = this.log(e.message, "ERROR");
+        });
     },
     async addRoom() {
       this.loading = true;
