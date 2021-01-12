@@ -153,23 +153,15 @@ class apiRomController extends nodefony.Controller {
 
   /**
    *  API POST
-   *    @Route ("/room/{name}",
+   *    @Route ("/rooms",
    *      name="route-room-post")
    *    @Method ({"POST"})
    */
-  async postRoomAction(name) {
+  async postRoomAction() {
     this.checkAuthorisation();
-    let value = {
-      name: this.query.name || null,
-      description: this.query.description,
-      secure: this.query.secure,
-      access: this.query.access,
-      password: this.query.password
-    };
-
-    return this.roomsService.create(value)
+    return this.roomsService.create(this.query)
       .then(async (room) => {
-        const message = `Save Room ${this.query.name} OK`;
+        const message = `Save Room ${this.query.name} : ${room} OK`;
         this.log(message, "INFO");
         const newRoom = await this.getRoom(this.query.name);
         return this.api.render({
@@ -179,6 +171,35 @@ class apiRomController extends nodefony.Controller {
       }).catch(e =>{
         this.log(e, "ERROR");
       })
+  }
+
+  /**
+   *  API DELETE
+   *    @Route ("/room/{name}",
+   *      name="route-room-delete")
+   *    @Method ({"DELETE"})
+   */
+  async deleteRoomAction(name) {
+    this.checkAuthorisation();
+    if (name) {
+      return this.roomsService.delete(name)
+        .then((result) => {
+          let message = `Delete Room ${result.name} OK`;
+          this.setFlashBag("info", message);
+          if (this.getRoom().name === name) {
+            this.session.invalidate();
+          }
+          return this.redirectToRoute("route-rooms");
+        }).catch(e => {
+          this.logger(e, "ERROR");
+          this.setFlashBag("error", e.message);
+          return this.redirectToRoute("route-rooms");
+        });
+    }
+    let error = new nodefony.Error(`Room ${name} not found`, this.context);
+    this.setFlashBag("error", error.message);
+    this.logger(error, "ERROR");
+    return this.redirectToRoute("route-rooms");
   }
 
   /**
