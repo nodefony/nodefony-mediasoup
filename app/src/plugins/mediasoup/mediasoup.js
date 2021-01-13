@@ -130,7 +130,7 @@ class Mediasoup extends nodefony.Service {
   }
 
   // websocket waiting
-  waiting(roomid = null, peerid = null) {
+  /*waiting(roomid = null, peerid = null) {
     return new Promise(async (resolve, reject) => {
       this.domain = await this.getWssServer();
       const url = `wss://${this.domain}:5152/mediasoup/waiting?roomId=${roomid}&peerId=${peerid}`;
@@ -144,7 +144,7 @@ class Mediasoup extends nodefony.Service {
         let message = null;
         try {
           message = JSON.parse(event.data);
-          this.fire("waitingMessage", message, this);
+          this.fire("waiting", message, this);
         } catch (e) {
           this.log(e, "ERROR");
           this.log(event.data, "ERROR");
@@ -156,33 +156,34 @@ class Mediasoup extends nodefony.Service {
         return reject(error);
       };
       this.sock.onclose = (event) => {
-        this.fire("waitingClose", event, this.sock);
+        this.fire("closeSock", event, this.sock);
         this.sock = null;
+        this.removeAllListeners("waiting");
         return;
       };
 
     });
-  }
-
-
+  }*/
 
   // websocket connect
   connect(roomid = null, peerid = null, options = {}) {
     return new Promise(async (resolve, reject) => {
       this.domain = await this.getWssServer();
       const url = `wss://${this.domain}:5152/mediasoup/ws?roomId=${roomid}&peerId=${peerid}`;
-      this.on("connect", (room, peer) => {
-        room.init(peer);
-      });
       this.sock = new WebSocket(url);
       this.sock.onopen = (event) => {
         this.log(`Mediasoup Websocket Connect peer ${peerid} room : ${roomid}`);
-        this.fire("openSock", event, this);
-        this.store.commit('setConnected', true);
+        try{
+          this.fire("openSock", event, this);
+          this.store.commit('setConnected', true);
+          return resolve(this.sock);
+        }catch(e){
+          return reject(e);
+        }
       };
       this.sock.onmessage = (event) => {
         let message = null;
-        let sendMessage = null;
+        //let sendMessage = null;
         this.store.commit("mediasoupActivity");
         try {
           message = JSON.parse(event.data);
@@ -191,27 +192,13 @@ class Mediasoup extends nodefony.Service {
           this.log(event.data, "ERROR");
           throw new Error(`Bad Json Message`);
         }
-        //this.log(message,"INFO", 'WebSocket message')
         switch (message.method) {
         case "notify":
           this.fire("notify", message, this);
           break;
-        case "handshake":
-          this.room = this.createRoom(message.roomid, options);
-          this.peer = this.createPeer(message.peerid, options);
-          //this.log(this.room, "DEBUG");
-          //this.log(this.peer, "DEBUG");
-          this.fire("connect", this.room, this.peer);
-          sendMessage = {
-            roomid: message.roomid,
-            peerid: message.peerid,
-            method: "getRouterRtpCapabilities"
-          };
-          this.sock.send(JSON.stringify(sendMessage));
-          return resolve({
-            room: this.room,
-            peer: this.peer
-          });
+        case "waiting":
+          this.fire("waiting", message, this);
+          break;
         case "getRouterRtpCapabilities":
           this.fire("routerRtpCapabilities", message, this);
           break;
@@ -250,8 +237,32 @@ class Mediasoup extends nodefony.Service {
         this.fire("closeSock", this);
         this.store.commit('setConnected', false);
         this.sock = null;
+        this.removeAllListeners();
         return this.leaveRoom();
       };
+    });
+  }
+
+  initializeRoom(roomid, peerid, options){
+    return new Promise((resolve, reject) => {
+      try{
+        this.room = this.createRoom(roomid, options);
+        this.peer = this.createPeer(peerid, options);
+        const sendMessage = {
+          method: "getRouterRtpCapabilities",
+          roomid: roomid,
+          peerid: peerid
+        };
+        this.sock.send(JSON.stringify(sendMessage));
+        this.room.init(this.peer);
+        return resolve({
+          room:this.room,
+          peer:this.peer,
+        });
+      }catch(e){
+        this.log(e, "ERROR");
+        return reject(e);
+      }
     });
   }
 
@@ -277,6 +288,7 @@ class Mediasoup extends nodefony.Service {
       this.room = null;
       this.peer = null;
       if (this.sock) {
+        this.log(`Close socket Mediasoup`);
         this.sock.close();
       }
       return this;

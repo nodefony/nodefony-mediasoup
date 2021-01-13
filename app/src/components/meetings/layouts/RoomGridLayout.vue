@@ -37,7 +37,7 @@
     <media-card-peer v-for="(remotePeer, index) in peers" max-width="300" max-height="300" class="ma-3 pa-0" :ref="remotePeer.id" :remote="remotePeer" :key="index" :name="remotePeer.id" spectrum :active="layout" />
 
 
-    <v-card v-for="n in 30" :elevation="12" width="300" height="200" max-height="200" max-width="300" :key="n" class="my-5 mx-5 pa-0" @click.native="tooglePeer(null, active, toggle, n)" style="margin:2px"></v-card>
+    <!--v-card v-for="n in 30" :elevation="12" width="300" height="200" max-height="200" max-width="300" :key="n" class="my-5 mx-5 pa-0" @click.native="tooglePeer(null, active, toggle, n)" style="margin:2px"></v-card-->
 
 
   </v-card>

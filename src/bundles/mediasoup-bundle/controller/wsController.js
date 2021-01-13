@@ -10,7 +10,6 @@ class wsController extends nodefony.Controller {
   constructor(container, context) {
     super(container, context);
     this.mediasoup = this.get("Mediasoup");
-    //this.meetingsService = this.get("Meetings");
   }
 
   /**

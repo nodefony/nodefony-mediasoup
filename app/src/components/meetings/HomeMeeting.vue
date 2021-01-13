@@ -14,6 +14,12 @@
     <v-row justify="center" align="center" class="mt-15" style="height:50px">
       <div v-show="progress" class="text-h4 blue-grey--text text--lighten-1"> {{progress}}</div>
     </v-row>
+
+    <v-row justify="center" align="center" class="mt-10">
+      <div style="min-height: 4px ;max-width:500px;width:100%">
+        <v-progress-linear :active="waiting" :indeterminate="true" :query="true"></v-progress-linear>
+      </div>
+    </v-row>
   </v-container>
 
   <v-container v-if="room && !waiting">
@@ -28,7 +34,7 @@
     </v-row>
 
     <v-row justify="center" align="center" :class="room.secure ? 'mt-5' :'mt-15'">
-      <v-btn small :loading="loading" :disabled="loading" color="blue-grey" class="ma-2 white--text" @click="join">
+      <v-btn small :loading="loading" :disabled="loading" color="blue-grey" class="ma-2 white--text" @click="connect">
         Connect
         <v-icon right dark>
           mdi-home
@@ -38,14 +44,10 @@
   </v-container>
 
   <v-container v-if="waiting" class="mt-5">
-    <v-row justify="center" align="center" class="mt-10">
-      <div style="min-height: 4px ;max-width:500px;width:100%">
-        <v-progress-linear :active="waiting" :indeterminate="true" :query="true"></v-progress-linear>
-      </div>
-    </v-row>
+
     <v-row justify="center" align="center" class="mt-10">
       <v-btn small :loading="loading" :disabled="loading" color="blue-grey" class="ma-2 white--text" @click="quit">
-        Stop
+        Quit
         <v-icon right dark>
           mdi-home
         </v-icon>
@@ -53,7 +55,7 @@
     </v-row>
   </v-container>
 
-  <v-container v-if="waiting" fluid width="100%">
+  <v-container fluid width="100%">
     <v-row class=" mt-10" justify="space-around">
       <v-col v-if="administrators" cols="auto" class="ml-5">
         <v-simple-table dense fixed-header dark height="200px">
@@ -121,8 +123,6 @@
     </v-row>
   </v-container>
 
-
-
 </v-window>
 </template>
 
@@ -163,6 +163,7 @@ export default {
     }
   }),
   async mounted() {
+    this.loading = true;
     this.room = await this.getRoom(this.roomid)
       .then((room) => {
         this.loading = false;
@@ -193,13 +194,13 @@ export default {
   },
   destroyed() {
     this.log(`destroy home room component `, "DEBUG");
-    if (this.socket) {
-      this.socket.close("1000");
-    }
   },
   watch: {
     message(message) {
       this.notify(message);
+    },
+    getProfileUsername(value) {
+      this.username = value;
     }
   },
   computed: {
@@ -209,22 +210,23 @@ export default {
     ]),
   },
   methods: {
+    ...mapMutations([]),
     async getRoom(id) {
       try {
-        this.log("Get rooms", "DEBUG");
+        //this.log("Get room", "DEBUG");
         let res = await this.$mediasoup.api.http(`room/${id}`)
           .catch(e => {
             throw e;
           });
         let room = res.result;
-        this.log(room, "DEBUG");
+        //this.log(room, "DEBUG");
         return room;
       } catch (e) {
         this.log(e, "ERROR");
         throw e;
       }
     },
-    join() {
+    connect() {
       const body = {
         password: this.password,
         username: this.getProfileUsername,
@@ -241,12 +243,10 @@ export default {
         .then((response) => {
           this.password = "";
           this.loading = false;
-          if (this.room.waitingconnect) {
-            return this.connectWaiting();
-          } else {
-            this.$emit("connect", response);
-            return response;
+          if (response.result.access === "authorized") {
+            return this.connectMediasoup();
           }
+          throw new Error(`unauthorised`);
         })
         .catch(e => {
           this.loading = false;
@@ -260,61 +260,58 @@ export default {
 
         })
     },
-    connectWaiting() {
-      return this.$mediasoup.waiting(this.roomid, this.username)
-        .then((sock) => {
-          this.socket = sock;
-          this.$mediasoup.on("waitingMessage", (message) => {
-            let pdu = this.log(message.message, "DEBUG");
-            this.progress = message.message;
-            this.message = pdu;
-            if (message.room && message.room.users) {
-              this.administrators = message.room.users;
-            }
-            console.log(message)
-            switch (message.status) {
-              case 'wait':
+    connectMediasoup() {
+      return this.$mediasoup.leaveRoom()
+        .then(() => {
+          return this.$mediasoup.connect(this.roomid, this.username)
+            .then((sock) => {
+              this.socket = sock;
+              this.$mediasoup.on("waiting", (message) => {
+                let pdu = this.log(message.message, "DEBUG");
+                this.progress = message.message;
+                this.message = pdu;
+                if (message.room && message.room.users) {
+                  this.administrators = message.room.users;
+                }
                 if (message.peers) {
                   this.peers = message.peers;
                 }
-                break;
-              case 'authorised':
-                this.progress = message.message;
-                this.$emit("connect", message);
-                this.quit();
-                break;
-              case 'unauthorised':
-                this.progress = message.message;
-                this.quit();
-                break;
-            }
-            //let pdu = this.log(`Waiting for Room Manager`);
-            //this.progress = pdu.payload;
-            //this.message = pdu;
-          });
-          this.$mediasoup.once("waitingClose", (event) => {
-            if (event.reason) {
-              let pdu = this.log(event.reason);
-              this.progress = event.reason;
+                switch (message.status) {
+                  case 'wait':
+                    break;
+                  case 'authorised':
+                    this.progress = message.message;
+                    this.waiting = false;
+                    this.$emit("connect", message.status);
+                    break;
+                  case 'unauthorised':
+                    this.progress = message.message;
+                    this.quit();
+                    break;
+                }
+              });
+              this.$mediasoup.once("closeSock", (event) => {
+                if (event.reason) {
+                  let pdu = this.log(event.reason);
+                  this.progress = event.reason;
+                  this.message = pdu;
+                }
+                this.waiting = false;
+              });
+              this.waiting = true;
+              return sock;
+            })
+            .catch((e) => {
+              this.log(e, "ERROR");
+              this.waiting = false;
+              let pdu = this.log(`Room ${this.room.name} can't be connect !!!!`);
               this.message = pdu;
-            }
-            this.waiting = false;
-            this.$mediasoup.removeAllListeners("waitingMessage");
-          });
-
-          this.waiting = true;
-          return sock;
-        })
-        .catch((e) => {
-          this.log(e, "ERROR");
-          this.waiting = false;
-          let pdu = this.log(`Room ${this.room.name} can't be join !!!!`);
-          this.message = pdu;
-          this.progress = pdu.payload;
-
-        })
+              this.progress = pdu.payload;
+            });
+        });
     },
     quit() {
+      this.log("Quit Home meeting", "DEBUG");
       this.progress = null;
       try {
         if (this.socket) {

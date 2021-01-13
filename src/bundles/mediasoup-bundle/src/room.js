@@ -95,9 +95,10 @@ class Room extends nodefony.Service {
         await this.close();
       }
       this.deletePeer(peerid);
-      this.fire("peerUnjoin", peer);
+      this.fire("peerQuit", peer);
     });
     this.setPeer(peerid, peer);
+    this.fire("peerEnter", peer);
     return peer;
   }
 

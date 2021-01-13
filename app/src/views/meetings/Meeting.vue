@@ -1,14 +1,13 @@
 <template>
 <v-container fluid fill-height class="ma-0 pa-0">
 
-  <room-home-meeting v-if="home" :roomid="roomid" v-on:connect="joining= true;home=false" />
+  <room-home-meeting v-if="home" :roomid="roomid" v-on:connect="connect" />
 
   <room-join-meeting v-if="joining" :roomid="roomid" v-on:join="acceptConnect" v-on:close="closeDialogJoin" />
 
   <v-container v-show="joined" fluid fill-height class="pa-0 ma-0">
 
     <v-flex fill-height>
-
       <room-tool-bar-top v-on:layoutchange="selectLayout" :roomid="roomid" />
 
       <room-grid-layout v-show="grid" :layout="grid" ref="grid" />
@@ -16,18 +15,22 @@
       <room-focus-layout v-show="focus" :layout="focus" ref="focus" />
 
       <room-tool-bar-bottom v-on:quit="quit" />
+
+      <!-- Paticipants -->
+      <!--v-row v-show="joined" class="pa-0 ma-0">
+        <room-side-ppers :peers="peers" />
+      </v-row-->
+
+      <!--chat-->
+      <!--v-row v-show="joined" class="pa-0 ma-0">
+        <v-col cols="3" class="pa-0 ma-0">
+          <room-side-chat :peers="peers" />
+        </v-col>
+        <room-tool-bar-bottom v-on:quit="quit" />
+      </v-row-->
+      <room-quit-meeting v-if="dialogQuit" :roomid="room.id" v-on:response="leave" />
     </v-flex>
-
   </v-container>
-
-  <!--v-row v-show="joined" class="pa-0 ma-0">
-    <v-col cols="3" class="pa-0 ma-0">
-      <room-side-bar :peers="peers" />
-    </v-col>
-    <room-tool-bar-bottom v-on:quit="quit" />
-  </v-row-->
-
-  <room-quit-meeting v-if="dialogQuit" :roomid="room.id" v-on:response="leave" />
 
 </v-container>
 </template>
@@ -38,14 +41,14 @@ import {
   mapMutations,
   mapActions
 } from 'vuex';
-import HomeMeeting from '@/views/meetings/HomeMeeting';
-import DialogJoin from '../../components/meetings/RoomDialogJoin';
-import DialogQuit from '../../components/meetings/RoomDialogQuit';
-import RoomToolBarTop from '../../components/meetings/nav/RoomToolBarTop';
-import RoomToolBarBottom from '../../components/meetings/nav/RoomToolBarBottom';
-import RoomSideBar from '../../components/meetings/nav/sidebar/RoomSideBar';
-import RoomFocusLayout from '../../components/meetings/layouts/RoomFocusLayout';
-import RoomGrilleLayout from '../../components/meetings/layouts/RoomGridLayout';
+import HomeMeeting from '@/components/meetings/HomeMeeting';
+import DialogJoin from '@/components/meetings/RoomDialogJoin';
+import DialogQuit from '@/components/meetings/RoomDialogQuit';
+import RoomToolBarTop from '@/components/meetings/nav/RoomToolBarTop';
+import RoomToolBarBottom from '@/components/meetings/nav/RoomToolBarBottom';
+import RoomSideBar from '@/components/meetings/nav/sidebar/RoomSideBar';
+import RoomFocusLayout from '@/components/meetings/layouts/RoomFocusLayout';
+import RoomGrilleLayout from '@/components/meetings/layouts/RoomGridLayout';
 
 export default {
   name: 'Layout',
@@ -68,7 +71,7 @@ export default {
     return {
       home: true,
       joining: false,
-      peerid: null,
+      //peerid: null,
       intevalTime: null,
       grid: false,
       focus: true,
@@ -79,25 +82,14 @@ export default {
   beforeRouteLeave(to, from, next) {
     //this.openDrawer();
     this.openNavBar();
-    return next()
+    return next();
   },
   mounted() {
     this.closeDrawer();
     this.closeNavBar();
-    if (!this.home) {
-      return this.openJoinDialog();
-    }
-    if (this.home && !this.isAuthenticated) {
-      //
-    }
-    if (this.joining && this.isAuthenticated) {
-      //
-    }
+  },
+  watch: {
 
-
-    /*this.intevalTime = setInterval(() => {
-      //this.setClock();
-    }, 1000);*/
   },
   beforeDestroy() {
     this.deleteVideoStream();
@@ -106,25 +98,22 @@ export default {
     this.peer = null;
   },
   destroyed() {
-    this.log(`destroyed room component`);
     if (this.intevalTime) {
       clearInterval(this.intevalTime);
     }
-
   },
+  beforeUpdate() {},
   //beforeMount() {
   async beforeCreate() {},
-  async created() {
-    this.peerid = this.getUser;
-    this.log(this.peerid, "DEBUG");
-
-  },
+  async created() {},
   computed: {
     ...mapGetters({
       clock: 'getClock',
+      peerid: 'getProfileUsername'
     }),
     ...mapGetters([
       "isAuthenticated",
+      //'getProfileUsername',
       'getRoom',
       'getPeer',
       'peers',
@@ -136,7 +125,6 @@ export default {
       'videoStream',
       'getMediasoupStatus',
       'getMediasoupActivity',
-      'getUser',
       'dialogQuit'
     ]),
     room: {
@@ -193,16 +181,13 @@ export default {
       'deleteMedias',
       'setMedia'
     ]),
-    close() {
-      //this.$destroy();
-      return this.redirect();
-    },
+
     // mediasoup
     async acceptConnect() {
       this.loading = true;
-      await this.connectMediasoup()
+      await this.initializeRoom()
         .then(() => {
-          return this.startMediasoup()
+          return this.start()
             .then(() => {
               this.loading = false;
               return;
@@ -212,8 +197,9 @@ export default {
           this.log(e, "ERROR");
         });
     },
-    connectMediasoup() {
-      return this.$mediasoup.connect(this.roomid, this.peerid)
+
+    initializeRoom(options) {
+      return this.$mediasoup.initializeRoom(this.roomid, this.peerid, options)
         .then(({
           room,
           peer
@@ -222,15 +208,14 @@ export default {
           this.peer = peer;
           this.peer.local = true;
           this.room = room;
-          this.$emit('connect', room, peer);
           return {
             room,
             peer
           }
-        })
+        });
     },
 
-    async startMediasoup() {
+    async start() {
       if (this.room) {
         if (this.room.ready) {
           return this.joinRoom();
@@ -255,19 +240,7 @@ export default {
       return await this.room.join();
     },
 
-    async leaveRoom(event) {
-      this.peers.forEach((item) => {
-        item.close();
-      });
-      this.removeAllPeers();
-      return await this.$mediasoup.leaveRoom()
-        .then((ele) => {
-          this.connected = false;
-          this.peer = null;
-          this.room = null;
-          return ele;
-        });
-    },
+
 
     listenRoomEvents() {
       this.room.on("joined", async (options, room) => {
@@ -444,7 +417,31 @@ export default {
     },
 
     // application
+    connect() {
+      this.joining = true;
+      this.openJoinDialog();
+      this.home = false;
+    },
+    close() {
+      return this.redirect();
+    },
+
+    async leaveRoom(event) {
+      this.peers.forEach((item) => {
+        item.close();
+      });
+      this.removeAllPeers();
+      return await this.$mediasoup.leaveRoom()
+        .then((ele) => {
+          this.connected = false;
+          this.peer = null;
+          this.room = null;
+          return ele;
+        });
+    },
+
     closeDialogJoin() {
+      this.joining = false;
       this.close();
     },
     quit(event) {
@@ -458,14 +455,20 @@ export default {
         })
     },
     redirect() {
-      this.home = true;
       return this.$router.push({
           name: 'Meeting',
           params: {
             roomid: this.roomid
           }
         })
-        .catch(() => {})
+        .then(() => {
+          this.home = true;
+          return this.leaveRoom();
+        })
+        .catch(() => {
+          this.home = true;
+          return this.leaveRoom();
+        })
     },
     leave(res) {
       this.$emit("quit", res);

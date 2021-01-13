@@ -33,8 +33,8 @@ module.exports = class Mediasoup extends nodefony.Service {
     }
   }
 
-  // websocket waiting home
-  async handShakeConnection(query, context) {
+  // websocket  home
+  async handShake(query, context) {
     if (query.roomId) {
       let peer = null;
       let room = null;
@@ -59,10 +59,10 @@ module.exports = class Mediasoup extends nodefony.Service {
 
         // peer
         peer = await mdroom.createPeer(query.peerId, context);
-        peer.status = "waiting";
         if (!peer) {
-          ontext.close("1006", "closed can't create peer");
+          context.close("1006", "closed can't create peer");
         }
+        
         // events room
         // close
         const close = () => {
@@ -74,74 +74,91 @@ module.exports = class Mediasoup extends nodefony.Service {
 
         // event peer join
         const newPeer = (peer) => {
-          const tosend = {
+          const sendMessage = {
+            method: "waiting",
             peers: mdroom.getPeers(),
             room: room,
             peerid: query.peerId,
             status: status,
             message: "peer joined"
           };
-          return context.send(JSON.stringify(tosend));
+          return context.send(JSON.stringify(sendMessage));
         };
         mdroom.on("join", newPeer);
+
+        // event peer enter
+        const peerEnter = (peer) => {
+          const sendMessage = {
+            method: "waiting",
+            peers: mdroom.getPeers(),
+            room: room,
+            peerid: query.peerId,
+            status: status,
+            message: "peer enter room"
+          };
+          return context.send(JSON.stringify(sendMessage));
+        };
+        mdroom.on("peerEnter", peerEnter);
 
         // authorise
         const authorise = (peer) =>{
           if (peer.id === query.peerId){
-            const tosend = {
+            const sendMessage = {
+              method: "waiting",
               room: room,
               peerid: query.peerId,
               status: peer.status,
               message: "peer accepted"
             };
-            return context.send(JSON.stringify(tosend));
+            return context.send(JSON.stringify(sendMessage));
           }
         }
         mdroom.on("authorise", authorise);
         // unauthorise
         const unauthorise = (peer) =>{
-          const tosend = {
+          const sendMessage = {
+            method: "waiting",
             room: room,
             peerid: query.peerId,
             status: peer.status,
             message: "peer unaccepted"
           };
-          return context.send(JSON.stringify(tosend));
+          return context.send(JSON.stringify(sendMessage));
         }
         mdroom.on("unauthorise", unauthorise);
 
-        const peerUnjoin = (peer) => {
-          const tosend = {
+        const peerQuit = (peer) => {
+          const sendMessage = {
+            method: "waiting",
             peers: mdroom.getPeers(),
             room: room,
             peerid: query.peerId,
             status: status,
-            message: "peer unJoined"
+            message: "peer Quit"
           };
-          return context.send(JSON.stringify(tosend));
+          return context.send(JSON.stringify(sendMessage));
         }
-        mdroom.on("peerUnjoin", peerUnjoin);
+        mdroom.on("peerQuit", peerQuit);
 
         // socket
         context.once('onClose', () => {
           //clean mediasoup events
-          if (peer) {
-            peer.status = "disconnected";
-          }
           mdroom.removeListener("join", newPeer);
           mdroom.removeListener("close", close);
-          mdroom.removeListener("peerUnjoin", peerUnjoin);
+          mdroom.removeListener("peerQuit", peerQuit);
+          mdroom.removeListener("peerEnter", peerEnter);
           mdroom.removeListener("unauthorise", unauthorise);
           mdroom.removeListener("authorise", authorise);
         });
 
+        // ACCESS
         // get administrators
         room = await this.roomsService.getUserRoom(query.roomId);
         message = `Waiting Authorisation`;
 
-        let tosend = {
+        let sendMessage = {
           query,
-          method: "handshakeConnection",
+          method: "waiting",
           peers: mdroom.getPeers(),
           room: room,
           peerid: query.peerId,
@@ -164,15 +181,15 @@ module.exports = class Mediasoup extends nodefony.Service {
           if (filter.length) {
             let admin = filter[0];
             status = "authorised";
-            tosend.admin = admin;
-            tosend.message = `${admin.username} authorised`;
-            tosend.status = "authorised";
+            sendMessage.admin = admin;
+            sendMessage.message = `${admin.username} authorised`;
+            sendMessage.status = "authorised";
           } else {
             status = "wait"
-            tosend.status = "wait";
+            sendMessage.status = "wait";
           }
         }
-        return context.send(JSON.stringify(tosend));
+        return context.send(JSON.stringify(sendMessage));
       } catch (e) {
         if (peer) {
           peer.status = "disconnected";
@@ -186,40 +203,11 @@ module.exports = class Mediasoup extends nodefony.Service {
     }
   }
 
-  async handleConnection(query, context) {
-    // stop connect
-  }
-
-  // websocket connect
-  async handShake(query, context) {
-    if (query.roomId && query.peerId) {
-      let info = `websocket handshake connection :
-      [roomId:${query.roomId}, peerId:${query.peerId}, address:${context.remoteAddress}, origin:${context.origin}]`;
-      this.log(info);
-      let mdroom = await this.getOrCreateRoom(query.roomId);
-      let peer = await mdroom.createPeer(query.peerId, context);
-      let message = {
-        query,
-        method: "handshake",
-        roomid: mdroom.id,
-        peerid: peer.id
-      };
-      return context.send(JSON.stringify(message));
-    } else {
-      throw new nodefony.Error("Connection request without roomId and/or peerId", 5006);
-    }
-  }
-
   handle(message, context) {
-    this.log(message);
+    this.log(message, "DEBUG");
     if (!message.roomid && !message.peerid) {
-      throw new Error(`Message can be without roomid an/or peerid`);
+      throw new Error(`Message  roomid an/or peerid not defined`);
     }
-    /*if (!this.meetingsService.hasRoom(message.roomid)) {
-      if (message.method !== "join") {
-        throw new Error(`No room : ${message.roomid} found `);
-      }
-    }*/
     let room = this.meetingsService.getRoom(message.roomid);
     if (!room) {
       throw new Error(`Room not exit with id ${message.roomid} `);

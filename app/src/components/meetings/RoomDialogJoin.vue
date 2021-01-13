@@ -19,7 +19,7 @@
       <v-row no-gutters>
         <v-col cols="6" class="pa-3 ma-0">
           <v-row justify="center">
-            <media-card-peer width="" init spectrum ref="peer" @endsharescreen='endsharescreen' :name="getUser" showOptions>
+            <media-card-peer init spectrum ref="peer" @endsharescreen='endsharescreen' :name="getProfileUsername" showOptions>
               <template slot="peer">
                 <v-container fluid class="pa-0">
                   <!--v-btn color="primary" fab rounded absolute top left>
@@ -145,14 +145,14 @@ export default {
   },
   async mounted() {
     this.loading = true;
-    this.peerid = this.getUser;
+    this.peerid = this.getProfileUsername;
     await this.getDevices();
     this.room = await this.getRoom(this.roomid)
       .then((room) => {
         this.loading = false;
         this.peer = this.$refs["peer"];
-        this.logger(`User Profile : `, this.getProfile);
-        this.log(`User : ${this.getUser}`, "DEBUG");
+        //this.logger(`User Profile : `, this.getProfile);
+        this.log(`User : ${this.getProfileUsername}`, "DEBUG");
         return room;
       })
       .catch(e => {
@@ -162,11 +162,11 @@ export default {
         }
       });
   },
-
+  destroyed() {},
   computed: {
     ...mapGetters([
-      "getUser",
-      "getProfile",
+      'getProfileUsername',
+      //"getProfile",
       'getProfileName',
       'getProfileSurname',
       "getJoinDialog",
@@ -187,6 +187,8 @@ export default {
         return this.storeMedias(value);
       }
     }
+  },
+  watch: {
 
   },
   methods: {
@@ -202,10 +204,11 @@ export default {
     ...mapActions([
       'getDevices'
     ]),
-    // room
+
+    // Meeting
     async getRoom(id) {
       try {
-        this.log("Get rooms", "DEBUG");
+        this.log("Get room", "DEBUG");
         let res = await this.$mediasoup.api.http(`room/${id}`)
           .catch(e => {
             throw e;
@@ -234,37 +237,12 @@ export default {
       this.deleteMedias("screen");
     },
     acceptConnect() {
-      //checkroom accees
-      let body = {
-        password: this.password,
-        username: this.peerid,
-        room: this.room.name
-      }
-      this.loading = true;
-      return this.$mediasoup.api.post(`access/room/${this.room.name}`, {
-          body: JSON.stringify(body),
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
-        .then((res) => {
-          this.loading = false;
-          this.setAudioStream(this.peer.audioStream);
-          this.setVideoStream(this.peer.videoStream);
-          this.$emit("join", res, this);
-          //this.$destroy();
-          return res;
-        })
-        .catch(e => {
-          this.loading = false;
-          if (e.response) {
-            // log error
-            this.message = this.log(e.response.message, "ERROR", "Authentication")
-          }
-        })
+      this.loading = false;
+      this.setAudioStream(this.peer.audioStream);
+      this.setVideoStream(this.peer.videoStream);
+      this.$emit("join", this);
     },
     close() {
-
       this.$emit("close", this);
       this.closeJoinDialog();
       this.$destroy();
