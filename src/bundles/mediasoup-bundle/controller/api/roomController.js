@@ -189,17 +189,18 @@ class apiRomController extends nodefony.Controller {
           if (this.getRoom().name === name) {
             this.session.invalidate();
           }
-          return this.redirectToRoute("route-rooms");
+          return this.api.render({
+            query: this.query,
+            room: null
+          });
         }).catch(e => {
           this.logger(e, "ERROR");
           this.setFlashBag("error", e.message);
-          return this.redirectToRoute("route-rooms");
         });
     }
     let error = new nodefony.Error(`Room ${name} not found`, this.context);
     this.setFlashBag("error", error.message);
     this.logger(error, "ERROR");
-    return this.redirectToRoute("route-rooms");
   }
 
   /**

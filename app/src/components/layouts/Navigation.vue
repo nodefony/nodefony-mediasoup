@@ -55,7 +55,7 @@
         </v-list-item-icon>
       </v-list-item>
 
-      <v-list-item sub-group @click="redirect('createRoom')">
+      <v-list-item sub-group @click="redirect('Room')">
         <v-list-item-content>
           <v-list-item-title class="ml-6">
             Create Room
