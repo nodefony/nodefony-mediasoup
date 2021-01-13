@@ -137,18 +137,16 @@ import {
 export default {
   name: 'EditRoom',
   props: {
-    room: {
-      type: Object,
+    roomid: {
+      type: String,
       default: null
-    },
-    creating: {
-      type: Boolean,
-      default: false
     }
   },
   data: () => ({
     tab: null,
     editing: false,
+    message: null,
+    room: {},
     showPassword: false,
     rules: {
       min: v => !v || v.length >= 8 || 'Min 8 characters',
@@ -159,24 +157,44 @@ export default {
     }
   }),
   async mounted() {
-    if (this.room) {
-      this.room.access = this.room.access || "private";
-      this.room.secure = (typeof this.room.secure === "undefined" ? false : this.room.secure);
-      this.room.waitingconnect = (typeof this.room.waitingconnect === "undefined" ? false : this.room.waitingconnect);
-      this.formData = { ...this.room, ...this.formData };
-      console.log("mounted", this.formData);
+    if (this.roomid) {
+      this.room = await this.getRoom(this.roomid);
+      if (this.room) {
+        this.room.access = this.room.access || "private";
+        this.room.secure = (typeof this.room.secure === "undefined" ? false : this.room.secure);
+        this.room.waitingconnect = (typeof this.room.waitingconnect === "undefined" ? false : this.room.waitingconnect);
+        this.formData = { ...this.room, ...this.formData };
+        console.log("mounted", this.formData);
+      }
     }
   },
   destroyed() {
     //console.log("destroyed", this.room.name)
   },
   watch: {
-
+    message(value) {
+      this.notify(value);
+    }
   },
   computed: {
-
+    creating() {
+      return !this.roomid;
+    }
   },
   methods: {
+    async getRoom(roomid) {
+      this.loading = true;
+      return this.$mediasoup.request(`room/${roomid}`)
+        .then((response) => {
+          this.loading = false;
+          return response.result;
+        })
+        .catch(async (e) => {
+          this.loading = false;
+          this.log(e, "ERROR");
+          return null;
+        });
+    },
     formatAccessLabel(label) {
       return label == 'private' ? 'Private' : 'Public';
     },
@@ -215,10 +233,15 @@ export default {
           if (response.message) {
             this.message = this.log(response.message, "INFO");
           } else {
-            this.message = this.log(`Delete ${response.result.room.name} ok`, "INFO");
+            this.message = this.log(`Delete ${name} ok`, "INFO");
           }
-          this.$emit("remove", response.result.room);
+          this.$emit("remove", this.room);
           this.close();
+          this.$router.replace({
+            name: 'Rooms',
+            params: {},
+            force: true
+          });
           return response.result.room;
         })
         .catch(async (e) => {
@@ -235,18 +258,16 @@ export default {
           }
         })
         .then((response) => {
-          Object.assign(this.room, data.result.room);
           this.loading = false;
           if (response.message) {
             this.message = this.log(response.message, "INFO");
           } else {
-            this.message = this.log(`create ${this.room.name}`, "INFO");
+            this.message = this.log(`create ${response.result.room.name}`, "INFO");
           }
           this.$router.replace({
             name: 'Room',
             params: {
-              room: this.room,
-              creating: false
+              roomid: response.result.room.name
             },
             force: true
           });

@@ -128,7 +128,7 @@ export default {
         return this.$router.push({
           name: 'Room',
           params: {
-            room: item
+            roomid: item.name
           }
         });
       }
@@ -137,8 +137,23 @@ export default {
       this.selectedRoom = null;
     },
     async deleteRoom(item) {
-      this.selectedRoom = item;
-      await this.$refs["selectedRoom"].deleteRoom();
+      const name = item.name;
+      return this.$mediasoup.request(`room/${name}`, "DELETE")
+        .then((response) => {
+          this.loading = false;
+          if (response.message) {
+            this.message = this.log(response.message, "INFO");
+          } else {
+            this.message = this.log(`Delete ${name} ok`, "INFO");
+          }
+          this.$emit("remove", item);
+          this.getRooms();
+          return response.result.room;
+        })
+        .catch(async (e) => {
+          this.loading = false;
+          this.message = this.log(e.message, "ERROR");
+        });
     }
   }
 
