@@ -43,7 +43,7 @@ module.exports = class Mediasoup extends nodefony.Service {
       let info = `Waiting connection :
       [roomId:${query.roomId}, address:${context.remoteAddress}, origin:${context.origin}]`;
       this.log(info);
-      let status = "wait";
+
       try {
         if (!query.roomId) {
           context.close("1006", "closed no roomId ");
@@ -62,7 +62,7 @@ module.exports = class Mediasoup extends nodefony.Service {
         if (!peer) {
           context.close("1006", "closed can't create peer");
         }
-        
+
         // events room
         // close
         const close = () => {
@@ -72,6 +72,18 @@ module.exports = class Mediasoup extends nodefony.Service {
         }
         mdroom.once("close", close);
 
+        // ACCESS
+        // get administrators
+        room = await this.roomsService.getUserRoom(query.roomId);
+        message = `Waiting Authorisation`;
+        let status = "wait";
+        if (room.waitingconnect) {
+          status = "wait";
+        } else {
+          status = "authorised";
+        }
+        let administrators = room.users;
+
         // event peer join
         const newPeer = (peer) => {
           const sendMessage = {
@@ -79,7 +91,7 @@ module.exports = class Mediasoup extends nodefony.Service {
             peers: mdroom.getPeers(),
             room: room,
             peerid: query.peerId,
-            status: status,
+            status: peer.status,
             message: "peer joined"
           };
           return context.send(JSON.stringify(sendMessage));
@@ -93,7 +105,7 @@ module.exports = class Mediasoup extends nodefony.Service {
             peers: mdroom.getPeers(),
             room: room,
             peerid: query.peerId,
-            status: status,
+            status: peer.status,
             message: "peer enter room"
           };
           return context.send(JSON.stringify(sendMessage));
@@ -101,8 +113,8 @@ module.exports = class Mediasoup extends nodefony.Service {
         mdroom.on("peerEnter", peerEnter);
 
         // authorise
-        const authorise = (peer) =>{
-          if (peer.id === query.peerId){
+        const authorise = (peer) => {
+          if (peer.id === query.peerId) {
             const sendMessage = {
               method: "waiting",
               room: room,
@@ -115,7 +127,7 @@ module.exports = class Mediasoup extends nodefony.Service {
         }
         mdroom.on("authorise", authorise);
         // unauthorise
-        const unauthorise = (peer) =>{
+        const unauthorise = (peer) => {
           const sendMessage = {
             method: "waiting",
             room: room,
@@ -133,7 +145,7 @@ module.exports = class Mediasoup extends nodefony.Service {
             peers: mdroom.getPeers(),
             room: room,
             peerid: query.peerId,
-            status: status,
+            status: peer.status,
             message: "peer Quit"
           };
           return context.send(JSON.stringify(sendMessage));
@@ -151,29 +163,25 @@ module.exports = class Mediasoup extends nodefony.Service {
           mdroom.removeListener("authorise", authorise);
         });
 
-        // ACCESS
-        // get administrators
-        room = await this.roomsService.getUserRoom(query.roomId);
-        message = `Waiting Authorisation`;
-
         let sendMessage = {
           query,
           method: "waiting",
+          status: status,
           peers: mdroom.getPeers(),
           room: room,
           peerid: query.peerId,
           peer: null,
-          admin: null,
-          message: message
+          admin: administrators,
+          message: message,
         };
-        if (room.users.length === 0) {
+        if (administrators.length === 0) {
           setTimeout(() => {
             context.close("1008", "Room managers not found");
           }, 2000);
           return;
         } else {
           // is administrator
-          let filter = room.users.filter((user) => {
+          let filter = administrators.filter((user) => {
             if (user.username === query.peerId) {
               return user
             }
@@ -184,9 +192,6 @@ module.exports = class Mediasoup extends nodefony.Service {
             sendMessage.admin = admin;
             sendMessage.message = `${admin.username} authorised`;
             sendMessage.status = "authorised";
-          } else {
-            status = "wait"
-            sendMessage.status = "wait";
           }
         }
         return context.send(JSON.stringify(sendMessage));

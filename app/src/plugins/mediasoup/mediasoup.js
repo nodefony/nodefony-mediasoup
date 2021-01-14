@@ -129,42 +129,6 @@ class Mediasoup extends nodefony.Service {
     return `wss://${this.domain}:${this.portHttps}/mediasoup/waiting`;
   }
 
-  // websocket waiting
-  /*waiting(roomid = null, peerid = null) {
-    return new Promise(async (resolve, reject) => {
-      this.domain = await this.getWssServer();
-      const url = `wss://${this.domain}:5152/mediasoup/waiting?roomId=${roomid}&peerId=${peerid}`;
-      this.sock = new WebSocket(url);
-      this.sock.onopen = (event) => {
-        this.log(`Mediasoup Websocket Waiting  connection peer ${peerid} room : ${roomid}`);
-        this.fire("waitingHandshake", this.sock);
-        return resolve(this.sock);
-      }
-      this.sock.onmessage = (event) => {
-        let message = null;
-        try {
-          message = JSON.parse(event.data);
-          this.fire("waiting", message, this);
-        } catch (e) {
-          this.log(e, "ERROR");
-          this.log(event.data, "ERROR");
-          throw new Error(`Bad Json Message`);
-        }
-      };
-      this.sock.onerror = (error) => {
-        this.log(error, "ERROR");
-        return reject(error);
-      };
-      this.sock.onclose = (event) => {
-        this.fire("closeSock", event, this.sock);
-        this.sock = null;
-        this.removeAllListeners("waiting");
-        return;
-      };
-
-    });
-  }*/
-
   // websocket connect
   connect(roomid = null, peerid = null, options = {}) {
     return new Promise(async (resolve, reject) => {

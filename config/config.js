@@ -29,8 +29,8 @@ let certificats = {
 let CDN = null;
 let statics = true;
 let monitoring = true;
-let documentation = true;
-let unitTest = true;
+let documentation = false;
+let unitTest = false;
 let domainCheck = false;
 if (process.env && process.env.NODE_ENV === "production") {
   certificats.key = path.resolve("config", "certificates", "server", "privkey.pem");

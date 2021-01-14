@@ -79,9 +79,5 @@ module.exports = {
     refreshToken: {
       expiresIn: 24*60*60  // 24 hours in secondes
     }
-  },
-  swagger: require(path.resolve(__dirname, "..", "swagger", "config.js")),
-
-  graphiql: require(path.resolve(__dirname, "..", "graphiql", "config.js"))
-
+  }
 };

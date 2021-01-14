@@ -8,6 +8,7 @@ import Rooms from '../views/rooms/Rooms.vue';
 import EditRoom from '../views/rooms/EditRoom.vue';
 
 import Meeting from '../views/meetings/Meeting.vue';
+import HomeMeeting from '../views/meetings/HomeMeeting.vue';
 import Meetings from '../views/meetings/Meetings.vue';
 import MeetingDetails from '../views/meetings/MeetingDetails.vue';
 
@@ -71,6 +72,11 @@ const routes = [{
     //beforeEnter: ifAuthenticated,
     children: []
  }, {
+   path: '/meetings/home/:roomid',
+   name: 'HomeMeeting',
+   props: true,
+   component: HomeMeeting,
+ },{
     path: '/meetings',
     name: 'Meetings',
     component: Meetings,

@@ -1,15 +1,14 @@
 <template>
 <v-dialog v-model="getJoinDialog" fullscreen hide-overlay transition="dialog-bottom-transition">
 
-  <v-card :loading="loading">
+  <v-card :loading="loading" class="">
     <v-toolbar color="" flat dense fixed top>
       <v-btn icon @click="close">
         <v-icon>mdi-close</v-icon>
       </v-btn>
-      <v-toolbar-title>{{ $t("rooms.name")}} {{roomid}}</v-toolbar-title>
+      <v-toolbar-title>{{ room ? room.name : ''}}</v-toolbar-title>
       <v-spacer></v-spacer>
     </v-toolbar>
-    <nodefony-notify v-if="messageroom" :pdu="messageroom" type="alert" />
 
     <template slot="progress">
       <v-progress-linear color="deep-purple" height="10" indeterminate></v-progress-linear>
@@ -39,7 +38,6 @@
 
         <v-col cols="6" class="px-10">
           <v-row justify="center">
-            <nodefony-notify v-if="message" :pdu="message" type="alert" />
             <v-card width="100%" flat tile>
               <v-card-title>Medias Settings</v-card-title>
               <v-row justify="space-between" class="mt-0 mb-5 mx-5">
@@ -78,21 +76,51 @@
 
               </v-row>
               <v-divider class="mx-4"></v-divider>
-              <v-card-title>Room {{roomid}}</v-card-title>
+              <v-card-title>{{room? room.name : ""}}</v-card-title>
 
-              <v-row justify="space-between" class="mt-0 mb-5 mx-5">
-                <v-card-text>
+              <v-row class="mt-0 mb-5 mx-5" width="100%">
+                <!--v-card-text>
                   <v-text-field v-model="peerid" :disabled="isAuthenticated" label="User" :value="peerid"></v-text-field>
                   <span class="caption grey--text text--darken-1">
                     This is the name you will use to login to Room
                   </span>
-                </v-card-text>
-                <v-card-text>
-                  <v-text-field v-model="password" label="Password" type="password" :disabled="room && ! room.secure"></v-text-field>
-                  <span class="caption grey--text text--darken-1">
-                    Please enter a password for join room
-                  </span>
-                </v-card-text>
+                </v-card-text-->
+                <v-simple-table dense fixed-header height="200px" style="width:100%">
+                  <template v-slot:top>
+                    <v-icon class="mx-5 my-3">mdi-account</v-icon>
+                    <span> Participants</span>
+                  </template>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">
+                          Participants
+                        </th>
+                        <th class="text-left">
+                          Display Name
+                        </th>
+                        <th class="text-left">
+                          Status
+                        </th>
+                        <th v-if="true" class="text-left">
+
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody v-show="peers">
+                      <tr v-for="peer in peers" :key="peer.username">
+                        <td>{{ peer.id }}</td>
+                        <td>{{ peer.displayName }}</td>
+                        <td>{{ peer.status }}</td>
+                        <td v-if="true">
+                          <v-btn x-small @click="authorise(item)">Authorised</v-btn>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+              </v-row>
+              <v-row align="center" justify="center">
                 <v-btn @click.end="acceptConnect" rounded color="primary" dark>
                   Join Room
                 </v-btn>
@@ -116,54 +144,43 @@ import {
 } from 'vuex';
 
 import MediaCardPeer from './medias/peers/MediaCardPeer';
-import notify from '@/plugins/nodefony/components/notify.vue';
 
 export default {
   name: 'DialogJoin',
   components: {
-    "media-card-peer": MediaCardPeer,
-    "nodefony-notify": notify
+    "media-card-peer": MediaCardPeer
   },
-  props: {
-    roomid: {
-      type: String
-    }
-  },
+  props: {},
   data(vm) {
     return {
       loading: false,
       message: null,
-      messageroom: null,
-      room: null,
       peer: null,
       peerid: null,
       audio: true,
       video: true,
-      screen: false,
-      password: ""
+      screen: false
     }
   },
   async mounted() {
     this.loading = true;
     this.peerid = this.getProfileUsername;
-    await this.getDevices();
-    this.room = await this.getRoom(this.roomid)
-      .then((room) => {
+    await this.getDevices()
+      .then((devices) => {
         this.loading = false;
-        this.peer = this.$refs["peer"];
-        //this.logger(`User Profile : `, this.getProfile);
-        this.log(`User : ${this.getProfileUsername}`, "DEBUG");
-        return room;
       })
-      .catch(e => {
+      .catch(() => {
         this.loading = false;
-        if (e.response) {
-          this.messageroom = this.log(e.response.message, "ERROR", "ROOM")
-        }
       });
+    this.peer = this.$refs["peer"];
+    this.log(`User : ${this.getProfileUsername}`, "DEBUG");
   },
   destroyed() {},
   computed: {
+    ...mapGetters({
+      room: 'getRoomEntity',
+      peers: 'getPeers'
+    }),
     ...mapGetters([
       'getProfileUsername',
       //"getProfile",
@@ -205,23 +222,6 @@ export default {
       'getDevices'
     ]),
 
-    // Meeting
-    async getRoom(id) {
-      try {
-        this.log("Get room", "DEBUG");
-        let res = await this.$mediasoup.api.http(`room/${id}`)
-          .catch(e => {
-            throw e;
-          });
-        let room = res.result;
-        this.log(room, "DEBUG");
-        return room;
-      } catch (e) {
-        this.log(e, "ERROR");
-        throw e;
-      }
-    },
-
     async changeMedia(selected) {
       await this.peer.changeMedia(selected)
         .then(() => {
@@ -240,12 +240,12 @@ export default {
       this.loading = false;
       this.setAudioStream(this.peer.audioStream);
       this.setVideoStream(this.peer.videoStream);
-      this.$emit("join", this);
+      return this.$emit("join", this);
     },
     close() {
       this.$emit("close", this);
       this.closeJoinDialog();
-      this.$destroy();
+      //this.$destroy();
     }
   }
 }
@@ -254,5 +254,26 @@ export default {
 <style scoped lang="scss">
 .v-dialog {
     z-index: 10000;
+}
+.nodefony--background {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    /*display: flex;
+    align-items: center;
+    justify-content: center;*/
+    background-image: url("../../assets/chateau-if.jpg");
+    background-size: cover;
+    overflow: hidden;
+}
+
+.nodefony--background::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0,0,0,0.65);
 }
 </style>

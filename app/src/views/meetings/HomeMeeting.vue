@@ -141,14 +141,14 @@ export default {
     }
   },
   data: () => ({
+    loading: false,
     waiting: false,
     message: null,
     progress: null,
-    room: null,
+    //room: null,
     socket: null,
     administrators: null,
-    peers: null,
-    password: "",
+    password: "12345678",
     username: "",
     usernamedisabled: true,
     show: false,
@@ -162,13 +162,22 @@ export default {
       }
     }
   }),
+  beforeRouteLeave(to, from, next) {
+    //this.openDrawer();
+    this.openNavBar();
+    return next();
+  },
   async mounted() {
     this.loading = true;
-    this.room = await this.getRoom(this.roomid)
+    return this.getRoom(this.roomid)
       .then((room) => {
-        this.loading = false;
+        //display administrator
+        if (room && room.users) {
+          this.administrators = room.users;
+        }
         if (room.access === "public") {
-          //
+          this.closeDrawer();
+          this.closeNavBar();
           if (this.isAuthenticated) {
             this.username = this.getProfileUsername;
           } else {
@@ -190,6 +199,9 @@ export default {
         if (e.response) {
           this.message = this.log(e.response.message, "ERROR")
         }
+        return this.$router.push({
+          name: 'Rooms'
+        }).catch(() => {})
       });
   },
   destroyed() {
@@ -201,30 +213,61 @@ export default {
     },
     getProfileUsername(value) {
       this.username = value;
-    }
+    },
+    /*room(value) {
+      this.room = value;
+    },
+    peers(value) {
+      this.peers = value;
+    }*/
   },
   computed: {
     ...mapGetters([
       "isAuthenticated",
-      'getProfileUsername'
+      'getProfileUsername',
+      'getRoomEntity',
+      'getPeers'
     ]),
+    room: {
+      get() {
+        return this.getRoomEntity;
+      },
+      set(value) {
+        this.setRoomEntity(value);
+      }
+    },
+    peers: {
+      get() {
+        return this.getPeers;
+      },
+      set(value) {
+        this.setPeers(value);
+      }
+    }
   },
   methods: {
-    ...mapMutations([]),
+    ...mapMutations([
+      'setRoomEntity',
+      'closeDrawer',
+      'openDrawer',
+      'openNavBar',
+      'closeNavBar',
+      'setPeers'
+    ]),
     async getRoom(id) {
-      try {
-        //this.log("Get room", "DEBUG");
-        let res = await this.$mediasoup.api.http(`room/${id}`)
-          .catch(e => {
-            throw e;
-          });
-        let room = res.result;
-        //this.log(room, "DEBUG");
-        return room;
-      } catch (e) {
-        this.log(e, "ERROR");
-        throw e;
-      }
+      //this.log("Get room", "DEBUG");
+      return this.$mediasoup.api.http(`room/${id}`)
+        .then((response) => {
+          this.room = response.result;
+          //this.log(room, "DEBUG");
+          this.loading = false;
+
+          return this.room;
+        })
+        .catch(e => {
+          this.log(e, "ERROR");
+          throw e;
+        });
     },
     connect() {
       const body = {
@@ -246,7 +289,7 @@ export default {
           if (response.result.access === "authorized") {
             return this.connectMediasoup();
           }
-          throw new Error(`unauthorised`);
+          throw new Error(response.result.access);
         })
         .catch(e => {
           this.loading = false;
@@ -260,6 +303,7 @@ export default {
 
         })
     },
+    // websoket
     connectMediasoup() {
       return this.$mediasoup.leaveRoom()
         .then(() => {
@@ -275,6 +319,8 @@ export default {
                 }
                 if (message.peers) {
                   this.peers = message.peers;
+                  //this.setPeers(message.peers);
+
                 }
                 switch (message.status) {
                   case 'wait':
@@ -283,7 +329,7 @@ export default {
                     this.progress = message.message;
                     this.waiting = false;
                     this.$emit("connect", message.status);
-                    break;
+                    return this.redirect();
                   case 'unauthorised':
                     this.progress = message.message;
                     this.quit();
@@ -309,6 +355,14 @@ export default {
               this.progress = pdu.payload;
             });
         });
+    },
+    redirect() {
+      return this.$router.push({
+        name: "Meeting",
+        params: {
+          roomid: this.room.name
+        }
+      }).catch(() => {})
     },
     quit() {
       this.log("Quit Home meeting", "DEBUG");
