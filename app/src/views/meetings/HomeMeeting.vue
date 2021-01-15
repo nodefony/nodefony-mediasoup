@@ -1,5 +1,5 @@
 <template>
-<v-window class="nodefony--background">
+<v-window class="nodefony--background" dark>
 
   <v-container>
 
@@ -11,7 +11,7 @@
       <div class="text-h5 teal--text text--lighten-1"> {{room.description}}</div>
     </v-row>
 
-    <v-row justify="center" align="center" class="mt-15" style="height:50px">
+    <v-row justify="center" align="center" class="mt-10" style="height:50px">
       <div v-show="progress" class="text-h4 blue-grey--text text--lighten-1"> {{progress}}</div>
     </v-row>
 
@@ -23,7 +23,6 @@
   </v-container>
 
   <v-container v-if="room && !waiting">
-
     <v-row v-if="room" justify="center" align="center" class="mt-15">
       <v-text-field style="min-width:200px ;max-width:350px" :disabled="usernamedisabled" :rules="[rules.required]" class="teal--text text--lighten-3" type="text" dense dark v-model="username" :label="$t('users.user')" outlined :hint="`${username} access`"></v-text-field>
     </v-row>
@@ -43,8 +42,9 @@
     </v-row>
   </v-container>
 
-  <v-container v-if="waiting" class="mt-5">
 
+
+  <v-container v-if="waiting" class="mt-5">
     <v-row justify="center" align="center" class="mt-10">
       <v-btn small :loading="loading" :disabled="loading" color="blue-grey" class="ma-2 white--text" @click="quit">
         Quit
@@ -57,7 +57,7 @@
 
   <v-container fluid width="100%">
     <v-row class=" mt-10" justify="space-around">
-      <v-col v-if="administrators" cols="auto" class="ml-5">
+      <v-col v-if="administrators && administrators.length" cols="auto" class="ml-5">
         <v-simple-table dense fixed-header dark height="200px">
           <template v-slot:top>
             <v-icon class="mx-5 my-3">mdi-security</v-icon> Room Managers
@@ -132,7 +132,6 @@ import {
   mapActions,
   mapMutations
 } from 'vuex';
-
 export default {
   name: 'HomeMeeting',
   props: {
@@ -169,40 +168,8 @@ export default {
   },
   async mounted() {
     this.loading = true;
-    return this.getRoom(this.roomid)
-      .then((room) => {
-        //display administrator
-        if (room && room.users) {
-          this.administrators = room.users;
-        }
-        if (room.access === "public") {
-          this.closeDrawer();
-          this.closeNavBar();
-          if (this.isAuthenticated) {
-            this.username = this.getProfileUsername;
-          } else {
-            this.usernamedisabled = false;
-          }
-        } else {
-          if (!this.isAuthenticated) {
-            this.$router.push({
-              name: 'Login'
-            }).catch(() => {})
-          } else {
-            this.username = this.getProfileUsername;
-          }
-        }
-        return room;
-      })
-      .catch(e => {
-        this.loading = false;
-        if (e.response) {
-          this.message = this.log(e.response.message, "ERROR")
-        }
-        return this.$router.push({
-          name: 'Rooms'
-        }).catch(() => {})
-      });
+    this.waiting = false;
+    return this.getRoom(this.roomid);
   },
   destroyed() {
     this.log(`destroy home room component `, "DEBUG");
@@ -213,18 +180,14 @@ export default {
     },
     getProfileUsername(value) {
       this.username = value;
-    },
-    /*room(value) {
-      this.room = value;
-    },
-    peers(value) {
-      this.peers = value;
-    }*/
+    }
   },
   computed: {
     ...mapGetters([
       "isAuthenticated",
       'getProfileUsername',
+      'getProfileName',
+      'getProfileSurname',
       'getRoomEntity',
       'getPeers'
     ]),
@@ -255,18 +218,43 @@ export default {
       'setPeers'
     ]),
     async getRoom(id) {
-      //this.log("Get room", "DEBUG");
+      this.peers = null;
+      this.room = null;
       return this.$mediasoup.api.http(`room/${id}`)
         .then((response) => {
           this.room = response.result;
-          //this.log(room, "DEBUG");
           this.loading = false;
-
+          //display administrator
+          if (this.room && this.room.users) {
+            this.administrators = this.room.users;
+          }
+          if (this.room.access === "public") {
+            this.closeDrawer();
+            this.closeNavBar();
+            if (this.isAuthenticated) {
+              this.username = this.getProfileUsername;
+            } else {
+              this.usernamedisabled = false;
+            }
+          } else {
+            if (!this.isAuthenticated) {
+              this.$router.push({
+                name: 'Login'
+              }).catch(() => {})
+            } else {
+              this.username = this.getProfileUsername;
+            }
+          }
           return this.room;
         })
         .catch(e => {
-          this.log(e, "ERROR");
-          throw e;
+          this.loading = false;
+          if (e.response) {
+            this.message = this.log(e.response.message, "ERROR")
+          }
+          return this.$router.push({
+            name: 'Rooms'
+          }).catch(() => {})
         });
     },
     connect() {
@@ -365,8 +353,8 @@ export default {
       }).catch(() => {})
     },
     quit() {
-      this.log("Quit Home meeting", "DEBUG");
       this.progress = null;
+      this.waiting = false;
       try {
         if (this.socket) {
           this.socket.close();
@@ -374,7 +362,9 @@ export default {
       } catch (e) {
         this.log(e, "ERROR");
       }
-      this.waiting = false;
+      return this.$nextTick(() => {
+        return this.getRoom(this.roomid);
+      });
     }
   }
 }

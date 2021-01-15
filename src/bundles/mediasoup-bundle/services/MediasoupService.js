@@ -174,7 +174,7 @@ module.exports = class Mediasoup extends nodefony.Service {
           admin: administrators,
           message: message,
         };
-        if (administrators.length === 0) {
+        if (room.waitingconnect && administrators.length === 0) {
           setTimeout(() => {
             context.close("1008", "Room managers not found");
           }, 2000);

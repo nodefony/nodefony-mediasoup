@@ -120,8 +120,11 @@
                   </template>
                 </v-simple-table>
               </v-row>
-              <v-row align="center" justify="center">
-                <v-btn @click.end="acceptConnect" rounded color="primary" dark>
+              <v-row align="center" justify="space-around">
+                <v-btn @click.end="close" rounded color="primary">
+                  Quit
+                </v-btn>
+                <v-btn @click.end="acceptConnect" rounded color="primary">
                   Join Room
                 </v-btn>
               </v-row>
@@ -245,7 +248,6 @@ export default {
     close() {
       this.$emit("close", this);
       this.closeJoinDialog();
-      //this.$destroy();
     }
   }
 }

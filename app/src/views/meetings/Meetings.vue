@@ -17,6 +17,10 @@
         </v-card-title>
         <v-data-table dense fixed-header height="520" :loading="loading" :headers="headers" :items="meetings" :items-per-page="15" class="elevation-2" :headers-length="30" :search="search">
 
+          <template v-slot:item.id="{ item }">
+            <v-btn @click="redirect(item.id)" class="ma-1" color="" plain>{{item.id}}</v-btn>
+          </template>
+
           <template v-slot:item.actions="{ item }">
             <v-icon small class="mr-2" @click="selectRoom(item)">
               mdi-eye
@@ -109,6 +113,15 @@ export default {
     }
   },
   methods: {
+    redirect(roomid) {
+      return this.$router.push({
+          name: "HomeMeeting",
+          params: {
+            roomid: roomid
+          }
+        })
+        .catch(() => {})
+    },
     async getMeetings() {
       this.loading = true;
       return this.$mediasoup.request("meetings")

@@ -1,6 +1,6 @@
 <template>
 <v-card :width="cardWidth" :height="height" class="rounded-lg" :elevation="elevation" :outlined="hover" :min-width="minWidth" :max-width="maxWidth" :max-height="maxHeight" :min-height="minHeight" :loading="loading" rounded @click="toggle" :class="{ focus: focus}"
-  style="background:transparent;">
+  style="background:transparent;" :dark="dark">
 
   <media-volume-peer v-if="volume" fab rounded absolute top left color="blue-grey" class=" white--text" :volume="this.volume || 0" :muted="local ? !hasAudio : !audio" />
 
@@ -130,6 +130,10 @@ export default {
       default: "100%"
     },
     showOptions: {
+      type: Boolean,
+      default: false
+    },
+    dark: {
       type: Boolean,
       default: false
     }
@@ -429,7 +433,12 @@ export default {
         await this.stopAudioStream();
         this.audioStream.addTrack(track);
         if (this.spectrum) {
-          this.$spectrum = await this.$nodefony.drawSpectrum(this.$refs.canvas, this.audioStream.stream, 5);
+          try {
+            this.$spectrum = await this.$nodefony.drawSpectrum(this.$refs.canvas, this.audioStream.stream, 5);
+          } catch (e) {
+            this.log(e, "ERROR");
+          }
+
         }
         return track
       }
