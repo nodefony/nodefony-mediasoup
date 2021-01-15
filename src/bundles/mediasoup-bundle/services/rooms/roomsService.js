@@ -102,6 +102,31 @@ class Rooms extends nodefony.Service {
       });
   }
 
+  async create(query) {
+    let transaction = null;
+    try {
+      transaction = await this.orm.startTransaction("room");
+      return this.Room.create(query, {
+          transaction: transaction
+        })
+        .then((el) => {
+          transaction.commit();
+          let room = el.get({
+            plain: true
+          });
+          return room;
+        }).catch(e => {
+          transaction.rollback();
+          throw this.sanitizeSequelizeError(e);
+        });
+    } catch (e) {
+      if (transaction) {
+        transaction.rollback();
+      }
+      throw this.sanitizeSequelizeError(e);
+    }
+  }
+
   async update(room, value) {
     let transaction = null;
     try {
@@ -131,12 +156,36 @@ class Rooms extends nodefony.Service {
     }
   }
 
-  async create(query) {
-
-  }
-
-  async delete(id) {
-
+  async delete(name) {
+    let transaction = null;
+    try {
+      return this.Room.findOne({
+          where: {
+            name: name
+          }
+        })
+        .then(async (room) => {
+          if (!room) {
+            throw new nodefony.Error(`Room ${name} not found`);
+          }
+          transaction = await this.orm.startTransaction("room");
+          return room.destroy({
+              transaction: transaction
+            })
+            .then((room) => {
+              transaction.commit();
+              return room;
+            }).catch(e => {
+              transaction.rollback();
+              throw this.sanitizeSequelizeError(e);
+            });
+        });
+    } catch (e) {
+      if (transaction) {
+        transaction.rollback();
+      }
+      throw this.sanitizeSequelizeError(e);
+    }
   }
 
   // UserRoom n:n

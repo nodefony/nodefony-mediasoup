@@ -11,7 +11,7 @@
       </v-badge>
 
       <v-spacer></v-spacer>
-      <v-btn small>Create</v-btn>
+      <v-btn x-small class="ml-5" color="grey" @click="selectRoom({}, true)">Create</v-btn>
     </v-toolbar>
     <v-layout v-if="layout==='table'" style='margin-top:64px'>
       <v-container fluid class="ma-5">
@@ -37,7 +37,7 @@
     </v-layout>
   </v-container>
   <v-container v-if="selectedRoom" style="background-color:#f2f5f8">
-    <room-edit :room="selectedRoom" class="mt-5" ref="selectedRoom" v-on:close="closeRoom" />
+    <room-edit :room="selectedRoom" :creating="create" class="mt-5" ref="selectedRoom" v-on:close="closeRoom" />
   </v-container>
 </v-window>
 </template>
@@ -59,6 +59,7 @@ export default {
     return {
       loading: true,
       rooms: [],
+      create: false,
       selectedRoom: null,
       layout: "table",
       countall: null
@@ -119,15 +120,40 @@ export default {
         }
       })
     },
-    selectRoom(item) {
-      this.selectedRoom = item;
+    selectRoom(item, create = false) {
+      if (create) {
+        this.create = create;
+        this.selectedRoom = item;
+      } else {
+        return this.$router.push({
+          name: 'Room',
+          params: {
+            roomid: item.name
+          }
+        });
+      }
     },
     closeRoom() {
       this.selectedRoom = null;
     },
     async deleteRoom(item) {
-      this.selectedRoom = item;
-      await this.$refs["selectedRoom"].deleteRoom();
+      const name = item.name;
+      return this.$mediasoup.request(`room/${name}`, "DELETE")
+        .then((response) => {
+          this.loading = false;
+          if (response.message) {
+            this.message = this.log(response.message, "INFO");
+          } else {
+            this.message = this.log(`Delete ${name} ok`, "INFO");
+          }
+          this.$emit("remove", item);
+          this.getRooms();
+          return response.result.room;
+        })
+        .catch(async (e) => {
+          this.loading = false;
+          this.message = this.log(e.message, "ERROR");
+        });
     }
   }
 

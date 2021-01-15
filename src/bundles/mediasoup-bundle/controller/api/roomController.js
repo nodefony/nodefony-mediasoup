@@ -152,6 +152,58 @@ class apiRomController extends nodefony.Controller {
   }
 
   /**
+   *  API POST
+   *    @Route ("/rooms",
+   *      name="route-room-post")
+   *    @Method ({"POST"})
+   */
+  async postRoomAction() {
+    this.checkAuthorisation();
+    return this.roomsService.create(this.query)
+      .then(async (room) => {
+        const message = `Save Room ${this.query.name} : ${room} OK`;
+        this.log(message, "INFO");
+        const newRoom = await this.getRoom(this.query.name);
+        return this.api.render({
+          query: this.query,
+          room: newRoom
+        });
+      }).catch(e =>{
+        this.log(e, "ERROR");
+      })
+  }
+
+  /**
+   *  API DELETE
+   *    @Route ("/room/{name}",
+   *      name="route-room-delete")
+   *    @Method ({"DELETE"})
+   */
+  async deleteRoomAction(name) {
+    this.checkAuthorisation();
+    if (name) {
+      return this.roomsService.delete(name)
+        .then((result) => {
+          let message = `Delete Room ${result.name} OK`;
+          this.setFlashBag("info", message);
+          if (this.getRoom().name === name) {
+            this.session.invalidate();
+          }
+          return this.api.render({
+            query: this.query,
+            room: null
+          });
+        }).catch(e => {
+          this.logger(e, "ERROR");
+          this.setFlashBag("error", e.message);
+        });
+    }
+    let error = new nodefony.Error(`Room ${name} not found`, this.context);
+    this.setFlashBag("error", error.message);
+    this.logger(error, "ERROR");
+  }
+
+  /**
    *  API
    *    @Route ("/access/room/{name}",
    *      name="route-rooms-access")

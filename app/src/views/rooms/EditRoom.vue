@@ -5,9 +5,13 @@
       <v-icon class="mr-5">mdi-home</v-icon>
       <v-toolbar-title>
         {{ $t('rooms.room') }} {{room ? room.name : ""}}
-        <v-btn class="ml-10" small @click="editing=!editing;tab =0" color="teal">
+        <v-btn v-if="!creating" class="ml-10" small @click="editing=!editing;tab =0" color="teal">
           <v-icon small left>mdi-pencil</v-icon>
           Edit
+        </v-btn>
+        <v-btn v-if='!creating' color="white--text accent-4" @click="deleteRoom(room.name)">
+          <v-icon small left>mdi-delete</v-icon>
+          Delete
         </v-btn>
       </v-toolbar-title>
       <v-spacer></v-spacer>
@@ -15,7 +19,7 @@
         <v-tabs v-model="tab" align-with-title v-on:change="editing=false">
           <v-tabs-slider color="yellow"></v-tabs-slider>
           <v-tab :disabled="false" ref="user" @click="editing=false">
-            {{ $t(`users.info`) }}
+            {{ $t(`rooms.info`) }}
           </v-tab>
         </v-tabs>
       </template>
@@ -23,7 +27,7 @@
     <v-tabs-items v-model="tab">
       <v-tab-item>
         <v-card flat tile>
-          <v-container v-if="!editing">
+          <v-container fluid v-if="!editing && !creating">
             <v-list>
               <v-list-item>
                 <v-list-item-content>
@@ -58,7 +62,7 @@
               </v-list-item>
             </v-list>
           </v-container>
-          <v-container fluid v-if="editing">
+          <v-container fluid v-if="editing || creating">
             <v-card flat tile>
               <form autocomplete="on">
                 <v-row>
@@ -133,15 +137,16 @@ import {
 export default {
   name: 'EditRoom',
   props: {
-    room: {
-      type: Object,
+    roomid: {
+      type: String,
       default: null
     }
   },
   data: () => ({
     tab: null,
     editing: false,
-    creating: false,
+    message: null,
+    room: {},
     showPassword: false,
     rules: {
       min: v => !v || v.length >= 8 || 'Min 8 characters',
@@ -149,29 +154,49 @@ export default {
     panel: [1, 0, 0],
     formData: {
       password: ""
-     }
+    }
   }),
   async mounted() {
-    if (this.room) {
-      console.log("mounted", this.room)
+    if (this.roomid) {
+      this.room = await this.getRoom(this.roomid);
+      if (this.room) {
+        this.room.access = this.room.access || "private";
+        this.room.secure = (typeof this.room.secure === "undefined" ? false : this.room.secure);
+        this.room.waitingconnect = (typeof this.room.waitingconnect === "undefined" ? false : this.room.waitingconnect);
+        this.formData = { ...this.room, ...this.formData };
+        console.log("mounted", this.formData);
+      }
     }
-    this.formData = { ...this.room, ...this.formData };
   },
   destroyed() {
     //console.log("destroyed", this.room.name)
   },
   watch: {
-
+    message(value) {
+      this.notify(value);
+    }
   },
   computed: {
-
+    creating() {
+      return !this.roomid;
+    }
   },
   methods: {
+    async getRoom(roomid) {
+      this.loading = true;
+      return this.$mediasoup.request(`room/${roomid}`)
+        .then((response) => {
+          this.loading = false;
+          return response.result;
+        })
+        .catch(async (e) => {
+          this.loading = false;
+          this.log(e, "ERROR");
+          return null;
+        });
+    },
     formatAccessLabel(label) {
       return label == 'private' ? 'Private' : 'Public';
-    },
-    async deleteRoom() {
-      console.log("remove")
     },
     saveRoom() {
       const form = this.formData;
@@ -199,6 +224,31 @@ export default {
           this.message = this.log(e.message, "ERROR");
         })
     },
+    deleteRoom(name) {
+      this.loading = true;
+      name = name || this.room.name;
+      return this.$mediasoup.request(`room/${name}`, "DELETE")
+        .then((response) => {
+          this.loading = false;
+          if (response.message) {
+            this.message = this.log(response.message, "INFO");
+          } else {
+            this.message = this.log(`Delete ${name} ok`, "INFO");
+          }
+          this.$emit("remove", this.room);
+          this.close();
+          this.$router.replace({
+            name: 'Rooms',
+            params: {},
+            force: true
+          });
+          return response.result.room;
+        })
+        .catch(async (e) => {
+          this.loading = false;
+          this.message = this.log(e.message, "ERROR");
+        });
+    },
     async addRoom() {
       this.loading = true;
       return this.$mediasoup.request(`rooms`, "POST", {
@@ -208,18 +258,16 @@ export default {
           }
         })
         .then((response) => {
-          this.creating = false;
-          Object.assign(this.room, data.result.room);
           this.loading = false;
           if (response.message) {
             this.message = this.log(response.message, "INFO");
           } else {
-            this.message = this.log(`create ${this.room.name}`, "INFO");
+            this.message = this.log(`create ${response.result.room.name}`, "INFO");
           }
           this.$router.replace({
-            name: 'Rooms',
+            name: 'Room',
             params: {
-              roomid: this.room.name
+              roomid: response.result.room.name
             },
             force: true
           });
