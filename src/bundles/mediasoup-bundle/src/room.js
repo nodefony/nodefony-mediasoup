@@ -25,8 +25,8 @@ class Room extends nodefony.Service {
   }
 
   async logStatus() {
-    let status = `logStatus() [roomId:${this.id}, Peers:${this.peers.length}, mediasoup Transports:${this.router._transports.size}]`;
-    this.log(status);
+    //let status = `logStatus() [roomId:${this.id}, Peers:${this.peers.length}, mediasoup Transports:${this.router._transports.size}]`;
+    //this.log(status);
     return {
       roomid: this.id,
       peers: this.peers.size,

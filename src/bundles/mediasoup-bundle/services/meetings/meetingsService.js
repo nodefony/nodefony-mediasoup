@@ -400,7 +400,7 @@ class Meetings extends nodefony.Service {
   getRoom(roomId) {
     return this.rooms.get(roomId);
   }
-  
+
   getRooms() {
     return this.rooms;
   }
@@ -413,6 +413,67 @@ class Meetings extends nodefony.Service {
     this.rooms.set(roomid, room);
     room.on('close', () => this.rooms.delete(roomid));
   }
+
+  async getRoomInfo(room){
+    let ele = {};
+    ele.id = room.id;
+    ele.status = await room.logStatus();
+    ele.closed = ele.status.closed ? true : false;
+    ele.RouterRtpCapabilities = room.getRouterRtpCapabilities();
+    return ele;
+  }
+
+  getPeersInfo(room){
+    return new Promise(async (resolve , reject)=>{
+      let peers = [];
+      let i = room.peers.size;
+      if(i === 0 ){
+        return resolve(peers);
+      }
+      room.peers.forEach( (peer, key, map)=>{
+        let ele = {};
+        ele.id = peer.id;
+        ele.status = peer.status;
+        ele.transports = peer.transports.size;
+        ele.producers = peer.producers.size;
+        ele.consumers = peer.consumers.size;
+        ele.dataProducers = peer.dataProducers.size;
+        ele.dataConsumers = peer.dataConsumers.size;
+        peers.push(ele);
+        if(i === 1){
+          return resolve(peers);
+        }
+        i--;
+      });
+      return resolve(peers);
+    });
+  }
+
+  getRoomsInfos(room) {
+    return new Promise(async (resolve , reject)=>{
+      try{
+        if (room){
+          return resolve( await this.getRoomInfo(room));
+        }
+        let rows = [];
+        let i = this.rooms.size;
+        if(i === 0 ){
+          return resolve(rows);
+        }
+        this.rooms.forEach(async (room, key, map)=>{
+          let ele = await this.getRoomInfo(room)
+          rows.push(ele);
+          if(i === 1){
+            return resolve(rows);
+          }
+          i--;
+        })
+      }catch(e){
+        return reject(e);
+      }
+    })
+  }
+
 }
 
 module.exports = Meetings;

@@ -64,16 +64,20 @@ class MediasoupStats extends nodefony.Service {
       }
     }
     const interval = setInterval(async () => {
-      let roomStat = {
+      /*let roomStat = {
         status:{
         }
-      }
-      const usage = await room.worker.getResourceUsage();
+      }*/
+      //const usage = await room.worker.getResourceUsage();
+
       this.log(`mediasoup Worker resource usage [pid:${room.worker.pid}]:`, "DEBUG");
-      roomStat.status.worker = {usage};
+      //roomStat.status.worker = {usage};
       return context.send(JSON.stringify({
         method: "roomStats",
-        room: roomStat
+        //room: roomStat
+        roomid:message.roomid,
+        room: await this.meetingsService.getRoomsInfos(room),
+        peers:await this.meetingsService.getPeersInfo(room)
       }));
     }, 1 * 1000);
     let idInterval = nodefony.generateId();

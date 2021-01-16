@@ -189,6 +189,9 @@ export default {
             if (message.room) {
               this.currentRoom = message.room;
             }
+            if (message.peers) {
+              this.peers = message.peers;
+            }
             break;
         }
       })

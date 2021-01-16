@@ -36,66 +36,6 @@ class meetingsController extends nodefony.Controller {
     return this.meetingsService.getRoom(roomId);
   }
 
-  async getRoomInfo(room){
-    let ele = {};
-    ele.id = room.id;
-    ele.status = await room.logStatus();
-    ele.closed = ele.status.closed ? true : false;
-    ele.RouterRtpCapabilities = room.getRouterRtpCapabilities();
-    return ele;
-  }
-
-  async getPeersInfo(room){
-    return new Promise(async (resolve , reject)=>{
-      let peers = [];
-      let i = room.peers.size;
-      if(i === 0 ){
-        return resolve(peers);
-      }
-      room.peers.forEach( (peer, key, map)=>{
-        let ele = {};
-        ele.id = peer.id;
-        ele.status = peer.status;
-        ele.transports = peer.transports.size;
-        ele.producers = peer.producers.size;
-        ele.consumers = peer.consumers.size;
-        ele.dataProducers = peer.dataProducers.size;
-        ele.dataConsumers = peer.dataConsumers.size;
-        peers.push(ele);
-        if(i === 1){
-          return resolve(peers);
-        }
-        i--;
-      });
-      return resolve(peers);
-    });
-  }
-
-  getRoomsInfos(room) {
-    return new Promise(async (resolve , reject)=>{
-      try{
-        if (room){
-          return resolve( await this.getRoomInfo(room));
-        }
-        let rows = [];
-        let i = this.meetingsService.rooms.size;
-        if(i === 0 ){
-          return resolve(rows);
-        }
-        this.meetingsService.rooms.forEach(async (room, key, map)=>{
-          let ele = await this.getRoomInfo(room)
-          rows.push(ele);
-          if(i === 1){
-            return resolve(rows);
-          }
-          i--;
-        })
-      }catch(e){
-        return reject(e);
-      }
-    })
-  }
-
   /**
    *  API GET resource that returns the mediasoup Router RTP capabilities of the room
    *    @Route ("",
@@ -103,7 +43,7 @@ class meetingsController extends nodefony.Controller {
    *    @Method ({"GET"})
    */
   async meetingsAction() {
-    let res = await this.getRoomsInfos()
+    const res = await this.meetingsService.getRoomsInfos()
     return this.api.render({
       size:res.length,
       rows: res
@@ -121,8 +61,8 @@ class meetingsController extends nodefony.Controller {
     if( room){
       return this.api.render({
         roomid: roomId,
-        room: await this.getRoomsInfos(room),
-        peers:await this.getPeersInfo(room)
+        room: await this.meetingsService.getRoomsInfos(room),
+        peers:await this.meetingsService.getPeersInfo(room)
       });
     }
     throw new Error(`Room ${roomId} not found`)
