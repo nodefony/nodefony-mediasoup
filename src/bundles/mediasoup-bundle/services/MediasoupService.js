@@ -43,7 +43,6 @@ module.exports = class Mediasoup extends nodefony.Service {
       let info = `Waiting connection :
       [roomId:${query.roomId}, address:${context.remoteAddress}, origin:${context.origin}]`;
       this.log(info);
-
       try {
         if (!query.roomId) {
           context.close("1006", "closed no roomId ");

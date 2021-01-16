@@ -207,6 +207,10 @@ class Mediasoup extends nodefony.Service {
     });
   }
 
+  async join() {
+    return await this.room.join();
+  }
+
   initializeRoom(roomid, peerid, options){
     return new Promise((resolve, reject) => {
       try{
@@ -261,9 +265,44 @@ class Mediasoup extends nodefony.Service {
     }
   }
 
-  async join() {
-    return await this.room.join();
+  connectStats(uri = "ws/stats", port = "5152"){
+    return new Promise( (resolve, reject) => {
+      const url = `wss://${this.domain}:${port}/mediasoup/${uri}`;
+      console.log(url)
+      this.sockStats = new WebSocket(url);
+      this.sockStats.onopen = (event) => {
+        this.log(`Mediasoup Websocket Connect Stats`);
+        try{
+          this.fire("openSock", event, this);
+          return resolve(this.sockStats);
+        }catch(e){
+          return reject(e);
+        }
+      };
+      this.sockStats.onmessage = (event) => {
+        let message = null;
+        //let sendMessage = null;
+        try {
+          message = JSON.parse(event.data);
+          this.fire("stats", message, this);
+        } catch (e) {
+          this.log(e, "ERROR");
+          this.log(event.data, "ERROR");
+          throw new Error(`Bad Json Message`);
+        }
+      }
+      this.sockStats.onerror = (error) => {
+        this.log(error, "ERROR");
+        this.fire("errorSockStats", error, this);
+        return reject(error);
+      };
+      this.sockStats.onclose = (event) => {
+        this.fire("closeSockStats", event ,this);
+        this.sockStats = null;
+      };
+    })
   }
+
 }
 
 export default new Mediasoup(process.env, nodefony.kernel);

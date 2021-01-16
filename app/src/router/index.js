@@ -15,6 +15,8 @@ import MeetingDetails from '../views/meetings/MeetingDetails.vue';
 import Users from '../views/users/Users.vue';
 import EditUser from '../views/users/EditUser.vue';
 
+import PageNotFound from '../views/404';
+
 const ifAuthenticated = (to, from, next) => {
   if (Store.getters.isAuthenticated) {
     return next();
@@ -54,6 +56,7 @@ const routes = [{
       import( /* webpackChunkName: "about" */ '../views/About.vue')
  }, {
     path: '/rooms',
+    alias: '/rooms/home',
     name: 'Rooms',
     component: Rooms,
     beforeEnter: ifAuthenticated,
@@ -78,6 +81,7 @@ const routes = [{
    component: HomeMeeting,
  },{
     path: '/meetings',
+    alias: '/meetings/home',
     name: 'Meetings',
     component: Meetings,
     beforeEnter: ifAuthenticated,
@@ -89,6 +93,7 @@ const routes = [{
     beforeEnter: ifAuthenticated,
  }, {
     path: '/users',
+    alias: '/users/home',
     name: 'Users',
     beforeEnter: ifAuthenticated,
     component: Users
@@ -98,8 +103,11 @@ const routes = [{
     props: true,
     beforeEnter: ifAuthenticated,
     component: EditUser
- }
-];
+ },{
+   // and finally the default route, when none of the above matches:
+    path: "*", component: PageNotFound
+
+}];
 
 const router = new VueRouter({
   mode: 'history',

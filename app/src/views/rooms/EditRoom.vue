@@ -4,22 +4,25 @@
     <v-toolbar color="blue-grey" dark flat>
       <v-icon class="mr-5">mdi-home</v-icon>
       <v-toolbar-title>
-        {{ $t('rooms.room') }} {{room ? room.name : ""}}
-        <v-btn v-if="!creating" class="ml-10" small @click="editing=!editing;tab =0" color="teal">
+        {{room ? room.name : ""}}
+        <v-btn v-if="hasRoleAdmin && !creating" class="ml-10" small @click="editing=!editing;tab =0" color="teal">
           <v-icon small left>mdi-pencil</v-icon>
           Edit
         </v-btn>
-        <v-btn v-if='!creating' color="white--text accent-4" @click="deleteRoom(room.name)">
-          <v-icon small left>mdi-delete</v-icon>
-          Delete
-        </v-btn>
+
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <template v-slot:extension>
         <v-tabs v-model="tab" align-with-title v-on:change="editing=false">
           <v-tabs-slider color="yellow"></v-tabs-slider>
-          <v-tab :disabled="false" ref="user" @click="editing=false">
+          <v-tab :disabled="false" ref="info" @click="editing=false">
             {{ $t(`rooms.info`) }}
+          </v-tab>
+          <v-tab v-if="!creating && hasRoleAdmin " :disabled="false" ref="danger" @click="editing=false">
+            Zone Danger
+          </v-tab>
+          <v-tab v-if="!creating && hasRoleAdmin" :disabled="false" ref="adminitrators" @click="editing=false">
+            Administrators
           </v-tab>
         </v-tabs>
       </template>
@@ -52,16 +55,44 @@
 
               <v-list-item>
                 <v-list-item-content>
-                    <v-list-item-title class="green--text" v-if="room.secure">
-                      <v-icon left color="green"> mdi-lock </v-icon>{{$t("rooms.secure")}}
-                    </v-list-item-title>
-                    <v-list-item-title class="red--text" v-else>
-                      <v-icon left color="red"> mdi-lock-off </v-icon>{{$t("rooms.unsecure")}}
-                    </v-list-item-title>
+                  <v-list-item-title>{{room.waitingconnect}}</v-list-item-title>
+                  <v-list-item-subtitle>{{$t("rooms.waiting")}}</v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
+
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title class="green--text" v-if="room.secure">
+                    <v-icon left color="green"> mdi-lock </v-icon>{{$t("rooms.secure")}}
+                  </v-list-item-title>
+                  <v-list-item-title class="red--text" v-else>
+                    <v-icon left color="red"> mdi-lock-off </v-icon>{{$t("rooms.unsecure")}}
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item v-if="room">
+                <v-list-item-icon>
+                  <v-icon color="indigo">
+                    mdi-shield-account
+                  </v-icon>
+                </v-list-item-icon>
+
+                <v-list-item-content>
+                  <v-list-item-title>
+                    <v-chip class="mx-2 my-1" x-small v-for="user in room.users" :key="`${user.username}-chip`">
+                      {{ user.username }}
+                    </v-chip>
+                  </v-list-item-title>
+                  <v-list-item-subtitle>Administrators</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+
+
             </v-list>
           </v-container>
+
+          <!-- EDIT -->
           <v-container fluid v-if="editing || creating">
             <v-card flat tile>
               <form autocomplete="on">
@@ -120,6 +151,31 @@
           </v-container>
         </v-card>
       </v-tab-item>
+
+      <!-- DANGER ZONE -->
+      <v-tab-item>
+
+
+        <v-banner v-if='hasRoleAdmin' two-line tile>
+          Delete the Room {{ room.name}}
+          <template v-slot:actions>
+            <v-btn color="white--text red accent-4" @click="deleteRoom(room.name)">
+              <v-icon left dark>
+                mdi-delete
+              </v-icon>
+              Delete
+            </v-btn>
+          </template>
+        </v-banner>
+
+
+      </v-tab-item>
+
+      <!-- ADMIN ZONE -->
+      <v-tab-item>
+      </v-tab-item>
+
+
     </v-tabs-items>
   </v-card>
 </v-window>
@@ -163,8 +219,9 @@ export default {
         this.room.access = this.room.access || "private";
         this.room.secure = (typeof this.room.secure === "undefined" ? false : this.room.secure);
         this.room.waitingconnect = (typeof this.room.waitingconnect === "undefined" ? false : this.room.waitingconnect);
-        this.formData = { ...this.room, ...this.formData };
-        console.log("mounted", this.formData);
+        this.formData = { ...this.room,
+          ...this.formData
+        };
       }
     }
   },
@@ -177,8 +234,14 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([
+      'hasRole'
+    ]),
     creating() {
       return !this.roomid;
+    },
+    hasRoleAdmin() {
+      return this.hasRole("ROLE_ADMIN");
     }
   },
   methods: {

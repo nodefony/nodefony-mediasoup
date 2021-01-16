@@ -12,13 +12,14 @@
     <v-layout class="" v-if="layout==='table'" style='margin-top:64px;'>
       <v-container fluid class="ma-5">
         <v-card-title>
-          {{$t('rooms.name')}}
+          {{$t('meetings.meetings')}} Status
           <v-spacer></v-spacer>
+          <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" single-line hide-details></v-text-field>
         </v-card-title>
-        <v-data-table dense fixed-header height="520" :loading="loading" :headers="headers" :items="meetings" :items-per-page="15" class="elevation-2" :headers-length="30" :search="search">
+        <v-data-table fixed-header height="520" :loading="loading" :headers="headers" :items="meetings" :items-per-page="15" class="elevation-2" :headers-length="30" :search="search">
 
           <template v-slot:item.id="{ item }">
-            <v-btn @click="redirect(item.id)" class="ma-1" color="" plain>{{item.id}}</v-btn>
+            <v-btn x-small class="mr-2 mt-1" @click="redirect(item.id)">{{item.id}}</v-btn>
           </template>
 
           <template v-slot:item.actions="{ item }">

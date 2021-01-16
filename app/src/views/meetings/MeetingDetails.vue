@@ -166,13 +166,41 @@ export default {
   async mounted() {
     if (this.roomid) {
       this.currentRoom = await this.getRoom(this.roomid);
+      this.$mediasoup.connectStats()
+        .then((sock) => {
+          this.sock = sock;
+          this.message = this.log("Connect mediasoup stats websocket ");
+          this.sock.send(JSON.stringify({
+            method: "startRoomStats",
+            roomid: this.roomid,
+          }));
+        }).catch(e => {
+          this.message = this.log(e.message, "ERROR");
+          this.sock = null;
+        })
+      this.$mediasoup.on("closeSockStats", (event) => {
+        if (event.reason) {
+          this.message = this.log(event.reason, "ERROR");
+        }
+      });
+      this.$mediasoup.on("stats", (message) => {
+        switch (message.method) {
+          case "roomStats":
+            if (message.room) {
+              this.currentRoom = message.room;
+            }
+            break;
+        }
+      })
     } else {
       if (this.room) {
         this.currentRoom = this.room;
       }
     }
   },
-  destroyed() {},
+  beforeDestroy() {
+    return this.sock.close(1000);
+  },
 
   computed: {
     ...mapGetters([

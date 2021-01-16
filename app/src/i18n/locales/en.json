@@ -14,7 +14,8 @@
     "actions": "Actions",
     "info": "Informations",
     "join": "join",
-    "peers": "peers"
+    "peers": "peers",
+    "waiting":"Connection Awaiting Authorization"
   },
   "meetings": {
     "meetings": "Meetings",

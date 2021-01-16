@@ -86,17 +86,27 @@ module.exports = {
   },
 
   pwa: {
-   name: 'nodefony-mediasoup',
-   themeColor: '#4DBA87',
-   msTileColor: '#000000',
-   appleMobileWebAppCapable: 'yes',
-   appleMobileWebAppStatusBarStyle: 'black',
-   // configure the workbox plugin
-   workboxPluginMode: 'InjectManifest',
-   workboxOptions: {
-     // swSrc is required in InjectManifest mode.
-     swSrc: 'src/pwa/registerServiceWorker.js',
-     // ...other Workbox options...
-   }
- }
+    name: 'nodefony-mediasoup',
+    themeColor: '#4DBA87',
+    msTileColor: '#000000',
+    appleMobileWebAppCapable: 'yes',
+    appleMobileWebAppStatusBarStyle: 'black',
+    // configure the workbox plugin
+    workboxPluginMode: 'InjectManifest',
+    workboxOptions: {
+      // swSrc is required in InjectManifest mode.
+      swSrc: 'src/pwa/registerServiceWorker.js',
+      // ...other Workbox options...
+    },
+    manifestOptions: {
+      start_url: "."
+    },
+    iconPaths: {
+      favicon32: '/app/img/icons/favicon-32x32.png',
+      favicon16: '/app/img/icons/favicon-16x16.png',
+      appleTouchIcon: '/app/img/icons/apple-touch-icon-152x152.png',
+      maskIcon: '/app/img/icons/safari-pinned-tab.svg',
+      msTileImage: '/app/img/icons/msapplication-icon-144x144.png'
+    }
+  }
 };

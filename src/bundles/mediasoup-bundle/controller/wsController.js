@@ -10,18 +10,17 @@ class wsController extends nodefony.Controller {
   constructor(container, context) {
     super(container, context);
     this.mediasoup = this.get("Mediasoup");
+    this.mediasoupStats = this.get("MediasoupStats");
   }
 
   /**
    *    @Route ("/ws",
-   *      name="route-mediasoup-realtime")
+   *      name="route-mediasoup-wss-join")
    */
   indexAction(message) {
     switch (this.method) {
       case "WEBSOCKET":
         if (message) {
-          let info = `websocket message type :  ${message.type}`;
-          this.log(info, "DEBUG");
           this.mediasoup.handle(JSON.parse(message.utf8Data), this.context);
         } else {
           this.mediasoup.handShake(this.query, this.context);
@@ -33,18 +32,16 @@ class wsController extends nodefony.Controller {
   }
 
   /**
-   *    @Route ("/waiting",
-   *      name="route-mediasoup-realtime-waiting")
+   *    @Route ("/ws/stats",
+   *      name="route-mediasoup-wss-stats")
    */
-  waitingAction(message) {
+  statsAction(message) {
     switch (this.method) {
       case "WEBSOCKET":
         if (message) {
-          let info = `websocket message type :  ${message.type}`;
-          this.log(info, "DEBUG");
-          this.mediasoup.handleConnection(JSON.parse(message.utf8Data), this.context);
+          this.mediasoupStats.handle(JSON.parse(message.utf8Data), this.context);
         } else {
-          this.mediasoup.handShakeConnection(this.query, this.context);
+          this.mediasoupStats.handShake(this.query, this.context);
         }
         break;
       default:

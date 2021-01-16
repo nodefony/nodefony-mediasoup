@@ -33,5 +33,10 @@ module.exports = {
     environment: ["SERVER"],
     class: nodefony.services.Streamer,
     arguments: ["@container"]
+  },
+  MediasoupStats: {
+    environment: ["SERVER"],
+    class: nodefony.services.MediasoupStats,
+    arguments: ["@container"]
   }
 };

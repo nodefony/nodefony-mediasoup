@@ -2,24 +2,29 @@
 <v-window style="background-color:#f2f5f8">
   <v-container v-show="!selectedRoom" fluid class="ma-0 pa-0">
 
-    <v-toolbar fixed outlined width="100%" color="blue-grey" dark flat style="top: 64px;position:fixed; z-index:1000">
+    <v-toolbar fixed outlined width="100%" color="blue-grey" dark flat style="top: 64px;position:fixed;">
 
       <v-icon class="mr-5">mdi-home</v-icon>
 
-      <v-badge inline color="cyan" :content="countall || 0">
-        <v-toolbar-title class="mx-5"> {{$t('rooms.name')}}</v-toolbar-title>
-      </v-badge>
+      <v-toolbar-title class="mx-5"> {{$t('rooms.name')}}</v-toolbar-title>
 
       <v-spacer></v-spacer>
-      <v-btn x-small class="ml-5" color="grey" @click="selectRoom({}, true)">Create</v-btn>
     </v-toolbar>
     <v-layout v-if="layout==='table'" style='margin-top:64px'>
       <v-container fluid class="ma-5">
-        <v-data-table :loading="loading" :headers="headers" :items="rooms" :items-per-page="10" class="elevation-2">
-          <template v-slot:item.actions="{ item }">
+        <v-card-title>
+          {{$t('rooms.name')}}
+          <v-btn v-if="isAdmin" x-small class="ml-5" color="grey" @click="selectRoom({}, true)">Create</v-btn>
+          <v-spacer></v-spacer>
+          <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" single-line hide-details></v-text-field>
+        </v-card-title>
+        <v-data-table :loading="loading" :headers="headers" :items="rooms" :items-per-page="10" class="elevation-2" :search="search">
+          <template v-slot:item.name="{ item }">
             <v-btn small class="mr-2" @click="joinMeetingOnRoom(item)">
-              {{$t('rooms.join')}}
+              {{item.name}}
             </v-btn>
+          </template>
+          <template v-slot:item.actions="{ item }">
             <v-icon small class="mr-2" @click="selectRoom(item)">
               mdi-pencil
             </v-icon>
@@ -62,38 +67,43 @@ export default {
       create: false,
       selectedRoom: null,
       layout: "table",
-      countall: null
+      countall: null,
+      search: ""
     }
   },
   mounted() {
     this.getRooms();
   },
   computed: {
+    ...mapGetters([
+      'hasRole'
+    ]),
+    isAdmin() {
+      return this.hasRole("ROLE_ADMIN")
+    },
     headers() {
       return [{
-          text: this.$t("rooms.name"),
-          align: 'start',
-          sortable: false,
-          value: 'name',
-        },
-        {
-          text: this.$t("rooms.description"),
-          value: 'description'
-        },
-        {
-          text: this.$t("rooms.secure"),
-          value: 'secure'
-        },
-        {
-          text: this.$t("rooms.access"),
-          value: 'access'
-        },
-        {
-          text: this.$t("rooms.actions"),
-          value: 'actions',
-          sortable: false
-        },
-      ]
+        text: this.$t("rooms.name"),
+        align: 'start',
+        sortable: false,
+        value: 'name',
+      }, {
+        text: this.$t("rooms.description"),
+        value: 'description'
+      }, {
+        text: this.$t("rooms.secure"),
+        value: 'secure'
+      }, {
+        text: this.$t("rooms.access"),
+        value: 'access'
+      }, {
+        text: this.$t("rooms.waiting"),
+        value: 'waitingconnect'
+      }, {
+        text: this.$t("rooms.actions"),
+        value: 'actions',
+        sortable: false
+      }]
     }
   },
   destroyed() {},
@@ -114,7 +124,7 @@ export default {
     },
     joinMeetingOnRoom(item) {
       return this.$router.push({
-        name: 'Meeting',
+        name: 'HomeMeeting',
         params: {
           roomid: item.name
         }

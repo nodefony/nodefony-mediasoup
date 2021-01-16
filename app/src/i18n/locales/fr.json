@@ -14,7 +14,8 @@
     "actions": "Actions",
     "info": "Informations",
     "join": "joindre",
-    "peers": "Participants"
+    "peers": "Participants",
+    "waiting":"Connection en Attente d'autorisation"
   },
   "meetings": {
     "meetings": "Réunions",

@@ -8,7 +8,7 @@ const {
  *	@constructor
  *	@param {class} container
  *	@param {class} context
- *  @Route ("/mediasoup/api/cli")
+ *  @Route ("/mediasoup/cli/api")
  */
 class apiController extends nodefony.Controller {
 

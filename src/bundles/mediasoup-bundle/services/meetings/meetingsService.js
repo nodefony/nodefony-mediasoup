@@ -400,6 +400,10 @@ class Meetings extends nodefony.Service {
   getRoom(roomId) {
     return this.rooms.get(roomId);
   }
+  
+  getRooms() {
+    return this.rooms;
+  }
 
   deleteRoom(roomId) {
     return this.rooms.delete(roomId);

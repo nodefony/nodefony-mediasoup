@@ -52,13 +52,17 @@ class apiRomController extends nodefony.Controller {
     }
     // create styky cookie
     const cookie_name = room.sticky_cookie;
-    const cookie = this.context.createCookie(cookie_name, room.name, {
-      secure: true,
-      maxAge: "1h",
-      httpOnly: true
-      //path
-    });
-    this.log(`add cookies : ${cookie_name}`);
+    let cookie = null;
+    if( cookie_name){
+       cookie = this.context.createCookie(cookie_name, room.name, {
+        secure: true,
+        maxAge: "1h",
+        httpOnly: true
+        //path
+      });
+      this.log(`add cookies : ${cookie_name}`);
+    }
+    return cookie
   }
 
   /**
