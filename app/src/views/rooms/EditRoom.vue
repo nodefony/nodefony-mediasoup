@@ -195,7 +195,7 @@
               <v-toolbar-title>Aministrators</v-toolbar-title>
               <v-divider class="mx-4" inset vertical></v-divider>
               <v-spacer></v-spacer>
-              <v-dialog v-model="dialog" max-width="500px">
+              <v-dialog v-model="dialog" max-width="800px">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn small color="primary" dark class="mb-2" v-bind="attrs" v-on="on" @click="openDialog">
                     Add
@@ -206,17 +206,17 @@
                     <span class="headline">{{ $t('users.users') }}</span>
                   </v-card-title>
                   <v-card-text>
-                    <v-list>
-                      <v-list-item v-for="user in users" :key="user.username">
+                    <v-list dense>
+                      <v-list-item dense v-for="user in users" :key="user.username">
 
-                        <v-list-item-avatar>
-                          <v-icon dark>mdi-account</v-icon>
+                        <v-list-item-avatar color="teal">
+                          <v-icon>mdi-account</v-icon>
                         </v-list-item-avatar>
 
                         <v-list-item-content>
                           <v-list-item-title v-text="user.username"></v-list-item-title>
 
-                          <v-list-item-subtitle v-text="user.name">{{user.name}} {{user.surname}}</v-list-item-subtitle>
+                          <v-list-item-subtitle>{{user.name}} {{user.surname}}</v-list-item-subtitle>
                         </v-list-item-content>
 
                         <v-list-item-action>
@@ -241,7 +241,7 @@
 
           </template>
           <template v-slot:item.actions="{ item }">
-            <v-icon small @click="dialog=true">
+            <v-icon small @click="openDialog">
               mdi-delete
             </v-icon>
           </template>

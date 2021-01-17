@@ -43,7 +43,7 @@
     <v-list-group class="mt-2" v-if="isAuthenticated" :value="false" prepend-icon="mdi-home">
 
       <template v-slot:activator>
-        <v-list-item-title>{{$t('rooms.name')}}</v-list-item-title>
+        <v-list-item-title>{{$t('rooms.meeting')}}</v-list-item-title>
       </template>
 
       <v-list-item sub-group @click="redirect('Rooms')">
@@ -52,17 +52,6 @@
         </v-list-item-title>
         <v-list-item-icon>
           <v-icon>mdi-home</v-icon>
-        </v-list-item-icon>
-      </v-list-item>
-
-      <v-list-item sub-group @click="redirect('Room')">
-        <v-list-item-content>
-          <v-list-item-title class="ml-6">
-            Create Room
-          </v-list-item-title>
-        </v-list-item-content>
-        <v-list-item-icon>
-          <v-icon>mdi-plus-outline</v-icon>
         </v-list-item-icon>
       </v-list-item>
 

@@ -16,7 +16,8 @@
     "join": "joindre",
     "peers": "Participants",
     "waiting":"Salle d'attente",
-    "hall": "Sas d'entrée"
+    "hall": "Sas d'entrée",
+    "meeting":"Salles de Réunion"
   },
   "meetings": {
     "meetings": "Réunions",

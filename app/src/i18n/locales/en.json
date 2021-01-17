@@ -16,7 +16,8 @@
     "join": "join",
     "peers": "peers",
     "waiting":"Waiting Room",
-    "hall": "Entrance Hall"
+    "hall": "Entrance Hall",
+    "meeting":"Meeting rooms"
   },
   "meetings": {
     "meetings": "Meetings",

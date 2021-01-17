@@ -67,14 +67,73 @@
 
       <v-tab-item>
         <v-card flat>
-          <v-list two-line>
-            <v-list-item>
-              <v-list-item-content>
-                <v-list-item-title>{{currentRoom.id}}</v-list-item-title>
-                <v-list-item-subtitle>{{$t("users.name")}}</v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
+          <v-container fluid>
+            <v-list v-if='roomEntity'>
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title>{{roomEntity.name}}</v-list-item-title>
+                  <v-list-item-subtitle>{{$t("name")}}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title>{{roomEntity.description}}</v-list-item-title>
+                  <v-list-item-subtitle>{{$t("rooms.description")}}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title>{{roomEntity.access}}</v-list-item-title>
+                  <v-list-item-subtitle>{{$t("rooms.access")}}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-content>
+                  <v-row>
+                    <v-col cols="3">
+                      <v-list-item-title>{{$t("rooms.waiting")}}</v-list-item-title>
+                      <v-list-item-subtitle>{{$t("rooms.hall")}}</v-list-item-subtitle>
+                    </v-col>
+                    <v-col cols="9">
+                      <v-switch :disabled="true" v-model="roomEntity.waitingconnect"></v-switch>
+                    </v-col>
+                  </v-row>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-title class="green--text" v-if="roomEntity.secure">
+                    <v-icon left color="green"> mdi-lock </v-icon>{{$t("rooms.secure")}}
+                  </v-list-item-title>
+                  <v-list-item-title class="red--text" v-else>
+                    <v-icon left color="red"> mdi-lock-off </v-icon>{{$t("rooms.unsecure")}}
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-icon>
+                  <v-icon color="indigo">
+                    mdi-shield-account
+                  </v-icon>
+                </v-list-item-icon>
+
+                <v-list-item-content>
+                  <v-list-item-title>
+                    <v-chip class="mx-2 my-1" x-small v-for="user in roomEntity.users" :key="`${user.username}-chip`">
+                      {{ user.username }}
+                    </v-chip>
+                  </v-list-item-title>
+                  <v-list-item-subtitle>Administrators</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+
+            </v-list>
+          </v-container>
         </v-card>
       </v-tab-item>
 
@@ -136,6 +195,7 @@ export default {
       message: null,
       loading: false,
       currentRoom: null,
+      roomEntity: null,
       peers: [],
       tab: null,
       search: "",
@@ -173,10 +233,11 @@ export default {
     if (this.roomid) {
       this.loading = true;
       this.currentRoom = await this.getRoom(this.roomid);
-
+      return this.getRoomEntity(this.roomid)
     } else {
       if (this.room) {
         this.currentRoom = this.room;
+        return this.getRoomEntity(this.room.name)
       }
     }
   },
@@ -306,6 +367,20 @@ export default {
         .catch(async (e) => {
           this.loading = false;
           this.message = this.log(e.message, "ERROR");
+        });
+    },
+    getRoomEntity(roomid) {
+      this.loading = true;
+      return this.$mediasoup.request(`room/${roomid}`)
+        .then((response) => {
+          this.loading = false;
+          this.roomEntity = response.result;
+          return response.result;
+        })
+        .catch(async (e) => {
+          this.loading = false;
+          this.log(e, "ERROR");
+          return null;
         });
     },
     closeRoom(room) {
