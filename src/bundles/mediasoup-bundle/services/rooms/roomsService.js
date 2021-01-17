@@ -102,15 +102,22 @@ class Rooms extends nodefony.Service {
       });
   }
 
-  async create(query) {
-    let transaction = null;
+  async create(query, username= null, mytransaction =null) {
+    let transaction = mytransaction;
     try {
-      transaction = await this.orm.startTransaction("room");
+      if (!transaction) {
+        transaction = await this.orm.startTransaction("room");
+      }
       return this.Room.create(query, {
           transaction: transaction
         })
-        .then((el) => {
-          transaction.commit();
+        .then(async (el) => {
+          if (!mytransaction) {
+            transaction.commit();
+          }
+          if (username){
+            await el.addUser(username);
+          }
           let room = el.get({
             plain: true
           });
@@ -190,61 +197,20 @@ class Rooms extends nodefony.Service {
 
   // UserRoom n:n
   addUserRoom(username, room) {
-    return this.usersService.findOne({
-        where: {
-          username: username
-        }
-      })
-      .then(async (el) => {
-        await el.addRoom(room);
-        return this.usersService.findOne({
-          include: [{
-            model: this.Room
-           }],
-          where: {
-            username: username
-          }
-        })
-      });
+    return this.usersService.addRoom(username, room);
   }
 
   deleteUserRoom(username, roomid) {
-    return this.usersService.findOne({
-        where: {
-          username: username
-        },
-        include: [{
-          model: this.Room
-        }]
-      })
-      .then(async (el) => {
-        for (let i = 0; i < el.rooms.length; i++) {
-          let room = el.rooms[i];
-          if (room.name === roomid) {
-            await room.UserRoom.destroy();
-          }
-        }
-        return this.usersService.findOne({
-          include: [{
-            model: this.Room
-         }],
-          where: {
-            username: username
-          }
-        })
-      });
+    return this.usersService.deleteRoom(username, roomid);
   }
 
-  getUserRoom(roomid){
+  getUserRoom(roomid) {
     return this.findOne(roomid, {
-        where: {
-          name: roomid
-        },
         include: [{
           model: this.User
         }]
       })
-      .then( (room) => {
+      .then((room) => {
         return room;
       });
   }

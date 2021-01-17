@@ -15,7 +15,8 @@
     "info": "Informations",
     "join": "join",
     "peers": "peers",
-    "waiting":"Connection Awaiting Authorization"
+    "waiting":"Waiting Room",
+    "hall": "Entrance Hall"
   },
   "meetings": {
     "meetings": "Meetings",

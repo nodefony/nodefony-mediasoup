@@ -121,16 +121,14 @@
                 </v-simple-table>
               </v-row>
               <v-row align="center" justify="space-around">
-                <v-btn @click.end="close" rounded color="primary">
-                  Quit
-                </v-btn>
                 <v-btn @click.end="acceptConnect" rounded color="primary">
                   Join Room
                 </v-btn>
+                <v-btn @click.end="close" rounded color="primary">
+                  Quit
+                </v-btn>
               </v-row>
-
             </v-card>
-
           </v-row>
         </v-col>
       </v-row>

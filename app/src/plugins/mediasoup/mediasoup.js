@@ -197,8 +197,8 @@ class Mediasoup extends nodefony.Service {
         this.fire("errorSock", error, this);
         return reject(error);
       };
-      this.sock.onclose = () => {
-        this.fire("closeSock", this);
+      this.sock.onclose = (event) => {
+        this.fire("closeSock", event, this);
         this.store.commit('setConnected', false);
         this.sock = null;
         this.removeAllListeners();
@@ -268,7 +268,6 @@ class Mediasoup extends nodefony.Service {
   connectStats(uri = "ws/stats", port = "5152"){
     return new Promise( (resolve, reject) => {
       const url = `wss://${this.domain}:${port}/mediasoup/${uri}`;
-      console.log(url)
       this.sockStats = new WebSocket(url);
       this.sockStats.onopen = (event) => {
         this.log(`Mediasoup Websocket Connect Stats`);
@@ -281,6 +280,7 @@ class Mediasoup extends nodefony.Service {
       };
       this.sockStats.onmessage = (event) => {
         let message = null;
+        this.store.commit("mediasoupActivity");
         //let sendMessage = null;
         try {
           message = JSON.parse(event.data);

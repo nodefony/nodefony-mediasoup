@@ -9,6 +9,11 @@
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
+      <v-col justify="center" align="right">
+        <v-btn x-small :loading="loading" :disabled="false" :color="color" class=" white--text" fab @click="toogleSocket">
+          <v-icon small :color="iconColor" dark>mdi-cloud-upload</v-icon>
+        </v-btn>
+      </v-col>
       <template v-slot:extension>
         <v-tabs v-model="tab" align-with-title>
           <v-tabs-slider color="yellow"></v-tabs-slider>
@@ -127,6 +132,7 @@ export default {
   },
   data(vm) {
     return {
+      color: "red darken-1",
       message: null,
       loading: false,
       currentRoom: null,
@@ -165,36 +171,9 @@ export default {
   beforeMount() {},
   async mounted() {
     if (this.roomid) {
+      this.loading = true;
       this.currentRoom = await this.getRoom(this.roomid);
-      this.$mediasoup.connectStats()
-        .then((sock) => {
-          this.sock = sock;
-          this.message = this.log("Connect mediasoup stats websocket ");
-          this.sock.send(JSON.stringify({
-            method: "startRoomStats",
-            roomid: this.roomid,
-          }));
-        }).catch(e => {
-          this.message = this.log(e.message, "ERROR");
-          this.sock = null;
-        })
-      this.$mediasoup.on("closeSockStats", (event) => {
-        if (event.reason) {
-          this.message = this.log(event.reason, "ERROR");
-        }
-      });
-      this.$mediasoup.on("stats", (message) => {
-        switch (message.method) {
-          case "roomStats":
-            if (message.room) {
-              this.currentRoom = message.room;
-            }
-            if (message.peers) {
-              this.peers = message.peers;
-            }
-            break;
-        }
-      })
+
     } else {
       if (this.room) {
         this.currentRoom = this.room;
@@ -202,13 +181,22 @@ export default {
     }
   },
   beforeDestroy() {
-    return this.sock.close(1000);
+    if (this.$sock) {
+      return this.$sock.close(1000);
+    }
   },
 
   computed: {
     ...mapGetters([
-      'hasRole'
+      'hasRole',
+      'getMediasoupActivity'
     ]),
+    iconColor() {
+      if (this.getMediasoupActivity) {
+        return "blue";
+      }
+      return "red lighten-3";
+    },
     isAdmin() {
       return this.hasRole("ROLE_ADMIN")
     },
@@ -257,6 +245,56 @@ export default {
     }
   },
   methods: {
+    toogleSocket() {
+      if (!this.$sock) {
+        return this.startSocket();
+      }
+      return this.closeSocket();
+    },
+    startSocket() {
+      this.$mediasoup.connectStats()
+        .then((sock) => {
+          this.$sock = sock;
+          this.loading = false;
+          this.color = "blue-grey";
+          this.message = this.log("Connect mediasoup stats websocket ");
+          this.$sock.send(JSON.stringify({
+            method: "startRoomStats",
+            roomid: this.roomid,
+          }));
+        }).catch(e => {
+          this.color = "red darken-3";
+          this.loading = false;
+          this.message = this.log(e.message, "ERROR");
+          this.$sock = null;
+        })
+      this.$mediasoup.once("closeSockStats", (event) => {
+        if (event.reason) {
+          this.message = this.log(event.reason, "ERROR");
+        }
+      });
+      this.$mediasoup.on("stats", this.onStatsMessage);
+    },
+    onStatsMessage(message) {
+      switch (message.method) {
+        case "roomStats":
+          if (message.room) {
+            this.currentRoom = message.room;
+          }
+          if (message.peers) {
+            this.peers = message.peers;
+          }
+          break;
+      }
+    },
+    closeSocket() {
+      if (this.$sock) {
+        this.$sock.close();
+        this.$mediasoup.removeListener("stats", this.onStatsMessage);
+        this.$sock = null;
+        this.color = "red darken-3";
+      }
+    },
     getRoom(roomid) {
       this.loading = true;
       return this.$mediasoup.request(`meetings/${roomid}`, "GET")

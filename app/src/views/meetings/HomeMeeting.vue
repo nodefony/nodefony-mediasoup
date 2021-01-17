@@ -308,7 +308,6 @@ export default {
                 if (message.peers) {
                   this.peers = message.peers;
                   //this.setPeers(message.peers);
-
                 }
                 switch (message.status) {
                   case 'wait':
@@ -325,6 +324,7 @@ export default {
                 }
               });
               this.$mediasoup.once("closeSock", (event) => {
+                console.log("closeSock", event)
                 if (event.reason) {
                   let pdu = this.log(event.reason);
                   this.progress = event.reason;

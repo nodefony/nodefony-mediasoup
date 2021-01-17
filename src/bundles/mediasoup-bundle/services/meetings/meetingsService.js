@@ -386,7 +386,7 @@ class Meetings extends nodefony.Service {
   async closeRoom(roomId) {
     if (this.hasRoom(roomId)) {
       let room = await this.getRoom(roomId).close();
-      this.fire("roomClosed", roomid, room, this);
+      this.fire("roomClosed", roomId, room, this);
       this.deleteRoom(roomId);
       return room;
     }

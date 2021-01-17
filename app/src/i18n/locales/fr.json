@@ -15,7 +15,8 @@
     "info": "Informations",
     "join": "joindre",
     "peers": "Participants",
-    "waiting":"Connection en Attente d'autorisation"
+    "waiting":"Salle d'attente",
+    "hall": "Sas d'entrée"
   },
   "meetings": {
     "meetings": "Réunions",

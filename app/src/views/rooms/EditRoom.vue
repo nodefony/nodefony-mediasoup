@@ -21,7 +21,7 @@
           <v-tab v-if="!creating && hasRoleAdmin " :disabled="false" ref="danger" @click="editing=false">
             Zone Danger
           </v-tab>
-          <v-tab v-if="!creating && hasRoleAdmin" :disabled="false" ref="adminitrators" @click="editing=false">
+          <v-tab v-if="!creating && hasRoleAdmin" :disabled="false" ref="administrators" @click="editing=false">
             Administrators
           </v-tab>
         </v-tabs>
@@ -55,8 +55,15 @@
 
               <v-list-item>
                 <v-list-item-content>
-                  <v-list-item-title>{{room.waitingconnect}}</v-list-item-title>
-                  <v-list-item-subtitle>{{$t("rooms.waiting")}}</v-list-item-subtitle>
+                  <v-row>
+                    <v-col cols="3">
+                      <v-list-item-title>{{$t("rooms.waiting")}}</v-list-item-title>
+                      <v-list-item-subtitle>{{$t("rooms.hall")}}</v-list-item-subtitle>
+                    </v-col>
+                    <v-col cols="9">
+                      <v-switch :disabled="true" v-model="room.waitingconnect"></v-switch>
+                    </v-col>
+                  </v-row>
                 </v-list-item-content>
               </v-list-item>
 
@@ -80,7 +87,7 @@
 
                 <v-list-item-content>
                   <v-list-item-title>
-                    <v-chip class="mx-2 my-1" x-small v-for="user in room.users" :key="`${user.username}-chip`">
+                    <v-chip class="mx-2 my-1" x-small v-for="user in administrators" :key="`${user.username}-chip`">
                       {{ user.username }}
                     </v-chip>
                   </v-list-item-title>
@@ -88,12 +95,11 @@
                 </v-list-item-content>
               </v-list-item>
 
-
             </v-list>
           </v-container>
 
           <!-- EDIT -->
-          <v-container fluid v-if="editing || creating">
+          <v-container fluid v-if="editing || creating" class="mt-3">
             <v-card flat tile>
               <form autocomplete="on">
                 <v-row>
@@ -120,6 +126,16 @@
                     <v-switch v-model="formData.access" :false-value="`private`" :true-value="`public`" :label="formatAccessLabel(formData.access)"></v-switch>
                   </v-col>
                 </v-row>
+
+                <v-row>
+                  <v-col cols="3">
+                    <v-subheader>{{$t('rooms.waiting')}}</v-subheader>
+                  </v-col>
+                  <v-col cols="9">
+                    <v-switch v-model="formData.waitingconnect"></v-switch>
+                  </v-col>
+                </v-row>
+
                 <v-row>
                   <v-col cols="3">
                     <v-subheader>{{$t('rooms.security')}}</v-subheader>
@@ -128,6 +144,7 @@
                     <v-switch v-model="formData.secure" :label="formData.secure ? $t('rooms.secure') : $t('rooms.unsecure')" :prepend-icon="formData.secure ? 'mdi-lock' : 'mdi-lock-off'" color="green"></v-switch>
                   </v-col>
                 </v-row>
+
                 <v-row v-if="formData.secure">
                   <v-col cols="3">
                     <v-subheader>Password</v-subheader>
@@ -155,7 +172,6 @@
       <!-- DANGER ZONE -->
       <v-tab-item>
 
-
         <v-banner v-if='hasRoleAdmin' two-line tile>
           Delete the Room {{ room.name}}
           <template v-slot:actions>
@@ -168,14 +184,69 @@
           </template>
         </v-banner>
 
-
       </v-tab-item>
 
       <!-- ADMIN ZONE -->
       <v-tab-item>
+        <v-data-table :headers="headersUser" :items="administrators" height="600px" class="elevation-1">
+
+          <template v-slot:top>
+            <v-toolbar flat>
+              <v-toolbar-title>Aministrators</v-toolbar-title>
+              <v-divider class="mx-4" inset vertical></v-divider>
+              <v-spacer></v-spacer>
+              <v-dialog v-model="dialog" max-width="500px">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn small color="primary" dark class="mb-2" v-bind="attrs" v-on="on" @click="openDialog">
+                    Add
+                  </v-btn>
+                </template>
+                <v-card>
+                  <v-card-title>
+                    <span class="headline">{{ $t('users.users') }}</span>
+                  </v-card-title>
+                  <v-card-text>
+                    <v-list>
+                      <v-list-item v-for="user in users" :key="user.username">
+
+                        <v-list-item-avatar>
+                          <v-icon dark>mdi-account</v-icon>
+                        </v-list-item-avatar>
+
+                        <v-list-item-content>
+                          <v-list-item-title v-text="user.username"></v-list-item-title>
+
+                          <v-list-item-subtitle v-text="user.name">{{user.name}} {{user.surname}}</v-list-item-subtitle>
+                        </v-list-item-content>
+
+                        <v-list-item-action>
+                          <v-switch :loading="loading" :input-value="userIsAdmin(user.username)" v-on:change="changeAdminRoom(user.username , $event)">
+                          </v-switch>
+                        </v-list-item-action>
+                      </v-list-item>
+                    </v-list>
+                  </v-card-text>
+
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="blue darken-1" text @click="dialog=false">
+                      Quit
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </v-toolbar>
+          </template>
+          <template v-slot:default>
+
+          </template>
+          <template v-slot:item.actions="{ item }">
+            <v-icon small @click="dialog=true">
+              mdi-delete
+            </v-icon>
+          </template>
+        </v-data-table>
       </v-tab-item>
-
-
     </v-tabs-items>
   </v-card>
 </v-window>
@@ -199,10 +270,13 @@ export default {
     }
   },
   data: () => ({
+    dialog: false,
     tab: null,
     editing: false,
     message: null,
     room: {},
+    users: null,
+    administrators: null,
     showPassword: false,
     rules: {
       min: v => !v || v.length >= 8 || 'Min 8 characters',
@@ -222,6 +296,8 @@ export default {
         this.formData = { ...this.room,
           ...this.formData
         };
+        delete this.formData.users;
+        //this.administrators = this.room.users;
       }
     }
   },
@@ -231,6 +307,10 @@ export default {
   watch: {
     message(value) {
       this.notify(value);
+    },
+    room(value) {
+      this.administrators = value.users;
+      return value;
     }
   },
   computed: {
@@ -242,7 +322,44 @@ export default {
     },
     hasRoleAdmin() {
       return this.hasRole("ROLE_ADMIN");
-    }
+    },
+    headersUser() {
+      return [{
+        text: this.$t("users.users"),
+        align: 'start',
+        sortable: true,
+        value: 'username'
+      }, {
+        text: this.$t("users.name"),
+        value: 'name'
+      }, {
+        text: this.$t("users.surname"),
+        value: 'surname'
+      }, {
+        text: this.$t("users.locale"),
+        value: 'lang'
+      }, {
+        text: this.$t("users.roles"),
+        value: 'roles'
+      }, {
+        text: "",
+        value: 'actions',
+        sortable: false
+      }]
+    },
+    userIsAdmin() {
+      return (username) => {
+        let tab = this.administrators.filter((admin) => {
+          if (admin.username === username) {
+            return admin
+          }
+        });
+        if (tab.length) {
+          return username;
+        }
+        return null;
+      }
+    },
   },
   methods: {
     async getRoom(roomid) {
@@ -280,6 +397,7 @@ export default {
           } else {
             this.message = this.log(`update ok`, "INFO");
           }
+          this.editing = false;
           return data.result;
         })
         .catch(async (e) => {
@@ -328,21 +446,22 @@ export default {
             this.message = this.log(`create ${response.result.room.name}`, "INFO");
           }
           this.$router.replace({
-            name: 'Room',
-            params: {
-              roomid: response.result.room.name
-            },
-            force: true
-          });
-
-          this.tab = 0;
+              name: 'Room',
+              params: {
+                roomid: response.result.room.name
+              },
+              force: true
+            })
+            .then(() => {
+              this.tab = 0;
+            })
           return response.result;
         })
         .catch(async (result) => {
           this.loading = false;
           if (result.error) {
             if (result.error.errors) {
-              this.showErrorField(result.error.errors);
+              this.message = this.log(result.error.errors[0].message, "ERROR");
             } else {
               this.message = this.log(result.error.message, "ERROR");
             }
@@ -351,8 +470,66 @@ export default {
           }
         })
     },
+    getUsers() {
+      this.loading = true;
+      return this.$nodefony.request("users")
+        .then((data) => {
+          this.users = data.result.rows
+          this.loading = false;
+          return data.result;
+        })
+        .catch(async (e) => {
+          this.loading = false;
+          this.log(e, "ERROR");
+        })
+    },
+    changeAdminRoom(username, active) {
+      this.loading = true;
+      if (active) {
+
+        return this.$mediasoup.request(`room/${this.room.name}/user`, "PUT", {
+            body: JSON.stringify({
+              username: username
+            }),
+            headers: {
+              "content-type": "application/json"
+            }
+          }).then((response) => {
+            this.loading = false;
+            this.room = response.result.room;
+            return this.room;
+          })
+          .catch((e) => {
+            this.loading = false;
+            this.message = this.log(e, 'ERROR');
+            throw e;
+          })
+      } else {
+        return this.$mediasoup.request(`room/${this.room.name}/user`, "DELETE", {
+            body: JSON.stringify({
+              username: username
+            }),
+            headers: {
+              "content-type": "application/json"
+            }
+          }).then((response) => {
+            this.loading = false;
+            this.room = response.result.room;
+            return this.room;
+          })
+          .catch((e) => {
+            this.loading = false;
+            this.message = this.log(e, 'ERROR');
+            throw e;
+          })
+      }
+    },
     close() {
       return this.$emit("close", this.room)
+    },
+    openDialog() {
+      this.dialog = true;
+      return this.getUsers();
     }
   }
 }

@@ -5,7 +5,7 @@
  *	@param {class} context
  *  @Route ("/mediasoup/api")
  */
-class apiRomController extends nodefony.Controller {
+class apiRoomController extends nodefony.Controller {
 
   constructor(container, context) {
     super(container, context);
@@ -163,17 +163,19 @@ class apiRomController extends nodefony.Controller {
    */
   async postRoomAction() {
     this.checkAuthorisation();
-    return this.roomsService.create(this.query)
+    let username = this.getUser().username;
+    return this.roomsService.create(this.query, username)
       .then(async (room) => {
-        const message = `Save Room ${this.query.name} : ${room} OK`;
+        const message = `Create Room ${this.query.name} : ${room} OK`;
         this.log(message, "INFO");
         const newRoom = await this.getRoom(this.query.name);
         return this.api.render({
           query: this.query,
           room: newRoom
         });
-      }).catch(e =>{
+      }).catch(async (e) =>{
         this.log(e, "ERROR");
+        throw e;
       })
   }
 
@@ -199,12 +201,13 @@ class apiRomController extends nodefony.Controller {
           });
         }).catch(e => {
           this.logger(e, "ERROR");
-          this.setFlashBag("error", e.message);
+          throw e;
         });
     }
     let error = new nodefony.Error(`Room ${name} not found`, this.context);
     this.setFlashBag("error", error.message);
     this.logger(error, "ERROR");
+    throw error;
   }
 
   /**
@@ -255,26 +258,36 @@ class apiRomController extends nodefony.Controller {
 
   /**
    *    @Method ({"PUT"})
-   *    @Route ( "/userroom/{username}",name="api-room-user-set")
+   *    @Route ( "/room/{roomid}/user",name="api-room-user-set")
    */
-  async addUserRoomAction(username) {
+  async addUserRoomAction(roomid) {
     this.checkAuthorisation();
-    let result = await this.roomsService.addUserRoom(username, this.query.roomid);
+    let result = await this.roomsService.addUserRoom(this.query.username ,roomid);
+    const room = await this.getRoom(roomid,{
+      include: [{
+        model: this.User
+      }]
+    });
     return this.api.render({
-      rooms: result.rooms
+      room: room
     })
   }
   /**
    *    @Method ({"DELETE"})
-   *    @Route ( "/userroom/{username}",name="api-room-user-delete")
+   *    @Route ( "/room/{roomid}/user",name="api-room-user-delete")
    */
-  async deleteUserRoomAction(username) {
+  async deleteUserRoomAction(roomid) {
     this.checkAuthorisation();
-    let result = await this.roomsService.deleteUserRoom(username, this.query.roomid);
+    let result = await this.roomsService.deleteUserRoom(this.query.username ,roomid );
+    const room = await this.getRoom(roomid,{
+      include: [{
+        model: this.User
+      }]
+    });
     return this.api.render({
-      rooms: result.rooms
+      room: room
     })
   }
 }
 
-module.exports = apiRomController;
+module.exports = apiRoomController;
