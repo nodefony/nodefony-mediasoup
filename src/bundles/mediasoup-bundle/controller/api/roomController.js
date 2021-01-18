@@ -22,8 +22,34 @@ class apiRoomController extends nodefony.Controller {
     }, this.context);
   }
 
-  checkAuthorisation() {
+  isRoomAdmin(room) {
+    let username = this.getUser().username;
+    if (room.users) {
+      let tab = room.users.filter((admin) => {
+        if (admin.username === username) {
+          return admin;
+        }
+      })
+      if (tab.length) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async checkAuthorisation(roomid) {
     let granted = this.is_granted("ROLE_ADMIN");
+    if (granted) {
+      return true;
+    }
+    if (roomid) {
+      const room = await this.getRoom(roomid, {
+        include: [{
+          model: this.User
+        }]
+      });
+      granted = this.isRoomAdmin(room)
+    }
     if (!granted) {
       throw new nodefony.authorizationError("Unauthorized", 401, this.context);
     }
@@ -36,8 +62,14 @@ class apiRoomController extends nodefony.Controller {
         if (room) {
           delete room.password;
           delete room.sticky_cookie;
+          if (room.users && room.users.length) {
+            room.users.map((user) => {
+              delete user.password;
+            });
+          }
           return room;
         }
+
         throw new Error(`room ${id} not found`);
       })
   }
@@ -53,8 +85,8 @@ class apiRoomController extends nodefony.Controller {
     // create styky cookie
     const cookie_name = room.sticky_cookie;
     let cookie = null;
-    if( cookie_name){
-       cookie = this.context.createCookie(cookie_name, room.name, {
+    if (cookie_name) {
+      cookie = this.context.createCookie(cookie_name, room.name, {
         secure: true,
         maxAge: "1h",
         httpOnly: true
@@ -80,8 +112,8 @@ class apiRoomController extends nodefony.Controller {
     if (room) {
       room.rows.map((room) => {
         delete room.password;
-        if (room.users && room.users.length){
-          room.users.map((user)=>{
+        if (room.users && room.users.length) {
+          room.users.map((user) => {
             delete user.password;
           });
         }
@@ -101,14 +133,14 @@ class apiRoomController extends nodefony.Controller {
    *    @Firewall ({bypass:true})
    */
   async roomAction(name) {
-    const room = await this.getRoom(name,{
+    const room = await this.getRoom(name, {
       include: [{
         model: this.User
       }]
     });
     if (room) {
-      if (room.users && room.users.length){
-        room.users.map((user)=>{
+      if (room.users && room.users.length) {
+        room.users.map((user) => {
           delete user.password;
         });
       }
@@ -126,8 +158,6 @@ class apiRoomController extends nodefony.Controller {
    *    @Method ({"PUT"})
    */
   async putRoomAction(name) {
-    this.checkAuthorisation();
-    const room = await this.roomsService.findOne(name);
     let value = {
       name: this.query.name || null,
       type: this.query.type,
@@ -137,7 +167,8 @@ class apiRoomController extends nodefony.Controller {
       waitingconnect: this.query.waitingconnect,
       sticky_cookie: this.query.sticky_cookie
     };
-
+    await this.checkAuthorisation(name);
+    const room = await this.roomsService.findOne(name);
     if (this.query.password) {
       value.password = this.query.password;
     }
@@ -150,19 +181,19 @@ class apiRoomController extends nodefony.Controller {
           query: this.query,
           room: newRoom
         });
-      }).catch(e =>{
+      }).catch(e => {
         this.log(e, "ERROR");
       })
   }
 
   /**
-   *  API POST
+   *  API POST create room
    *    @Route ("/rooms",
    *      name="route-room-post")
    *    @Method ({"POST"})
    */
   async postRoomAction() {
-    this.checkAuthorisation();
+    await this.checkAuthorisation();
     let username = this.getUser().username;
     return this.roomsService.create(this.query, username)
       .then(async (room) => {
@@ -173,7 +204,7 @@ class apiRoomController extends nodefony.Controller {
           query: this.query,
           room: newRoom
         });
-      }).catch(async (e) =>{
+      }).catch(async (e) => {
         this.log(e, "ERROR");
         throw e;
       })
@@ -186,15 +217,11 @@ class apiRoomController extends nodefony.Controller {
    *    @Method ({"DELETE"})
    */
   async deleteRoomAction(name) {
-    this.checkAuthorisation();
+    await this.checkAuthorisation(name);
     if (name) {
       return this.roomsService.delete(name)
         .then((result) => {
           let message = `Delete Room ${result.name} OK`;
-          this.setFlashBag("info", message);
-          if (this.getRoom().name === name) {
-            this.session.invalidate();
-          }
           return this.api.render({
             query: this.query,
             room: null
@@ -205,7 +232,6 @@ class apiRoomController extends nodefony.Controller {
         });
     }
     let error = new nodefony.Error(`Room ${name} not found`, this.context);
-    this.setFlashBag("error", error.message);
     this.logger(error, "ERROR");
     throw error;
   }
@@ -261,9 +287,9 @@ class apiRoomController extends nodefony.Controller {
    *    @Route ( "/room/{roomid}/user",name="api-room-user-set")
    */
   async addUserRoomAction(roomid) {
-    this.checkAuthorisation();
-    let result = await this.roomsService.addUserRoom(this.query.username ,roomid);
-    const room = await this.getRoom(roomid,{
+    await this.checkAuthorisation(roomid);
+    let result = await this.roomsService.addUserRoom(this.query.username, roomid);
+    const room = await this.getRoom(roomid, {
       include: [{
         model: this.User
       }]
@@ -277,9 +303,9 @@ class apiRoomController extends nodefony.Controller {
    *    @Route ( "/room/{roomid}/user",name="api-room-user-delete")
    */
   async deleteUserRoomAction(roomid) {
-    this.checkAuthorisation();
-    let result = await this.roomsService.deleteUserRoom(this.query.username ,roomid );
-    const room = await this.getRoom(roomid,{
+    await this.checkAuthorisation(roomid);
+    let result = await this.roomsService.deleteUserRoom(this.query.username, roomid);
+    const room = await this.getRoom(roomid, {
       include: [{
         model: this.User
       }]

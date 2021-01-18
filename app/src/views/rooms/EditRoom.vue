@@ -5,7 +5,7 @@
       <v-icon class="mr-5">mdi-home</v-icon>
       <v-toolbar-title>
         {{room ? room.name : ""}}
-        <v-btn v-if="hasRoleAdmin && !creating" class="ml-10" small @click="editing=!editing;tab =0" color="teal">
+        <v-btn v-if=" (!creating) && (isUserRoomAdmin || isAdmin)" class="ml-10" small @click="editing=!editing;tab =0" color="teal">
           <v-icon small left>mdi-pencil</v-icon>
           Edit
         </v-btn>
@@ -18,10 +18,10 @@
           <v-tab :disabled="false" ref="info" @click="editing=false">
             {{ $t(`rooms.info`) }}
           </v-tab>
-          <v-tab v-if="!creating && hasRoleAdmin " :disabled="false" ref="danger" @click="editing=false">
+          <v-tab v-if="(!creating) && (isUserRoomAdmin || isAdmin)" :disabled="false" ref="danger" @click="editing=false">
             Zone Danger
           </v-tab>
-          <v-tab v-if="!creating && hasRoleAdmin" :disabled="false" ref="administrators" @click="editing=false">
+          <v-tab v-if="(!creating) && (isUserRoomAdmin || isAdmin)" :disabled="false" ref="administrators" @click="editing=false">
             Administrators
           </v-tab>
         </v-tabs>
@@ -172,7 +172,7 @@
       <!-- DANGER ZONE -->
       <v-tab-item>
 
-        <v-banner v-if='hasRoleAdmin' two-line tile>
+        <v-banner v-if='isAdmin || isUserRoomAdmin ' two-line tile>
           Delete the Room {{ room.name}}
           <template v-slot:actions>
             <v-btn color="white--text red accent-4" @click="deleteRoom(room.name)">
@@ -197,7 +197,7 @@
               <v-spacer></v-spacer>
               <v-dialog v-model="dialog" max-width="800px">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn small color="primary" dark class="mb-2" v-bind="attrs" v-on="on" @click="openDialog">
+                  <v-btn v-if="(isUserRoomAdmin || isAdmin)" small color="primary" dark class="mb-2" v-bind="attrs" v-on="on" @click="openDialog">
                     Add
                   </v-btn>
                 </template>
@@ -220,7 +220,7 @@
                         </v-list-item-content>
 
                         <v-list-item-action>
-                          <v-switch :loading="loading" :input-value="userIsAdmin(user.username)" v-on:change="changeAdminRoom(user.username , $event)">
+                          <v-switch :loading="loading" :input-value="isRoomAdmin(user.username)" v-on:change="changeAdminRoom(user.username , $event)">
                           </v-switch>
                         </v-list-item-action>
                       </v-list-item>
@@ -315,13 +315,38 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'hasRole'
+      'hasRole',
+      'getProfileUsername'
     ]),
     creating() {
       return !this.roomid;
     },
-    hasRoleAdmin() {
+    isAdmin() {
       return this.hasRole("ROLE_ADMIN");
+    },
+    isUserRoomAdmin() {
+      let tab = this.administrators.filter((admin) => {
+        if (admin.username === this.getProfileUsername) {
+          return admin
+        }
+      });
+      if (tab.length) {
+        return this.getProfileUsername;
+      }
+      return false;
+    },
+    isRoomAdmin() {
+      return (username) => {
+        let tab = this.administrators.filter((admin) => {
+          if (admin.username === username) {
+            return admin
+          }
+        });
+        if (tab.length) {
+          return username;
+        }
+        return null;
+      }
     },
     headersUser() {
       return [{
@@ -346,20 +371,7 @@ export default {
         value: 'actions',
         sortable: false
       }]
-    },
-    userIsAdmin() {
-      return (username) => {
-        let tab = this.administrators.filter((admin) => {
-          if (admin.username === username) {
-            return admin
-          }
-        });
-        if (tab.length) {
-          return username;
-        }
-        return null;
-      }
-    },
+    }
   },
   methods: {
     async getRoom(roomid) {

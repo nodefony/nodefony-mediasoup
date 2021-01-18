@@ -25,10 +25,13 @@
             </v-btn>
           </template>
           <template v-slot:item.actions="{ item }">
-            <v-icon small class="mr-2" @click="selectRoom(item)">
+            <v-icon v-if="isAdmin || isRoomAdmin(item)" small class="mr-2" @click="selectRoom(item)">
               mdi-pencil
             </v-icon>
-            <v-icon small class="mr-2" @click="deleteRoom(item)">
+            <v-icon v-else small class="mr-2" @click="selectRoom(item)">
+              mdi-eye
+            </v-icon>
+            <v-icon v-if="isAdmin || isRoomAdmin(item)" small class="mr-2" @click="deleteRoom(item)">
               mdi-delete
             </v-icon>
           </template>
@@ -76,10 +79,24 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'hasRole'
+      'hasRole',
+      'getProfileUsername'
     ]),
     isAdmin() {
       return this.hasRole("ROLE_ADMIN")
+    },
+    isRoomAdmin() {
+      return (room) => {
+        let tab = room.users.filter((admin) => {
+          if (admin.username === this.getProfileUsername) {
+            return admin
+          }
+        });
+        if (tab.length) {
+          return this.getProfileUsername;
+        }
+        return null;
+      }
     },
     headers() {
       return [{
