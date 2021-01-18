@@ -5,7 +5,8 @@
   <v-toolbar-title style="width: 300px" class="ml-0 pl-4">
     <router-link :to="{ name: 'Home'}" tag="div">
       <v-btn text>
-        <span class="hidden-sm-and-down">Nodefony Mediasoup FSU</span>
+        <img src="../../assets/mediasoup.png" />
+        <span class="hidden-sm-and-down ml-2">Nodefony Mediasoup FSU</span>
       </v-btn>
     </router-link>
   </v-toolbar-title>

@@ -3,13 +3,18 @@
   <!-- v-col cols="12"-->
   <v-row justify="center" align="center">
     <!--v-col cols="12" sm="12"-->
-    <v-card min-width="600" min-height="400">
-      <v-row align="center" justify="center">
-        <v-col cols="12" sm="8" md="4">
-          <v-img src="/app/images/app-logo.png" aspect-ratio="1"></v-img>
+    <v-card dark min-width="600" min-height="400">
+      <v-row class="ma-5">
+        <v-col>
+          <v-row justify="center" align="center" class="mb-3">
+            <img src="../assets/mediasoup.png" />
+          </v-row>
+          <v-row justify="center" align="center">
+            <v-card-title>Mediasoup </v-card-title>
+          </v-row>
         </v-col>
       </v-row>
-      <v-card-title>Mediasoup {{ $t('signin') }} {{select}} </v-card-title>
+
       <v-card-subtitle class="pb-0">
         <v-text-field v-if="isLoading" color="success" loading disabled>
         </v-text-field>
@@ -18,14 +23,14 @@
       <v-card-text class="text--primary">
 
         <v-form @submit.prevent="submit" ref="form">
-          <v-select v-model="select" :items="items" label="Authencation type" required></v-select>
+          <v-select v-if="false" v-model="select" :items="items" label="Authencation type" required></v-select>
 
           <v-text-field v-model="username" placeholder="username" :counter="50" :rules="nameRules" :label="$t('username')" required prepend-icon="mdi-account-circle" />
 
           <v-text-field :label="$t('password')" v-model="password" placeholder="password" prepend-icon="mdi-lock" :type="showPassword ? 'text' : 'password'" :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'" @click:append="showPassword = !showPassword"
             required />
 
-          <v-btn type="submit" class="mr-4" color="success">
+          <v-btn type="submit" class="mx-6 my-4" color="success">
             {{ $t('submit') }}
           </v-btn>
 

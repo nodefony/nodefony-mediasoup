@@ -14,6 +14,7 @@ class apiRoomController extends nodefony.Controller {
     this.entity = this.orm.getEntity("room");
     // service entity
     this.roomsService = this.get("Rooms");
+    this.meetingsService = this.get("Meetings");
     this.User = this.orm.getEntity("user");
     this.api = new nodefony.api.Json({
       name: "mediasoup-rooms",
@@ -139,11 +140,6 @@ class apiRoomController extends nodefony.Controller {
       }]
     });
     if (room) {
-      if (room.users && room.users.length) {
-        room.users.map((user) => {
-          delete user.password;
-        });
-      }
       return this.api.render(
         room
       );
@@ -175,7 +171,10 @@ class apiRoomController extends nodefony.Controller {
     return this.roomsService.update(room, value)
       .then(async (room) => {
         const message = `Update Room ${this.query.name} OK`;
-        this.log(message, "INFO");
+        this.log(message, "DEBUG");
+        if(this.meetingsService.hasRoom(name)) {
+          await this.meetingsService.closeRoom(name)
+        }
         const newRoom = await this.getRoom(this.query.name);
         return this.api.render({
           query: this.query,
@@ -198,7 +197,7 @@ class apiRoomController extends nodefony.Controller {
     return this.roomsService.create(this.query, username)
       .then(async (room) => {
         const message = `Create Room ${this.query.name} : ${room} OK`;
-        this.log(message, "INFO");
+        this.log(message, "DEBUG");
         const newRoom = await this.getRoom(this.query.name);
         return this.api.render({
           query: this.query,
@@ -220,7 +219,10 @@ class apiRoomController extends nodefony.Controller {
     await this.checkAuthorisation(name);
     if (name) {
       return this.roomsService.delete(name)
-        .then((result) => {
+        .then(async (result) => {
+          if(this.meetingsService.hasRoom(name)) {
+            await this.meetingsService.closeRoom(name)
+          }
           let message = `Delete Room ${result.name} OK`;
           return this.api.render({
             query: this.query,

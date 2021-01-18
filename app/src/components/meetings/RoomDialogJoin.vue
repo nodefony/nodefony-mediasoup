@@ -112,8 +112,9 @@
                         <td>{{ peer.id }}</td>
                         <td>{{ peer.displayName }}</td>
                         <td>{{ peer.status }}</td>
-                        <td v-if="true">
-                          <v-btn x-small @click="authorise(item)">Authorised</v-btn>
+                        <td v-if="isRoomAdmin || isAdmin">
+                          <v-btn x-small @click="authorise(peer)">Authorised</v-btn>
+                          <v-btn x-small @click="unauthorise(peer)">UnAuthorised</v-btn>
                         </td>
                       </tr>
                     </tbody>
@@ -183,8 +184,8 @@ export default {
       peers: 'getPeers'
     }),
     ...mapGetters([
+      'hasRole',
       'getProfileUsername',
-      //"getProfile",
       'getProfileName',
       'getProfileSurname',
       "getJoinDialog",
@@ -204,6 +205,20 @@ export default {
       set(value) {
         return this.storeMedias(value);
       }
+    },
+    isAdmin() {
+      return this.hasRole("ROLE_ADMIN");
+    },
+    isRoomAdmin() {
+      let tab = this.room.users.filter((admin) => {
+        if (admin.username === this.getProfileUsername) {
+          return admin;
+        }
+      });
+      if (tab.length) {
+        return this.getProfileUsername;
+      }
+      return false;
     }
   },
   watch: {
@@ -243,6 +258,8 @@ export default {
       this.setVideoStream(this.peer.videoStream);
       return this.$emit("join", this);
     },
+    authorise() {},
+    unauthorise() {},
     close() {
       this.$emit("close", this);
       this.closeJoinDialog();
