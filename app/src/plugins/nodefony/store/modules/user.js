@@ -90,6 +90,7 @@ const actions = {
         return resp
       })
       .catch(e => {
+        Api.clearToken();
         commit(USER_ERROR, e)
         throw e;
       })
