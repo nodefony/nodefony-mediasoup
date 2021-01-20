@@ -9,6 +9,8 @@ class Peer extends nodefony.Service{
     super("Peer", mediasoup.container, null, nodefony.extend({}, defaultOptions, options));
     this.id = id;
     this.local = false;
+    this.displayName = "";
+    this.user = null;
     this.mediasoup = mediasoup;
     this.consumers = [];
     this.producers = [];

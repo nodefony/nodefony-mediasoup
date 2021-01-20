@@ -177,7 +177,12 @@ export default {
     this.peer = this.$refs["peer"];
     this.log(`User : ${this.getProfileUsername}`, "DEBUG");
   },
-  destroyed() {},
+  beforeDestroy() {
+
+  },
+  destroyed() {
+    this.log(`joinpeer destroyed`);
+  },
   computed: {
     ...mapGetters({
       room: 'getRoomEntity',

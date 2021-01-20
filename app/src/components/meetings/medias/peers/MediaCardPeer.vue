@@ -7,7 +7,6 @@
   <slot name="peer"></slot>
 
   <v-container fluid class="pa-0">
-
     <!-- VIDEO -->
     <v-hover v-slot="{ hover }" :disabled="hoverDisabled">
       <v-row class="pa-0 ma-0">
@@ -198,13 +197,16 @@ export default {
       }
     }
   },
-  beforeDestroy() {
+  async beforeDestroy() {
     this.log(`Try Destroy peer component ${this.name}`, "DEBUG");
-    this.stopAudioStream();
-    this.stopVideoStream();
-    if (this.$spectrum) {
-      this.$spectrum.stop();
+    if (!this.local || this.$route.name !== "Meeting") {
+      await this.stopAudioStream();
+      await this.stopVideoStream();
     }
+    if (this.$spectrum) {
+      await this.$spectrum.stop();
+    }
+    return;
   },
   destroyed() {
     this.log(`Destroy peer ${this.name}`)
@@ -531,7 +533,6 @@ export default {
           audio: settings,
           video: false
         }).then(async (stream) => {
-
           this.audio = true;
           if (this.remote) {
             this.audioStream.attachStream();
@@ -540,7 +541,11 @@ export default {
             if (this.$spectrum) {
               this.$spectrum.start(stream);
             } else {
-              this.$spectrum = await this.$nodefony.drawSpectrum(this.$refs.canvas, stream, 5);
+              if (this.$refs.canvas) {
+                this.$spectrum = await this.$nodefony.drawSpectrum(this.$refs.canvas, stream, 5);
+              } else {
+                this.log(`Canvas component not ready`, "ERROR");
+              }
             }
           }
           this.log(`Device : ${stream.getAudioTracks()[0].label}`);
@@ -552,7 +557,6 @@ export default {
           this.log(e, "ERROR");
           throw e;
         });
-
     },
 
     async getVideoUserMedia(settings) {

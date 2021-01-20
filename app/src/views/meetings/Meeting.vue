@@ -1,8 +1,6 @@
 <template>
 <v-container fluid fill-height class="ma-0 pa-0">
 
-  <room-join-meeting v-if="joining" v-on:join="acceptConnect" v-on:close="closeDialogJoin" ref="join" key="join" />
-
   <v-container v-show="joined" fluid fill-height class="pa-0 ma-0">
 
     <v-flex fill-height>
@@ -39,24 +37,21 @@ import {
   mapMutations,
   mapActions
 } from 'vuex';
-//import HomeMeeting from '@/components/meetings/HomeMeeting';
-import DialogJoin from '@/components/meetings/RoomDialogJoin';
+
 import DialogQuit from '@/components/meetings/RoomDialogQuit';
 import RoomToolBarTop from '@/components/meetings/nav/RoomToolBarTop';
 import RoomToolBarBottom from '@/components/meetings/nav/RoomToolBarBottom';
-import RoomSideBar from '@/components/meetings/nav/sidebar/RoomSideBar';
+//import RoomSideBar from '@/components/meetings/nav/sidebar/RoomSideBar';
 import RoomFocusLayout from '@/components/meetings/layouts/RoomFocusLayout';
 import RoomGrilleLayout from '@/components/meetings/layouts/RoomGridLayout';
 
 export default {
-  name: 'Layout',
+  name: 'Meeting',
   components: {
-    //"room-home-meeting": HomeMeeting,
-    "room-join-meeting": DialogJoin,
     "room-quit-meeting": DialogQuit,
     "room-tool-bar-top": RoomToolBarTop,
     "room-tool-bar-bottom": RoomToolBarBottom,
-    "room-side-bar": RoomSideBar,
+    //"room-side-bar": RoomSideBar,
     "room-focus-layout": RoomFocusLayout,
     "room-grid-layout": RoomGrilleLayout,
   },
@@ -67,8 +62,7 @@ export default {
   },
   data(vm) {
     return {
-      joining: true,
-      //peerid: null,
+      message: null,
       intevalTime: null,
       grid: false,
       focus: true,
@@ -84,13 +78,16 @@ export default {
   mounted() {
     this.closeDrawer();
     this.closeNavBar();
-    this.openJoinDialog();
+    //this.openJoinDialog();
     if (!this.getRoomEntity) {
-      this.redirect()
+      this.redirect();
     }
+    return this.acceptConnect();
   },
   watch: {
-
+    message(message) {
+      this.notify(message);
+    }
   },
   beforeDestroy() {
     this.deleteVideoStream();
@@ -164,8 +161,6 @@ export default {
   methods: {
     ...mapGetters([]),
     ...mapMutations([
-      'openJoinDialog',
-      'closeJoinDialog',
       'openQuitDialog',
       'closeQuitDialog',
       'closeDrawer',
@@ -236,7 +231,6 @@ export default {
     },
 
     async joinRoom() {
-      this.closeJoinDialog();
       this.connected = this.getMediasoupStatus;
       this.listenRoomEvents();
       return await this.room.join();
@@ -449,7 +443,6 @@ export default {
     },
 
     closeDialogJoin() {
-      this.joining = false;
       this.close();
     },
     quit(event) {

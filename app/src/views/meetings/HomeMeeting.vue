@@ -173,6 +173,7 @@ export default {
   },
   destroyed() {
     this.log(`destroy home room component `, "DEBUG");
+    this.$mediasoup.removeListener("waiting", this.onWaiting);
   },
   watch: {
     message(message) {
@@ -298,36 +299,11 @@ export default {
           return this.$mediasoup.connect(this.roomid, this.username)
             .then((sock) => {
               this.socket = sock;
-              this.$mediasoup.on("waiting", (message) => {
-                let pdu = this.log(message.message, "DEBUG");
-                this.progress = message.message;
-                this.message = pdu;
-                if (message.room && message.room.users) {
-                  this.administrators = message.room.users;
-                }
-                if (message.peers) {
-                  this.peers = message.peers;
-                  //this.setPeers(message.peers);
-                }
-                switch (message.status) {
-                  case 'wait':
-                    break;
-                  case 'authorised':
-                    this.progress = message.message;
-                    this.waiting = false;
-                    this.$emit("connect", message.status);
-                    return this.redirect();
-                  case 'unauthorised':
-                    this.progress = message.message;
-                    this.quit();
-                    break;
-                }
-              });
+              this.$mediasoup.on("waiting", this.onWaiting);
               this.$mediasoup.once("closeSock", (event) => {
-                console.log("closeSock", event)
                 if (event.reason) {
                   let pdu = this.log(event.reason);
-                  this.progress = event.reason;
+                  this.progress = null;
                   this.message = pdu;
                 }
                 this.waiting = false;
@@ -340,13 +316,51 @@ export default {
               this.waiting = false;
               let pdu = this.log(`Room ${this.room.name} can't be connect !!!!`);
               this.message = pdu;
-              this.progress = pdu.payload;
+              this.progress = "";
             });
         });
     },
+    onWaiting(message) {
+      let pdu = this.log(message.message, "DEBUG");
+      if (message.status) {
+        this.progress = message.message;
+      }
+      this.message = pdu;
+      if (message.room && message.room.users) {
+        this.administrators = message.room.users;
+      }
+      if (message.peers) {
+        this.peers = message.peers;
+      }
+      switch (message.status) {
+        case 'waiting':
+          break;
+        case 'authorised':
+          this.progress = message.message;
+          this.waiting = false;
+          return this.redirect();
+        case 'unauthorised':
+          this.progress = message.message;
+          return this.quit();
+        default:
+          if (message.authorise === true) {
+            this.waiting = false;
+            return this.redirect();
+          }
+          if (message.authorise === false) {
+            return this.quit();
+          }
+      }
+    },
     redirect() {
-      return this.$router.push({
+      /*return this.$router.push({
         name: "Meeting",
+        params: {
+          roomid: this.room.name
+        }
+      }).catch(() => {})*/
+      return this.$router.push({
+        name: "JoinMeeting",
         params: {
           roomid: this.room.name
         }
@@ -355,6 +369,7 @@ export default {
     quit() {
       this.progress = null;
       this.waiting = false;
+
       try {
         if (this.socket) {
           this.socket.close();

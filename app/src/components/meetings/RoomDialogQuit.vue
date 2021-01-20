@@ -1,8 +1,8 @@
 <template>
 <v-dialog v-model="dialogQuit" persistent max-width="600">
-  <v-row justify="center">
-    <v-card min-width="600">
-      <v-system-bar color="indigo darken-2" dark>
+  <v-row justify="center" align="center">
+    <v-card min-width="500">
+      <v-system-bar color="teal darken-2" dark>
         <v-spacer></v-spacer>
         <v-icon @click="leave"> mdi-close</v-icon>
       </v-system-bar>
