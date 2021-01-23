@@ -1,16 +1,24 @@
 const now = new Date();
 
 const setStorage = (item, value) => {
-  return window.sessionStorage.setItem(item, JSON.stringify(value));
+  try {
+    return window.sessionStorage.setItem(item, JSON.stringify(value));
+  } catch (e) {
+    console.error(e, item, value);
+  }
 };
 
 const getStorage = (item) => {
-  return JSON.parse(window.sessionStorage.getItem(item));
+  try {
+    return JSON.parse(window.sessionStorage.getItem(item));
+  } catch (e) {
+    console.error(e, item);
+  }
 };
 
 const state = {
   clock: `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`,
-  sideBar: getStorage("roomsidebar") || [],
+  sideBar: getStorage("roomsidebar") || false,
   dialogJoin: true,
   dialogQuit: false,
   medias: getStorage("medias") || ["audio", "video"],
@@ -77,8 +85,8 @@ const mutations = {
     state.clock = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`
   },
   setSideBar(state, value) {
-    state.sideBar = value;
-    setStorage('roomsidebar', value);
+    state.sideBar = (value === undefined) ? false : value;
+    setStorage('roomsidebar', state.sideBar);
   },
   openJoinDialog(state) {
     state.dialogJoin = true;

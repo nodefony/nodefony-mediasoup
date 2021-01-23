@@ -948,7 +948,7 @@ class Room extends nodefony.Service {
     if (this.webcamProducer) {
       return this.webcamProducer;
     } else if (this.shareProducer) {
-      await this.disableShare();
+      //await this.disableShare();
     }
     if (!this.mediasoupDevice.canProduce('video')) {
       this.log('enableWebcam() | cannot produce video', "ERROR");
@@ -1233,11 +1233,11 @@ class Room extends nodefony.Service {
   async enableShare() {
     this.log(`Enable share screen`, "DEBUG");
     if (this.shareProducer) {
-      return;
+      //return;
     }
-    if (this.webcamProducer) {
+    /*if (this.webcamProducer) {
       await this.disableWebcam();
-    }
+    }*/
     if (!this.mediasoupDevice.canProduce('video')) {
       this.log('enableShare() | cannot produce video', "ERROR");
       return;

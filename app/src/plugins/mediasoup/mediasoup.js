@@ -214,6 +214,9 @@ class Mediasoup extends nodefony.Service {
   initializeRoom(roomid, peerid, options){
     return new Promise((resolve, reject) => {
       try{
+        if(! this.sock ){
+          throw new Error(`Mediasoup not connected`);
+        }
         this.room = this.createRoom(roomid, options);
         this.peer = this.createPeer(peerid, options);
         const sendMessage = {

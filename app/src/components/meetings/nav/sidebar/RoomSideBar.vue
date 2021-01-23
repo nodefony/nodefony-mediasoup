@@ -1,41 +1,30 @@
 <template>
-<v-container fluid class="pa-0 ma-0">
-  <v-row class="pa-0 ma-0">
-    <v-expansion-panels multiple accordion v-model="drawer">
-      <v-expansion-panel>
-        <v-expansion-panel-header>
-          <template v-slot:actions>
-            <v-icon color="error">
-              mdi-account-multiple
-            </v-icon>
-          </template>
-          <div>
-            Participants
-            <v-badge bordered color="deep-purple accent-4" offset-x="-5" offset-y="-5" :content="peers.length">
-            </v-badge>
-          </div>
-        </v-expansion-panel-header>
-        <v-expansion-panel-content>
-          <room-card-peers :peers="peers" />
-        </v-expansion-panel-content>
-      </v-expansion-panel>
+<v-navigation-drawer v-if="room" width="25%" v-model="displaybar" right class="" style="position:fixed;top:64px;z-index:1000">
 
-      <v-expansion-panel>
-        <v-expansion-panel-header>
-          <template v-slot:actions>
-            <v-icon color="error">
-              mdi-message-text
-            </v-icon>
-          </template>
-          Chat
-        </v-expansion-panel-header>
-        <v-expansion-panel-content id="innerExPan">
-          <room-card-chat />
-        </v-expansion-panel-content>
-      </v-expansion-panel>
-    </v-expansion-panels>
-  </v-row>
-</v-container>
+  <v-list-item style="postion:fixed;">
+    <v-btn icon class="ml-2 mr-3">
+      <v-icon v-if="menu === 'peers'" dark @click="setSideBar(undefined)">
+        mdi-account-multiple
+      </v-icon>
+      <v-icon v-if="menu === 'chat'" dark @click="setSideBar(undefined)">
+        mdi-message-text
+      </v-icon>
+    </v-btn>
+    <v-list-item-content>
+      <v-list-item-title class="title">
+        {{menu}}
+      </v-list-item-title>
+      <v-list-item-subtitle>
+        {{room.id}}
+      </v-list-item-subtitle>
+    </v-list-item-content>
+  </v-list-item>
+
+  <room-card-peers v-if="menu === 'peers'" />
+
+  <room-card-chat v-if="menu === 'chat'" />
+
+</v-navigation-drawer>
 </template>
 
 
@@ -52,29 +41,49 @@ export default {
   name: 'RoomSideBar',
   components: {
     "room-card-chat": CardChat,
-    "room-card-peers": CardPeers,
+    "room-card-peers": CardPeers
   },
-  props: {},
+  props: {
+
+  },
   data(vm) {
     return {}
   },
   mounted() {},
   computed: {
+    ...mapGetters({
+      room: 'getRoom',
+      peer: 'getPeer'
+    }),
     ...mapGetters([
-      'peers'
+      'peers',
+      'getSideBar',
+      //'getRoomEntity'
     ]),
-    drawer: {
-      set(value) {
-        this.$store.commit('setSideBar', value)
-      },
+    menu() {
+      switch (this.getSideBar) {
+        case 1:
+          return "chat"
+        case 0:
+          return "peers"
+        default:
+          return false
+      }
+    },
+    displaybar: {
       get() {
-        return this.$store.getters.getSideBar;
+        return this.menu;
+      },
+      set(value) {
+        return value;
       }
     }
   },
 
   methods: {
-
+    ...mapMutations([
+      'setSideBar'
+    ])
   },
 }
 </script>

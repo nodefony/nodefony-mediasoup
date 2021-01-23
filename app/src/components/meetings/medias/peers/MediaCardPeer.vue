@@ -2,7 +2,7 @@
 <v-card :width="cardWidth" :height="height" class="rounded-lg" :elevation="elevation" :outlined="hover" :min-width="minWidth" :max-width="maxWidth" :max-height="maxHeight" :min-height="minHeight" :loading="loading" rounded @click="toggle" :class="{ focus: focus}"
   style="background:transparent;" :dark="dark">
 
-  <media-volume-peer v-if="volume" fab rounded absolute top left color="blue-grey" class=" white--text" :volume="this.volume || 0" :muted="local ? !hasAudio : !audio" />
+  <media-volume-peer v-if="volume" fab rounded absolute top left color="blue-grey" class=" white--text mt-5" :volume="this.volume || 0" :muted="local ? !hasAudio : !audio" />
 
   <slot name="peer"></slot>
 
@@ -14,7 +14,7 @@
 
           <v-container fluid fill-height class="pa-0 ma-0">
             <v-row justify="center" align="center" class="pa-0 ma-0">
-              <div v-show="hover" style="position:absolute">
+              <div v-show="hover || !video" style="position:absolute">
                 <v-avatar color="primary" class="white--text" :size="local ? (remote ? 50 : 120) :50">{{local ? getTrigramme : (remote ? remote.id : "") }}</v-avatar>
               </div>
               <video style="width:100%;border-radius:8px 8px 0 0;" class="pa-0 ma-0" muted playsinline :controls="false" ref="prevideo" />
@@ -25,7 +25,7 @@
 
         <v-container v-show="(!video && !screen && !noise)" fluid class="pa-0">
 
-          <v-container fluid fill-height style="min-height:160px;background-color:grey;opacity:0.3;border-radius:8px 8px 0 0;" class="pa-0 ma-0">
+          <v-container fluid fill-height style="min-height:160px;background-color:#034750;opacity:0.5;border-radius:8px 8px 0 0;" class="pa-0 ma-0">
             <v-row justify="center" align="center">
               <div style="position:absolute">
                 <v-avatar color="primary" class="white--text" :size="local ? (remote ? 50 : 120) :50">{{local ? getTrigramme : (remote ? remote.id : "") }}</v-avatar>
@@ -94,10 +94,6 @@ export default {
     spectrum: {
       type: Boolean,
       default: false
-    },
-    active: {
-      type: Boolean,
-      default: true
     },
     remote: {
       type: Object,
@@ -170,20 +166,19 @@ export default {
     } else {
       this.local = true;
     }
-
-    if (this.remote && this.active) {
+    if (this.remote) {
       this.log(`initialize remote stream`)
       if (this.remote.audioStream) {
         this.audioStream = this.createAudioStream(this.remote.audioStream);
         this.audioStream.mediaElement = this.$refs["preaudio"];
       } else {
-        this.createAudioStream();
+        this.audioStream = this.createAudioStream();
       }
       if (this.remote.videoStream) {
         this.videoStream = this.createVideoStream(this.remote.videoStream);
         this.videoStream.mediaElement = this.$refs["prevideo"];
       } else {
-        this.createVideoStream();
+        this.videoStream = this.createVideoStream();
       }
     } else {
       if (this.init) {
@@ -192,8 +187,10 @@ export default {
           //this.initDevices();
         }
       } else {
-        this.createAudioStream();
-        this.createVideoStream();
+        this.audioStream = this.createAudioStream();
+        this.audioStream.mediaElement = this.$refs["preaudio"];
+        this.videoStream = this.createVideoStream();
+        this.videoStream.mediaElement = this.$refs["prevideo"];
       }
     }
   },
@@ -394,6 +391,9 @@ export default {
     addConsumer(consumer) {
       return this.addTracks(consumer.track);
     },
+    deleteConsumer(consumer) {
+      return this.deleteTracks(consumer.track);
+    },
 
     // tracks
     async addTracks(track) {
@@ -469,7 +469,11 @@ export default {
         tracks.forEach(function(track) {
           track.stop();
         });
-        return await this.audioStream.detachStream();
+        return await this.audioStream.detachStream()
+          .then((res) => {
+            this.audio = false;
+            return res;
+          });
         //this.audioStream = null;
       }
     },
@@ -479,7 +483,11 @@ export default {
         tracks.forEach(function(track) {
           track.stop();
         });
-        return await this.videoStream.detachStream();
+        return await this.videoStream.detachStream()
+          .then((res) => {
+            this.video = false;
+            return res;
+          });
         //this.videoStream = null;
       }
     },
@@ -495,6 +503,7 @@ export default {
           this.videoStream.attachStream();
           stream.getVideoTracks()[0]
             .addEventListener('ended', () => {
+              this.noise = false;
               this.$emit("endwhitenoise", stream);
             });
           return stream;
@@ -516,6 +525,7 @@ export default {
           this.videoStream.attachStream();
           stream.getVideoTracks()[0]
             .addEventListener('ended', () => {
+              this.share = false;
               this.$emit("endsharescreen", stream);
             });
           return stream;
@@ -682,7 +692,6 @@ export default {
           });
       }
       if (!this.noise && this.hasNoise) {
-
         return await this.getWhiteNoise()
           .catch(e => {
             throw {

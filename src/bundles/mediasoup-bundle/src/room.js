@@ -262,8 +262,7 @@ class Room extends nodefony.Service {
   }
 
   async createPlainRtpTransport(config) {
-    const transport = await this.router.createPlainRtpTransport(config);
-    return transport;
+    return await this.router.createPlainRtpTransport(config);
   }
 
   async connecPlainRtpTransport(transport, options) {

@@ -106,14 +106,16 @@ export default {
       'audioStream',
       'videoStream',
       'webcam',
-      'microphone'
+      'microphone',
+      'getSideBar'
     ]),
     drawer: {
       set(value) {
-        this.$store.commit('setSideBar', value)
+        this.setSideBar(value)
+        return value;
       },
       get() {
-        return this.$store.getters.getSideBar;
+        return this.getSideBar;
       }
     }
   },
@@ -121,7 +123,8 @@ export default {
   methods: {
     ...mapMutations([
       'deleteMedias',
-      'setMedia'
+      'setMedia',
+      'setSideBar'
     ]),
     quit(event) {
       this.$emit("quit", event);

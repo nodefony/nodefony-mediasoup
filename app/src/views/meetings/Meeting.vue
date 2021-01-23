@@ -4,26 +4,19 @@
   <v-container v-show="joined" fluid fill-height class="pa-0 ma-0">
 
     <v-flex fill-height>
-      <room-tool-bar-top v-on:layoutchange="selectLayout" :roomid="roomid" />
+      <room-tool-bar-top :roomid="roomid" v-on:quit="quit" v-on:layoutchange="selectLayout" />
 
-      <room-grid-layout v-show="grid" :layout="grid" ref="grid" />
+      <!--room-grid-layout v-show="grid" :layout="grid" ref="grid" />
 
-      <room-focus-layout v-show="focus" :layout="focus" ref="focus" />
+      <room-focus-layout v-show="focus" :layout="focus" ref="focus" /-->
 
-      <room-tool-bar-bottom v-on:quit="quit" />
+      <meeting-layout ref="layout" />
 
-      <!-- Paticipants -->
-      <!--v-row v-show="joined" class="pa-0 ma-0">
-        <room-side-ppers :peers="peers" />
-      </v-row-->
 
-      <!--chat-->
-      <!--v-row v-show="joined" class="pa-0 ma-0">
-        <v-col cols="3" class="pa-0 ma-0">
-          <room-side-chat :peers="peers" />
-        </v-col>
-        <room-tool-bar-bottom v-on:quit="quit" />
-      </v-row-->
+      <room-side-bar />
+      <!--room-tool-bar-bottom v-on:quit="quit" /-->
+
+
       <room-quit-meeting v-if="dialogQuit" :roomid="room.id" v-on:response="leave" />
     </v-flex>
   </v-container>
@@ -41,9 +34,11 @@ import {
 import DialogQuit from '@/components/meetings/RoomDialogQuit';
 import RoomToolBarTop from '@/components/meetings/nav/RoomToolBarTop';
 import RoomToolBarBottom from '@/components/meetings/nav/RoomToolBarBottom';
-//import RoomSideBar from '@/components/meetings/nav/sidebar/RoomSideBar';
+import RoomSideBar from '@/components/meetings/nav/sidebar/RoomSideBar';
 import RoomFocusLayout from '@/components/meetings/layouts/RoomFocusLayout';
 import RoomGrilleLayout from '@/components/meetings/layouts/RoomGridLayout';
+
+import MettingLayout from '@/components/meetings/layouts/MeetingLayout.vue';
 
 export default {
   name: 'Meeting',
@@ -51,9 +46,10 @@ export default {
     "room-quit-meeting": DialogQuit,
     "room-tool-bar-top": RoomToolBarTop,
     "room-tool-bar-bottom": RoomToolBarBottom,
-    //"room-side-bar": RoomSideBar,
+    "room-side-bar": RoomSideBar,
     "room-focus-layout": RoomFocusLayout,
     "room-grid-layout": RoomGrilleLayout,
+    "meeting-layout": MettingLayout
   },
   props: {
     roomid: {
@@ -65,23 +61,42 @@ export default {
       message: null,
       intevalTime: null,
       grid: false,
-      focus: true,
+      focus: false,
       joined: false,
       connected: false
     }
   },
-  beforeRouteLeave(to, from, next) {
-    //this.openDrawer();
-    this.openNavBar();
+  async beforeRouteEnter(to, from, next) {
+    /*if (to.name === from.name) {
+      return next((vm) => {
+        return vm.redirect()
+      });
+    }*/
     return next();
   },
+  beforeRouteLeave(to, from, next) {
+    //console.log("passs beforeRouteLeave ")
+    //this.openDrawer();
+    //console.log(to.name, to.name)
+    this.openNavBar();
+    return next();
+    /*return this.close()
+      .then(() => {
+        this.openNavBar();
+        return next();
+      });*/
+  },
+  //beforeMount() {
+  async beforeCreate() {},
+  async created() {},
   mounted() {
+    //console.trace("passss mount meeting")
     this.closeDrawer();
     this.closeNavBar();
     //this.openJoinDialog();
-    if (!this.getRoomEntity) {
-      this.redirect();
-    }
+    /*if (!this.getRoomEntity) {
+      return;
+    }*/
     return this.acceptConnect();
   },
   watch: {
@@ -89,21 +104,22 @@ export default {
       this.notify(message);
     }
   },
-  beforeDestroy() {
+  async beforeDestroy() {
+    //console.log("passs beforeDestroy ")
     this.deleteVideoStream();
     this.deleteAudioStream();
-    this.room = null;
-    this.peer = null;
+    return await this.leaveRoom();
   },
-  destroyed() {
+  async destroyed() {
+    //console.log("passs destroyed ")
     if (this.intevalTime) {
       clearInterval(this.intevalTime);
     }
+    this.room = null;
+    this.peer = null;
   },
   beforeUpdate() {},
-  //beforeMount() {
-  async beforeCreate() {},
-  async created() {},
+
   computed: {
     ...mapGetters({
       clock: 'getClock',
@@ -124,7 +140,8 @@ export default {
       'videoStream',
       'getMediasoupStatus',
       'getMediasoupActivity',
-      'dialogQuit'
+      'dialogQuit',
+      'getSideBar'
     ]),
     room: {
       get() {
@@ -290,12 +307,14 @@ export default {
       });
       this.room.on("addProducer", async (producer) => {
         this.log(`addProducer => ${producer.type}`, "DEBUG");
-        let component = this.getPeerComponent(this.peer.id);
-        this.peer.addProducer(producer);
-        await component.addProducer(producer);
         if (producer.type === "share") {
-          this.getLayout().displayShare(this.peer);
+          let component = this.getPeerComponent("share");
+          await component.addProducer(producer);
+          this.getLayout().displayShare(this.peer, producer);
         } else {
+          let component = this.getPeerComponent(this.peer.id);
+          this.peer.addProducer(producer);
+          await component.addProducer(producer);
           this.getLayout().focusPeer(this.peer.id, 0);
         }
       });
@@ -305,28 +324,38 @@ export default {
         return component.deleteProducer(producer);
       });
       this.room.on("disableShare", async (room) => {
-        await room.enableWebcam();
+        //await room.enableWebcam();
+        console.log('disableShare')
         this.deleteMedias("screen");
+        this.getLayout().stopDisplayShare();
       });
       this.room.on("consume", async (consumer, peer) => {
         this.log(`Consume event : ${peer.id}`);
         peer.addConsumer(consumer);
         // media
-        let component = this.getPeerComponent(peer.id);
-        await component.addConsumer(consumer);
         if (consumer.appData.share) {
-          this.getLayout().displayShare(peer)
+          let component = this.getPeerComponent("share");
+          await component.addConsumer(consumer);
+          this.getLayout().displayShare(peer, consumer);
+        } else {
+          let component = this.getPeerComponent(peer.id);
+          await component.addConsumer(consumer);
         }
       });
-      this.room.on("consumerClosed", (consumerId, peerId, appData) => {
+      this.room.on("consumerClosed", async (consumerId, peerId, appData) => {
         this.log(`consumerClosed : ${peerId} condumeId =${consumerId} `, "DEBUG");
         try {
+          if (appData.share) {
+            this.getLayout().stopDisplayShare();
+          }
           let peer = this.getRemotePeer(peerId);
           if (peer) {
-            peer.deleteConsumer(consumerId);
-          }
-          if (appData.share) {
-            this.getLayout().stopDisplayShare(peer)
+            let consumer = peer.hasConsumer(consumerId);
+            if (consumer) {
+              let component = this.getPeerComponent(peerId);
+              await component.deleteConsumer(consumer);
+              peer.deleteConsumer(consumerId);
+            }
           }
         } catch (e) {
           this.log(e, "WARNING");
@@ -382,6 +411,9 @@ export default {
       if (this.focus) {
         layout = this.$refs.focus;
       }
+      if (!layout) {
+        layout = this.$refs.layout;
+      }
       return layout;
     },
     selectLayout(selectedLayout) {
@@ -415,11 +447,12 @@ export default {
     },
 
     redirect() {
-      return this.$router.push({
+      return this.$router.replace({
           name: 'HomeMeeting',
           params: {
             roomid: this.roomid
-          }
+          },
+          force: true
         })
         .then(() => {
           return this.leaveRoom();

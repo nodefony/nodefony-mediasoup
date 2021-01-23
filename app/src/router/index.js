@@ -36,81 +36,82 @@ const allReadyLogin = (to, from, next) => {
 Vue.use(VueRouter)
 
 const routes = [{
-    path: '/',
-    alias: '/home',
-    name: 'Home',
-    component: Home,
-    beforeEnter: ifAuthenticated
+  path: '/',
+  alias: '/home',
+  name: 'Home',
+  component: Home,
+  beforeEnter: ifAuthenticated
 }, {
-    path: '/login',
-    name: 'Login',
-    component: Login,
-    beforeEnter: allReadyLogin
+  path: '/login',
+  name: 'Login',
+  component: Login,
+  beforeEnter: allReadyLogin
 }, {
-    path: '/logout',
-    name: 'Logout',
-    component: Login
+  path: '/logout',
+  name: 'Logout',
+  component: Login
 }, {
-    path: '/about',
-    name: 'About',
-    component: () =>
-      import( /* webpackChunkName: "about" */ '../views/About.vue')
+  path: '/about',
+  name: 'About',
+  component: () =>
+    import( /* webpackChunkName: "about" */ '../views/About.vue')
  }, {
-    path: '/rooms',
-    alias: '/rooms/home',
-    name: 'Rooms',
-    component: Rooms,
-    beforeEnter: ifAuthenticated,
-    children: []
+  path: '/rooms',
+  alias: '/rooms/home',
+  name: 'Rooms',
+  component: Rooms,
+  beforeEnter: ifAuthenticated,
+  children: []
  }, {
-    path: '/room/:roomid',
-    name: 'Room',
-    component: EditRoom,
-    props: true,
-    beforeEnter: ifAuthenticated
+  path: '/room/:roomid',
+  name: 'Room',
+  component: EditRoom,
+  props: true,
+  beforeEnter: ifAuthenticated
  }, {
-    path: '/meetings/join/:roomid',
-    name: 'JoinMeeting',
-    props: true,
-    component: JoinMeeting,
-    children: []
+  path: '/meetings/join/:roomid',
+  name: 'JoinMeeting',
+  props: true,
+  component: JoinMeeting,
+  children: []
  }, {
-   path: '/meetings/home/:roomid',
-   name: 'HomeMeeting',
-   props: true,
-   component: HomeMeeting,
+  path: '/meetings/home/:roomid',
+  name: 'HomeMeeting',
+  props: true,
+  component: HomeMeeting,
  }, {
-   path: '/meetings/enter/:roomid',
-   name: 'Meeting',
-   props: true,
-   component: Meeting,
+  path: '/meetings/enter/:roomid',
+  name: 'Meeting',
+  props: true,
+  component: Meeting,
  }, {
-    path: '/meetings',
-    alias: '/meetings/home',
-    name: 'Meetings',
-    component: Meetings,
-    beforeEnter: ifAuthenticated,
+  path: '/meetings',
+  alias: '/meetings/home',
+  name: 'Meetings',
+  component: Meetings,
+  beforeEnter: ifAuthenticated,
  }, {
-    path: '/meetings/:roomid',
-    name: 'MeetingDetails',
-    props: true,
-    component: MeetingDetails,
-    beforeEnter: ifAuthenticated,
+  path: '/meetings/:roomid',
+  name: 'MeetingDetails',
+  props: true,
+  component: MeetingDetails,
+  beforeEnter: ifAuthenticated,
  }, {
-    path: '/users',
-    alias: '/users/home',
-    name: 'Users',
-    beforeEnter: ifAuthenticated,
-    component: Users
+  path: '/users',
+  alias: '/users/home',
+  name: 'Users',
+  beforeEnter: ifAuthenticated,
+  component: Users
  }, {
-    path: '/user/:username',
-    name: 'User',
-    props: true,
-    beforeEnter: ifAuthenticated,
-    component: EditUser
- },{
-   // and finally the default route, when none of the above matches:
-    path: "*", component: PageNotFound
+  path: '/user/:username',
+  name: 'User',
+  props: true,
+  beforeEnter: ifAuthenticated,
+  component: EditUser
+ }, {
+  // and finally the default route, when none of the above matches:
+  path: "*",
+  component: PageNotFound
 
 }];
 

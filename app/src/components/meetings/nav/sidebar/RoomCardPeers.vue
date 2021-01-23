@@ -1,24 +1,49 @@
 <template>
-<div>
-  <v-card class="mx-auto" min-width="100%" min-height="100%">
-    <v-virtual-scroll :items="items" :item-height="50" height="500">
-      <template v-slot:default="{ item }">
-        <v-list-item>
-          <v-list-item-avatar>
-            <v-avatar :color="item.color" size="56" class="white--text">
-              <v-img :src="item.avatar"></v-img>
-            </v-avatar>
-          </v-list-item-avatar>
+<v-card elevation="1" min-width="100%" class="">
+  <v-virtual-scroll :items="peers" height="300" item-height="64">
+    <v-list-item-action>
+      <v-btn fab small depressed color="primary">
+        {{ peer.id }}
+      </v-btn>
+    </v-list-item-action>
 
-          <v-list-item-content>
-            <v-list-item-title v-html="item.name"></v-list-item-title>
-            <v-list-item-subtitle v-html="item.subtitle"></v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
-      </template>
-    </v-virtual-scroll>
-  </v-card>
-</div>
+    <v-list-item-content>
+      <v-list-item-title>
+        User Database Record <strong>ID {{ peer.id }}</strong>
+      </v-list-item-title>
+    </v-list-item-content>
+
+    <v-list-item-action>
+      <v-icon small>
+        mdi-open-in-new
+      </v-icon>
+    </v-list-item-action>
+    </v-list-item>
+    <template v-slot:default="{ item }">
+      <v-list-item :key="item">
+        <v-list-item-action>
+          <v-btn fab small depressed color="primary">
+            {{ item.id }}
+          </v-btn>
+        </v-list-item-action>
+
+        <v-list-item-content>
+          <v-list-item-title>
+            User Database Record <strong>ID {{ item.id }}</strong>
+          </v-list-item-title>
+        </v-list-item-content>
+
+        <v-list-item-action>
+          <v-icon small>
+            mdi-open-in-new
+          </v-icon>
+        </v-list-item-action>
+      </v-list-item>
+
+      <v-divider></v-divider>
+    </template>
+  </v-virtual-scroll>
+</v-card>
 </template>
 
 
@@ -29,7 +54,7 @@ import {
   mapActions
 } from 'vuex';
 export default {
-  name: 'Peers',
+  name: 'MenuPeers',
   data(vm) {
     return {
 
@@ -37,18 +62,14 @@ export default {
   },
   props: {},
   computed: {
+    ...mapGetters({
+      room: 'getRoom',
+      peer: 'getPeer'
+    }),
     ...mapGetters([
       'peers'
     ]),
-    items() {
-      let tab = [];
-      for (let i = 0; i < this.peers.length; i++) {
-        tab.push({
-          name: this.peers[i].id
-        });
-      }
-      return tab;
-    }
+
   },
   mount() {},
   methods: {

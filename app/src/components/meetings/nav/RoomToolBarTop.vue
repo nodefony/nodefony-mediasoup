@@ -1,17 +1,50 @@
 <template>
-<v-toolbar fixed outlined dense flat width="100%" class="ma-0 pa-0" style="top: 0;position:fixed; z-index:1000">
-  <v-app-bar-nav-icon @click="toogleSlider"></v-app-bar-nav-icon>
-  <v-toolbar-title>{{ $t("rooms.name")}} {{roomid}}</v-toolbar-title>
+<v-toolbar fixed outlined flat width="100%" class="ma-0 pa-0" style="top: 0;position:fixed; z-index:1000">
+
+  <v-toolbar-title>
+    <v-btn text>
+      <img src="@/assets/mediasoup.png" />
+      <span class="hidden-sm-and-down ml-2">{{roomid}}</span>
+    </v-btn>
+  </v-toolbar-title>
   <v-spacer></v-spacer>
+
+
+  <v-btn x-small class="mx-4" fab @click="toogleAudio">
+    <v-icon v-if="hasAudio">
+      mdi-volume-high
+    </v-icon>
+    <v-icon v-else>
+      mdi-volume-off
+    </v-icon>
+
+  </v-btn>
+  <v-btn x-small class="mx-4" fab @click="toogleVideo">
+    <v-icon v-if="hasVideo">
+      mdi-video-outline
+    </v-icon>
+    <v-icon v-else>
+      mdi-video-off
+    </v-icon>
+
+  </v-btn>
+  <v-btn x-small class="mx-4" fab @click="toogleShare">
+    <v-icon v-if="hasScreen">
+      mdi-monitor-share
+    </v-icon>
+    <v-icon v-else>
+      mdi-monitor-off
+    </v-icon>
+  </v-btn>
+
+  <v-app-bar-nav-icon class="mx-4" @click="toogleSlider"></v-app-bar-nav-icon>
+
   <v-menu :close-on-content-click="false" :nudge-width="200" offset-x>
     <template v-slot:activator="{ on, attrs }">
-      <v-btn small class="mx-4" v-bind="attrs" v-on="on" rounded outlined>
-        <v-icon left>
-          mdi-page-layout-header-footer
+      <v-btn small icon class="mx-2" v-bind="attrs" v-on="on">
+        <v-icon>
+          mdi-dots-vertical
         </v-icon>
-        <span>
-          Mise en Page
-        </span>
       </v-btn>
     </template>
     <v-card>
@@ -43,7 +76,37 @@
       </v-list>
     </v-card>
   </v-menu>
-  <v-app-bar-nav-icon></v-app-bar-nav-icon>
+
+  <v-spacer></v-spacer>
+
+  <v-btn small class="mx-6" dark rounded color="red" @click="quit">
+    <v-icon small class="mx-1">
+      mdi-close
+    </v-icon>
+    Quitter
+  </v-btn>
+
+  <v-spacer></v-spacer>
+
+  <v-btn-toggle v-model="drawer" rounded small>
+    <v-btn small>
+      <v-icon small dark>
+        mdi-account-multiple
+      </v-icon>
+      <!--span>
+        Participants
+      </span-->
+    </v-btn>
+    <v-btn small>
+      <v-icon small dark>
+        mdi-message-text
+      </v-icon>
+      <!--span>
+        Chat
+      </span-->
+    </v-btn>
+  </v-btn-toggle>
+
 </v-toolbar>
 </template>
 
@@ -73,16 +136,88 @@ export default {
   },
   mounted() {},
   computed: {
+    ...mapGetters({
+      room: 'getRoom',
+      peer: 'getPeer'
+    }),
+    ...mapGetters([
+      'hasAudio',
+      'hasVideo',
+      'hasScreen',
+      'audioStream',
+      'videoStream',
+      'webcam',
+      'microphone'
+    ]),
 
+    drawer: {
+      set(value) {
+        this.setSideBar(value)
+      },
+      get() {
+        return this.getSideBar;
+      }
+    }
   },
 
   methods: {
     ...mapMutations([
-      'toogleSlider'
+      'toogleSlider',
+      'deleteMedias',
+      'setMedia',
+      'setSideBar'
     ]),
     selectLayout(event) {
       this.$emit("layoutchange", this.selectedLayout, event);
     },
+    quit(event) {
+      this.$emit("quit", event);
+    },
+    async toogleVideo() {
+      this.log(`Video : `);
+      // tag
+      if (this.hasVideo) {
+        await this.room.disableWebcam();
+        //return this.pauseVideoTag();
+        this.deleteMedias("video")
+      } else {
+        await this.room.enableWebcam(null, this.webcam);
+        //return this.playVideoTag();
+        this.setMedia("video");
+      }
+    },
+    async toogleAudio() {
+      this.log(`Audio : `);
+      if (!this.room.micProducer) {
+        await this.room.enableMic(null, this.microphone);
+        this.setMedia("audio");
+        return;
+      }
+      // tag
+      if (this.hasAudio) {
+        await this.room.muteMic()
+        //this.muteTag();
+        this.deleteMedias("audio")
+      } else {
+        await this.room.unmuteMic()
+        //this.demuteTag();
+        this.setMedia("audio");
+      }
+
+    },
+    toogleShare() {
+      this.log(`Share : `);
+      if (this.hasScreen) {
+        return this.room.disableShare()
+          .then(() => {
+            this.deleteMedias("screen")
+          })
+      }
+      return this.room.enableShare()
+        .then(() => {
+          this.setMedia("screen")
+        })
+    }
 
   }
 }
