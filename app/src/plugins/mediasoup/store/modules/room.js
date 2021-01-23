@@ -1,7 +1,8 @@
 const state = {
   room: null,
   roomEntity:null,
-  peers:null
+  peers:null,
+  chatMessages:[]
 }
 
 const getters = {
@@ -9,17 +10,20 @@ const getters = {
   getRoom(state) {
     return state.room;
   },
-  getRoomName() {
+  getRoomName(state) {
     if (state.room){
       return state.room.id;
     }
     return "";
   },
-  getRoomEntity(){
+  getRoomEntity(state){
     return state.roomEntity;
   },
-  getPeers(){
+  getPeers(state){
     return state.peers;
+  },
+  getChatMessages(state){
+    return state.chatMessages;
   }
 };
 
@@ -33,6 +37,9 @@ const mutations = {
   },
   setPeers(state, value){
     state.peers = value;
+  },
+  setChatMessage(state, message){
+    state.chatMessages.push(message);
   }
 };
 

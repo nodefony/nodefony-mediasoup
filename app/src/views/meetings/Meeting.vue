@@ -33,10 +33,9 @@ import {
 
 import DialogQuit from '@/components/meetings/RoomDialogQuit';
 import RoomToolBarTop from '@/components/meetings/nav/RoomToolBarTop';
-import RoomToolBarBottom from '@/components/meetings/nav/RoomToolBarBottom';
 import RoomSideBar from '@/components/meetings/nav/sidebar/RoomSideBar';
-import RoomFocusLayout from '@/components/meetings/layouts/RoomFocusLayout';
-import RoomGrilleLayout from '@/components/meetings/layouts/RoomGridLayout';
+//import RoomFocusLayout from '@/components/meetings/layouts/RoomFocusLayout';
+//import RoomGrilleLayout from '@/components/meetings/layouts/RoomGridLayout';
 
 import MettingLayout from '@/components/meetings/layouts/MeetingLayout.vue';
 
@@ -45,10 +44,9 @@ export default {
   components: {
     "room-quit-meeting": DialogQuit,
     "room-tool-bar-top": RoomToolBarTop,
-    "room-tool-bar-bottom": RoomToolBarBottom,
     "room-side-bar": RoomSideBar,
-    "room-focus-layout": RoomFocusLayout,
-    "room-grid-layout": RoomGrilleLayout,
+    //"room-focus-layout": RoomFocusLayout,
+    //"room-grid-layout": RoomGrilleLayout,
     "meeting-layout": MettingLayout
   },
   props: {

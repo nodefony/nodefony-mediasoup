@@ -335,6 +335,6 @@ export default {
       this.data = null;
       return data;
     },
-  },
+  }
 }
 </script>
