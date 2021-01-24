@@ -18,7 +18,7 @@
       <v-card-subtitle class="pb-0">
         <v-text-field v-if="isLoading" color="success" loading disabled>
         </v-text-field>
-        <notify v-if="message" :pdu="message" type="alert" />
+        <nodefony-notify outlined app top v-if="message" :pdu="message" />
       </v-card-subtitle>
       <v-card-text class="text--primary">
 
@@ -50,7 +50,7 @@ import {
   mapMutations
 } from 'vuex';
 
-import notify from '@/plugins/nodefony/components/notify.vue';
+import notify from '@/plugins/nodefony/notify/snackbar.vue';
 
 export default {
   name: 'Login',
@@ -77,7 +77,7 @@ export default {
     iframe: null
   }),
   components: {
-    notify
+    "nodefony-notify": notify
   },
   computed: {
     ...mapGetters([
@@ -97,6 +97,13 @@ export default {
   },
   beforeDestroy() {
 
+  },
+  watch: {
+    message(value) {
+      if (value) {
+        this.notify(value)
+      }
+    }
   },
   methods: {
     ...mapMutations([

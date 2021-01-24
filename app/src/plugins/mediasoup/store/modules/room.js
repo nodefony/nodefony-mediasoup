@@ -39,7 +39,7 @@ const mutations = {
     state.peers = value;
   },
   setChatMessage(state, message){
-    state.chatMessages.push(message);
+    state.chatMessages.push( message);
   }
 };
 

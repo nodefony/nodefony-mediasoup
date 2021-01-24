@@ -1,16 +1,10 @@
 <template>
-<v-snackbar v-bind="{...$props, ...$attrs}" v-model="visible" :color="severityColor" :style="`margin-top:${margin}`">
-  {{ pdu.payload }}
-  <v-btn color="red" text @click="close">
+<v-snackbar v-if="newPdu" v-bind="{...$props, ...$attrs}" v-model="visible" :color="severityColor" :style="`margin-top:${margin}`">
+  {{ newPdu.payload }}
+  <v-btn v-if="timeout === -1" dark text @click="close">
     {{ $t('close') }}
   </v-btn>
 </v-snackbar>
-<!--v-snackbar v-bind="$props" absolute :timeout="timeout" :top="top" :right="right" v-model="visible" :multi-line="multiLine" :color="severityColor">
-  {{ pdu.payload }}
-  <v-btn color="red" text @click="visible=false">
-    {{ $t('close') }}
-  </v-btn>
-</v-snackbar-->
 </template>
 
 <script>
@@ -48,20 +42,64 @@ export default {
   computed: {
     margin() {
       return (this.stacked * 68) + 'px'
+    },
+    newPdu() {
+      if (this.pdu) {
+        return this.parse(this.pdu);
+      }
+      return null;
     }
   },
   mounted() {
-    this.severityColor = this.pdu.type || this.color;
+    if (this.pdu) {
+      this.severityColor = this.pdu.type || this.color;
+    }
+    /*if (this.timeout !== -1) {
+      setTimeout(() => {
+        this.$emit("close", this.pdu);
+      }, this.timeout)
+    }*/
   },
   methods: {
     close() {
       this.visible = false;
+    },
+    parse(pdu) {
+      if (!pdu) {
+        return
+      }
+      switch (true) {
+        case pdu.severity <= 3:
+          pdu.type = 'error';
+          pdu.color = 'red';
+          break;
+        case pdu.severity === 4:
+          pdu.type = 'warning';
+          pdu.color = 'yellow';
+          break;
+        case pdu.severity === 5:
+          pdu.type = 'info';
+          pdu.color = 'blue';
+          break;
+        case pdu.severity === 6:
+          pdu.type = 'success';
+          pdu.color = 'green';
+          break;
+        case pdu.severity === 7:
+          pdu.type = 'success';
+          pdu.color = 'teal';
+          break;
+        default:
+          pdu.type = 'info';
+          pdu.color = 'teal';
+      }
+      return pdu;
     }
   },
   watch: {
     visible(value) {
       if (!value) {
-        this.$emit("close", this.pdu)
+        this.$emit("close", this.pdu);
       }
     }
   }

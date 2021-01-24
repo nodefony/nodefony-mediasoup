@@ -1,58 +1,59 @@
 <template>
 <v-timeline dense clipped>
-  <v-timeline-item fill-dot class="white--text mb-12" color="orange" dense>
+  <v-timeline-item fill-dot class="white--text mb-12" color="orange" dense key="input">
     <template v-slot:icon>
       <span>{{peer.id}}</span>
     </template>
 
-    <v-textarea v-model="input" @keydown.enter="dragdrop" @paste="dragdrop" @dragstart="dragdrop" @dragenter="dragdrop" @dragleave="dragdrop" @dragover="dragdrop" @drop.prevent.stop="dragdrop" label="Leave a comment.." auto-grow outlined rows="3"
-      row-height="30" shaped dense>
+    <v-textarea v-model="input" @keydown.enter="eventsImput" @paste="eventsImput" @dragstart="eventsImput" @dragenter="eventsImput" @dragleave="eventsImput" @dragover="eventsImput" @drop.prevent.stop="eventsImput" label="Leave a comment.." auto-grow
+      outlined rows="3" row-height="30" shaped dense>
       <template v-slot:append>
-        <v-btn small class="mx-0" depressed @click="dragdrop">
+        <v-btn small class="mx-0" depressed @click="eventsImput">
           Post
         </v-btn>
       </template>
     </v-textarea>
   </v-timeline-item>
 
-  <v-slide-x-transition group>
+  <v-slide-x-transition v-if="timeline.length" group name="fade">
 
-    <v-timeline-item v-for="event in timeline" :key="event.id" class="mb-4" color="orange" dense>
+    <v-timeline-item v-for="(message, index) in timeline" :key="index" class="mb-4" color="orange" dense>
       <template v-slot:icon>
-        <span v-text="event.from"></span>
+        <span v-text="message.from.id"></span>
       </template>
       <v-row justify="space-between">
-
-        <v-card v-if="event.ogp">
+        <v-card v-if="message.ogp">
           <div class="d-flex flex-no-wrap justify-space-between">
             <div>
-              <v-card-title class="headline" v-if="event.ogp['og:title']" v-text="event.ogp['og:title'][0] ">
+              <v-card-title class="headline" v-if="message.ogp['og:title']" v-text="message.ogp['og:title'][0] ">
               </v-card-title>
-              <v-card-subtitle v-if="event.ogp['og:site_name']" v-text="event.ogp['og:site_name'][0]">
+              <v-card-subtitle v-if="message.ogp['og:site_name']" v-text="message.ogp['og:site_name'][0]">
               </v-card-subtitle>
-              <v-card-text v-if="event.ogp['og:description']">
-                {{ event.ogp['og:description'][0] }}
+              <v-card-text v-if="message.ogp['og:description']">
+                {{ message.ogp['og:description'][0] }}
               </v-card-text>
-              <v-card-actions v-if="event.ogp['og:url']">
-                <v-btn outlined rounded text link :src="event.ogp['og:url'][0]">
-                  {{ event.ogp['og:site_name'][0]}}
+              <v-card-actions v-if="message.ogp['og:url']">
+                <v-btn outlined rounded text link :src="message.ogp['og:url'][0]">
+                  {{ message.ogp['og:site_name'][0]}}
                 </v-btn>
               </v-card-actions>
             </div>
-            <v-avatar v-if="event.ogp['og:video']" class="ma-3" size="125" tile>
-              <video controls v-if="event.ogp['og:video']" :src=" event.ogp['og:video'][0]" />
+            <v-avatar v-if="message.ogp['og:video']" class="ma-3" size="125" tile>
+              <video controls v-if="message.ogp['og:video']" :src=" message.ogp['og:video'][0]" />
             </v-avatar>
-            <v-avatar v-else-if="event.ogp['og:image']" class="ma-3" size="125" tile>
-              <v-img :src="event.ogp['og:image'][0]"></v-img>
+            <v-avatar v-else-if="message.ogp['og:image']" class="ma-3" size="125" tile>
+              <v-img :src="message.ogp['og:image'][0]"></v-img>
             </v-avatar>
           </div>
         </v-card>
-        <v-col cols="7" v-else-if="event.html" v-html="event.html"></v-col>
-        <v-col cols="7" v-else-if="event.url" v-html="event.url"></v-col>
-        <v-col cols="7" v-else-if="event.uri" v-html="event.uri"></v-col>
-        <v-col cols="7" v-else-if="event.text" v-text="event.text"></v-col>
-        <v-col cols="7" v-else-if="event.files && event.files[0]" v-text="event.files[0]"></v-col>
-        <v-col class="text-right" cols="5" v-text="event.formatTime"></v-col>
+
+        <v-col cols="7" v-else-if="message.html" v-html="message.html"></v-col>
+        <v-col cols="7" v-else-if="message.url" v-html="message.url"></v-col>
+        <v-col cols="7" v-else-if="message.uri" v-html="message.uri"></v-col>
+        <v-col cols="7" v-else-if="message.text" v-text="message.text"></v-col>
+        <v-col cols="7" v-else-if="message.message" v-text="message.message"></v-col>
+        <v-col cols="7" v-else-if="message.files && message.files[0]" v-text="message.files[0]"></v-col>
+        <v-col class="text-right" cols="5" v-text="message.formatTime"></v-col>
 
       </v-row>
     </v-timeline-item>
@@ -96,12 +97,11 @@ export default {
     }
   },
   destroyed() {
-    console.log('destroyed');
-    this.room.removeListener("onDataConsumerMessage", this.eventsMessage);
+    //this.room.removeListener("onDataConsumerMessage", this.eventsMessage);
   },
   mounted() {
     if (this.room) {
-      this.room.on("onDataConsumerMessage", this.eventsMessage);
+      //this.room.on("onDataConsumerMessage", this.eventsMessage);
     }
   },
   computed: {
@@ -111,11 +111,15 @@ export default {
       chatMessages: 'getChatMessages'
     }),
     ...mapGetters([
-      'peers'
+      //'peers'
     ]),
     timeline() {
-      let ele = this.chatMessages.slice().reverse()
-      return ele;
+      const tab = this.chatMessages.map((message) => {
+        let parser = this.parseMessage(message.message);
+        parser.from = message.from;
+        return parser;
+      });
+      return tab.slice().reverse()
     }
   },
 
@@ -123,13 +127,24 @@ export default {
     ...mapMutations([
       'setChatMessage'
     ]),
-    async eventsMessage(message) {
-      if (message.message instanceof ArrayBuffer) {
-        let file = await this.previewFile(new Blob([message.message]));
-        return this.comment(message.from, file)
+    parseMessage(message = {}) {
+      if (message) {
+        if (message instanceof ArrayBuffer) {
+          //let file = await this.previewFile(new Blob([message.message]));
+          //message.file = file
+          //return message;
+        }
+        if (message && typeof message === "string") {
+          let data = null;
+          try {
+            data = JSON.parse(message);
+          } catch (e) {
+            data = message
+          }
+          message = data;
+        }
       }
-      let data = JSON.parse(message.message);
-      return this.comment(message.from, data)
+      return message
     },
     agree() {
       this.dialog = false;
@@ -166,105 +181,17 @@ export default {
         }
       });
     },
-    async entryParser(value, ogp = false) {
 
-      let regUrl = urlRegex({
-        exact: true,
-        strict: false
-      });
-      this.log(`try ogp ==> ${ogp} Is Url ? ${value}  ====>  ${regUrl.test(value)}`);
-      if (ogp) {
-        if (regUrl.test(value)) {
-          const headers = new Headers();
-          headers.append("Content-Type", "application/json");
-          return window.fetch(`/service/ogp`, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({
-                url: value
-              })
-            }).then(async (response) => {
-              let res = await response.json();
-              return res.ogp || null;
-            })
-            .catch(() => {
-              return null;
-            })
-        } else {
-          return null;
-        }
-      }
-      let data = {
-        time: Date.now(),
-        text: value,
-        html: "",
-        ogp: null
-      }
-      switch (true) {
-        case (value instanceof window.DataTransfer):
-          {
-            data.text = value.getData("text") || data.text;
-            data.html = value.getData("text/html");
-            data.url = value.getData("URL");
-            data.uri = value.getData("text/uri-list");
-            data.files = [];
-            data.items = [];
-            if (data.url) {
-              data.ogp = await this.entryParser(data.url, true);
-            }
-            if (data.text) {
-              data.ogp = await this.entryParser(data.text, true);
-            }
-            //console.log(value.files)
-            //console.log(value.items)
-            if (value.items.length) {
-              for (let i = 0; i < value.items.length; i++) {
-                data.items.push(value.items[i])
-                if (value.items[i].kind === 'file') {
-                  let file = value.items[i].getAsFile();
-                  if (file) {
-                    //data.files.push(file);
-                    let reader = await this.convertFile(file);
-                    data.files.push(reader.result);
-                    return reader.result
-                  }
-                }
-              }
-            } else {
-              // Use DataTransfer interface to access the file(s)
-              for (let i = 0; i < value.files.length; i++) {
-                data.files.push(value.files[i])
-              }
-            }
-            break;
-          }
-        case (regUrl.test(value)):
-          {
-            data.ogp = await this.entryParser(value, true);
-            break;
-          }
-        case (typeof value === "string"):
-          {
-            data.text = value;
-          }
-      }
-      return data;
-    },
-    async dragdrop(event) {
+    async eventsImput(event) {
       switch (event.type) {
         case "click":
-        case "keydown":
+          //case "keydown":
           {
-            if (this.data) {
-              return this.post(this.comment(this.peer, this.data));
-            }
-            let data = await this.entryParser(this.input);
-            return this.post(this.comment(this.peer, data));
+            return this.post(null, this.input);
           }
         case "paste":
           {
-            this.data = await this.entryParser(event.clipboardData);
-            this.input = this.data.text || this.data.html;
+            //return this.post(null, this.input);
             break;
           }
         case "dragstart":
@@ -283,8 +210,8 @@ export default {
         case "drop":
           {
             try {
-              let data = await this.entryParser(event.dataTransfer);
-              this.post(this.comment(this.peer, data));
+              //let data = await this.entryParser(event.dataTransfer);
+              //this.post(this.comment(this.peer, data));
             } catch (e) {
               this.log(e, "ERROR");
               throw e;
@@ -295,7 +222,7 @@ export default {
           this.log(event.type, "DEBUG");
       }
     },
-    post(data, protocol) {
+    post(to = null, data) {
       if (!data) {
         return
       }
@@ -303,48 +230,27 @@ export default {
         if (data.buffer) {
           this.room.sendChatMessage(data.buffer);
         } else {
-          this.room.sendChatMessage(JSON.stringify(data));
+          let time = null;
+          if (data && data.time) {
+            time = data.time;
+          } else {
+            time = Date.now();
+          }
+          let proto = {
+            uuid: this.$nodefony.client.generateId(),
+            to: to,
+            message: data,
+            time,
+            buffer: null
+          };
+          /*this.setChatMessage({
+            peer: this.peer,
+            message: proto
+          });*/
+          this.room.sendChatMessage(JSON.stringify(proto));
         }
       }
-    },
-    comment(from, data) {
-      switch (true) {
-        case (data instanceof window.Blob):
-        case (data instanceof window.ArrayBuffer):
-          {
-            return {
-              buffer: data
-            };
-          }
-        case (data instanceof window.FileReader):
-          {
-            this.dialog = true;
-            this.setChatMessage({
-              from: from.id
-            })
-            this.data = data.result;
-            return "dddddddd";
-            //window.open(data.result)
-          }
-      }
-      let time = null;
-      if (data && data.time) {
-        time = data.time;
-      } else {
-        time = Date.now();
-      }
-      const formatTime = new Date(time).toTimeString().replace(/:\d{2}\sGMT-\d{4}\s\((.*)\)/, (match, contents, offset) => {
-        return ` ${contents.split(' ').map(v => v.charAt(0)).join('')}`
-      })
-      data.from = from.id;
-      data.formatTime = formatTime;
-      data.id = this.nonce++;
-      this.setChatMessage(data);
-      delete data.formatTime;
-      this.input = null;
-      this.data = null;
-      return data;
-    },
+    }
   }
 }
 </script>

@@ -34,9 +34,6 @@ import {
 import DialogQuit from '@/components/meetings/RoomDialogQuit';
 import RoomToolBarTop from '@/components/meetings/nav/RoomToolBarTop';
 import RoomSideBar from '@/components/meetings/nav/sidebar/RoomSideBar';
-//import RoomFocusLayout from '@/components/meetings/layouts/RoomFocusLayout';
-//import RoomGrilleLayout from '@/components/meetings/layouts/RoomGridLayout';
-
 import MettingLayout from '@/components/meetings/layouts/MeetingLayout.vue';
 
 export default {
@@ -45,8 +42,6 @@ export default {
     "room-quit-meeting": DialogQuit,
     "room-tool-bar-top": RoomToolBarTop,
     "room-side-bar": RoomSideBar,
-    //"room-focus-layout": RoomFocusLayout,
-    //"room-grid-layout": RoomGrilleLayout,
     "meeting-layout": MettingLayout
   },
   props: {
@@ -121,7 +116,8 @@ export default {
   computed: {
     ...mapGetters({
       clock: 'getClock',
-      peerid: 'getProfileUsername'
+      peerid: 'getProfileUsername',
+      chatMessages: 'getChatMessages'
     }),
     ...mapGetters([
       "isAuthenticated",
@@ -191,7 +187,8 @@ export default {
       'setRoom',
       'setPeer',
       'deleteMedias',
-      'setMedia'
+      'setMedia',
+      'setChatMessage'
     ]),
 
     // mediasoup
@@ -323,7 +320,6 @@ export default {
       });
       this.room.on("disableShare", async (room) => {
         //await room.enableWebcam();
-        console.log('disableShare')
         this.deleteMedias("screen");
         this.getLayout().stopDisplayShare();
       });
@@ -398,6 +394,10 @@ export default {
             return component.playVideoTag();
           }
         }
+      });
+      this.room.on("onDataConsumerMessage", (message) => {
+        console.log("onDataConsumerMessage", message)
+        this.setChatMessage(message);
       });
     },
 

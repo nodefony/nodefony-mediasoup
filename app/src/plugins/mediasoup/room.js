@@ -145,7 +145,7 @@ class Room extends nodefony.Service {
           this.log(connectionState, "DEBUG", "connectionstatechange");
           if (connectionState === 'connected') {
             this.enableChatDataProducer();
-            this.enableBotDataProducer();
+            //this.enableBotDataProducer();
           }
         });
         this.procudeTransportReady = true;
@@ -743,8 +743,13 @@ class Room extends nodefony.Service {
               }
             });
             if (!from) {
-              this.log('DataConsumer "message" from unknown peer', "DEBUG");
-              break;
+              let res = this.peer.dataConsumers.has(dataConsumer.id);
+              if (res) {
+                from = this.peer;
+              }else{
+                this.log('DataConsumer "message" from unknown peer', "DEBUG");
+                break;
+              }
             }
             this.fire("onDataConsumerMessage", {
               from,
@@ -802,13 +807,14 @@ class Room extends nodefony.Service {
       this.log('enableMic() | cannot produce audio', "ERROR");
       return;
     }
-    this.log('enableMic()', "DEBUG");
+    let mute = !microphone.device;
     let track;
     try {
       if (!this.externalVideo) {
-        this.log(`enableMic()`, "DEBUG");
+        this.log(`enableMic() mute : ${mute}`, "DEBUG");
         this.microphone = microphone;
-        if (!stream) {
+        if (!stream || !stream.stream) {
+          mute = !stream.stream;
           let options = null;
           if(!this.microphone){
             options = true;
@@ -852,6 +858,9 @@ class Room extends nodefony.Service {
         // codec : this._mediasoupDevice.rtpCapabilities.codecs
         // 	.find((codec) => codec.mimeType.toLowerCase() === 'audio/pcma')
       });
+      if(mute){
+        this.muteMic();
+      }
       this.micProducer.on('transportclose', () => {
         this.micProducer = null;
       });
@@ -966,7 +975,7 @@ class Room extends nodefony.Service {
         device = this.webcam.device;
         if (!device) {
           if (webcam){
-            await this.updateWebcams();
+            device = await this.updateWebcams();
           }else{
             throw new Error('no webcam devices');
           }
@@ -1418,7 +1427,7 @@ class Room extends nodefony.Service {
         this.log({
           bufferedAmountLowThreshold: this.chatDataProducer.bufferedAmountLowThreshold,
           bufferedAmount: this.chatDataProducer.bufferedAmount
-        }, "ERROR", "chat DataProducer Event bufferedamountlow");
+        }, "WARNING", "chat DataProducer Event bufferedamountlow");
       });
       return this.chatDataProducer;
     } catch (error) {
@@ -1456,7 +1465,6 @@ class Room extends nodefony.Service {
         this.botDataProducer = null;
       });
       this.botDataProducer.on('open', () => {
-        console.log("open data channel")
         this.log('Bot DataProducer "open" event');
       });
       this.botDataProducer.on('close', () => {
@@ -1469,7 +1477,7 @@ class Room extends nodefony.Service {
         this.fire("onBotDataProducerError", error);
       });
       this.botDataProducer.on('bufferedamountlow', () => {
-        this.log("bufferedamountlow", "ERROR", "Bot DataProducer");
+        this.log("bufferedamountlow", "WARNING", "Bot DataProducer");
       });
       return this.botDataProducer;
     } catch (error) {

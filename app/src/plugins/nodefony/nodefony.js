@@ -78,39 +78,10 @@ class Nodefony extends nodefony.Kernel {
     Vue.prototype.notify = (...args) => {
       return this.notify(...args);
     };
-    this.log(`Add Plugin nodefony : ${this.version}`, "INFO");
+    this.showBanner();
+    //this.log(`Add Plugin nodefony : ${this.version}`, "INFO");
     this.log(`Nodefony Domain : ${this.domain}`);
     this.client = nodefony;
-
-  }
-
-  parse(pdu) {
-    switch (true) {
-    case pdu.severity <= 3:
-      pdu.type = 'error';
-      pdu.color = 'red';
-      break;
-    case pdu.severity === 4:
-      pdu.type = 'warning';
-      pdu.color = 'yellow';
-      break;
-    case pdu.severity === 5:
-      pdu.type = 'info';
-      pdu.color = 'blue';
-      break;
-    case pdu.severity === 6:
-      pdu.type = 'success';
-      pdu.color = 'green';
-      break;
-    case pdu.severity === 7:
-      pdu.type = 'success';
-      pdu.color = 'teal';
-      break;
-    default:
-      pdu.type = 'info';
-      pdu.color = 'teal';
-    }
-    return pdu;
   }
 
   notify(pdu, options = {
@@ -141,7 +112,6 @@ class Nodefony extends nodefony.Kernel {
         parent: this.application
       });
     }
-    this.parse(pdu);
     options.pdu = pdu;
     const component = new ComponentClass({
       data: {
@@ -152,7 +122,7 @@ class Nodefony extends nodefony.Kernel {
     const uuid = this.client.generateId();
     this.notifyTab.set(uuid, this.notifyTab.size)
     component.$on("close", () => {
-      this.notifyTab.delete(uuid)
+      this.notifyTab.delete(uuid);
     });
     component.$mount();
     container.appendChild(component.$el);

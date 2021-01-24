@@ -137,7 +137,7 @@ class Meetings extends nodefony.Service {
           }
         }
         // Create DataConsumers for bot DataProducer.
-        await room.createDataConsumer(peer, null, room.bot.dataProducer);
+        //await room.createDataConsumer(peer, null, room.bot.dataProducer);
 
         // Notify the new Peer to all other Peers.
         for (const otherPeer of room.getJoinedPeers({
@@ -311,7 +311,7 @@ class Meetings extends nodefony.Service {
           {
             // Create a server-side DataConsumer for each Peer.
             for (const otherPeer of room.getJoinedPeers({
-                excludePeer: peer
+                //excludePeer: peer
               })) {
               await room.createDataConsumer(
                 otherPeer,
