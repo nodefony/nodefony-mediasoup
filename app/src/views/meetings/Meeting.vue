@@ -28,7 +28,7 @@
 import {
   mapGetters,
   mapMutations,
-  mapActions
+  //mapActions
 } from 'vuex';
 
 import DialogQuit from '@/components/meetings/RoomDialogQuit';
@@ -396,7 +396,6 @@ export default {
         }
       });
       this.room.on("onDataConsumerMessage", (message) => {
-        console.log("onDataConsumerMessage", message)
         this.setChatMessage(message);
       });
     },

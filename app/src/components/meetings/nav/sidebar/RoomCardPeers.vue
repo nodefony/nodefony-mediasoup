@@ -1,48 +1,19 @@
 <template>
-<v-card elevation="1" min-width="100%" class="">
-  <v-virtual-scroll :items="peers" height="300" item-height="64">
-    <v-list-item-action>
-      <v-btn fab small depressed color="primary">
-        {{ peer.id }}
-      </v-btn>
-    </v-list-item-action>
-
-    <v-list-item-content>
-      <v-list-item-title>
-        User Database Record <strong>ID {{ peer.id }}</strong>
-      </v-list-item-title>
-    </v-list-item-content>
-
-    <v-list-item-action>
-      <v-icon small>
-        mdi-open-in-new
+<v-card max-width="450" class="mx-auto" style="border:none">
+  <v-toolbar color="teal" dark class="fixed-bar">
+    <v-btn icon class="">
+      <v-icon dark @click="setSideBar(undefined)">
+        mdi-account-multiple
       </v-icon>
-    </v-list-item-action>
-    </v-list-item>
-    <template v-slot:default="{ item }">
-      <v-list-item :key="item">
-        <v-list-item-action>
-          <v-btn fab small depressed color="primary">
-            {{ item.id }}
-          </v-btn>
-        </v-list-item-action>
+    </v-btn>
+    <v-toolbar-title>Participants</v-toolbar-title>
 
-        <v-list-item-content>
-          <v-list-item-title>
-            User Database Record <strong>ID {{ item.id }}</strong>
-          </v-list-item-title>
-        </v-list-item-content>
+    <v-spacer></v-spacer>
 
-        <v-list-item-action>
-          <v-icon small>
-            mdi-open-in-new
-          </v-icon>
-        </v-list-item-action>
-      </v-list-item>
+  </v-toolbar>
 
-      <v-divider></v-divider>
-    </template>
-  </v-virtual-scroll>
+  <view-peers view="list" dense />
+
 </v-card>
 </template>
 
@@ -51,11 +22,16 @@
 import {
   mapGetters,
   mapMutations,
-  mapActions
+  //mapActions
 } from 'vuex';
+
+import ViewPeers from "@/components/meetings/peers/viewPeers";
 export default {
   name: 'MenuPeers',
-  data(vm) {
+  components: {
+    "view-peers": ViewPeers
+  },
+  data() {
     return {
 
     }
@@ -67,17 +43,26 @@ export default {
       peer: 'getPeer'
     }),
     ...mapGetters([
-      'peers'
+      'peers',
+      'getTrigramme'
     ]),
 
   },
   mount() {},
   methods: {
-
+    ...mapMutations([
+      'setSideBar'
+    ])
   }
 }
 </script>
 
 <style scoped lang="scss">
-
+.fixed-bar {
+    position: sticky;
+    position: -webkit-sticky;
+    /* for Safari */
+    top: 0;
+    z-index: 1000;
+}
 </style>

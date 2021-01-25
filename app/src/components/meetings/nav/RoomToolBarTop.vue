@@ -106,7 +106,7 @@
       </span-->
     </v-btn>
   </v-btn-toggle>
-
+  <bar-avatar v-if="isAuthenticated" class="ml-5" />
 </v-toolbar>
 </template>
 
@@ -115,11 +115,15 @@
 import {
   mapGetters,
   mapMutations,
-  mapActions
+  //mapActions
 } from 'vuex';
+import BarAvatar from '@/components/layouts/avatar.vue';
 
 export default {
   name: 'RoomToolBarTop',
+  components: {
+    "bar-avatar": BarAvatar
+  },
   props: {
     selected: {
       type: Number,
@@ -141,6 +145,7 @@ export default {
       peer: 'getPeer'
     }),
     ...mapGetters([
+      'isAuthenticated',
       'hasAudio',
       'hasVideo',
       'hasScreen',
@@ -159,7 +164,6 @@ export default {
       }
     }
   },
-
   methods: {
     ...mapMutations([
       'toogleSlider',

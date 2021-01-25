@@ -77,13 +77,14 @@
             <v-card-title>{{room? room.name : ""}}</v-card-title>
 
             <v-row class="mt-0 mb-5 mx-5" width="100%">
+              <view-peers view="simpleTable" dense />
               <!--v-card-text>
                   <v-text-field v-model="peerid" :disabled="isAuthenticated" label="User" :value="peerid"></v-text-field>
                   <span class="caption grey--text text--darken-1">
                     This is the name you will use to login to Room
                   </span>
                 </v-card-text-->
-              <v-simple-table dense fixed-header height="200px" style="width:100%">
+              <!--v-simple-table dense fixed-header height="200px" style="width:100%">
                 <template v-slot:top>
                   <v-icon class="mx-5 my-3">mdi-account</v-icon>
                   <span> Participants</span>
@@ -119,7 +120,7 @@
 
                   </tbody>
                 </template>
-              </v-simple-table>
+              </v-simple-table-->
             </v-row>
             <v-row align="center" justify="space-around">
               <v-btn @click.end="acceptConnect" rounded color="primary">
@@ -145,11 +146,12 @@ import {
   mapActions
 } from 'vuex';
 import MediaCardPeer from '@/components/meetings/medias/peers/MediaCardPeer';
-
+import ViewPeers from "@/components/meetings/peers/viewPeers";
 export default {
   name: 'JoinMeeting',
   components: {
-    "media-card-peer": MediaCardPeer
+    "media-card-peer": MediaCardPeer,
+    "view-peers": ViewPeers
   },
   props: {
     roomid: {

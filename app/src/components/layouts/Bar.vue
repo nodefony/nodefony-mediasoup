@@ -44,11 +44,12 @@
   <v-btn icon v-if="isAuthenticated">
     <v-icon>mdi-bell</v-icon>
   </v-btn>
-  <v-btn icon v-if="isAuthenticated" class="text-transform-none">
+  <bar-avatar v-if="isAuthenticated" />
+  <!--v-btn icon v-if="isAuthenticated" class="text-transform-none">
     <v-menu v-model="account" :close-on-content-click="false" :nudge-width="200" offset-x>
       <template v-slot:activator="{ on, attrs }">
         <v-list-item-avatar v-bind="attrs" v-on="on" color="blue-grey">
-          <!--img src="" alt=""-->
+
           <span class="white--text">{{getTrigramme}}</span>
         </v-list-item-avatar>
       </template>
@@ -56,7 +57,7 @@
         <v-list>
           <v-list-item>
             <v-list-item-avatar color="blue-grey">
-              <!--img src="" alt=""-->
+
               <span class="white--text">{{getTrigramme}}</span>
             </v-list-item-avatar>
 
@@ -80,8 +81,7 @@
         </v-card-actions>
       </v-card>
     </v-menu>
-
-  </v-btn>
+  </v-btn-->
 
   <!-- LOGIN -->
   <a v-else :href="$router.resolve({ name: 'Login' }).href">
@@ -99,14 +99,16 @@ import {
   mapMutations,
   mapActions
 } from 'vuex';
-
+import BarAvatar from '@/components/layouts/avatar.vue';
 export default {
   name: 'Bar',
-  components: {},
+  components: {
+    "bar-avatar": BarAvatar
+  },
   props: {},
-  data(vm) {
+  data() {
     return {
-      account: false,
+      //account: false,
       hiddeDrawder: false,
       selectedLang: 0,
       langs: [{
@@ -135,10 +137,10 @@ export default {
       'isAuthenticated',
       'getUser',
       'getProfile',
-      'getTrigramme',
+      //'getTrigramme',
       'getNavBar',
-      'getProfileName',
-      'getProfileSurname'
+      //'getProfileName',
+      //'getProfileSurname'
     ]),
     navbar: {
       get() {
@@ -183,20 +185,18 @@ export default {
         }
       });
       return this.selectedLang
-    },
-    async deconnect() {
+    }
+    /*async deconnect() {
       await this.logout()
         .then((res) => {
           document.location = `/app/login`;
           return res;
         })
-    }
+    }*/
   }
 }
 </script>
 
 <style scoped lang="scss">
-.text-transform-none {
-    text-transform: none !important;
-}
+
 </style>
