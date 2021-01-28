@@ -42,8 +42,6 @@
     </v-row>
   </v-container>
 
-
-
   <v-container v-if="waiting" class="mt-5">
     <v-row justify="center" align="center" class="mt-10">
       <v-btn small :loading="loading" :disabled="loading" color="blue-grey" class="ma-2 white--text" @click="quit">

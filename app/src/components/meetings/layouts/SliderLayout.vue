@@ -1,22 +1,22 @@
 <template>
-<v-sheet tile max-width="100%" max-height="160" style="background-color:transparent">
+<v-sheet tile max-width="100%" max-height="110" style="background-color:transparent">
 
-  <v-slide-group v-model="slide" class="px-3" show-arrows style="background-color:transparent;height:160px">
+  <v-slide-group v-model="slide" class="px-3" show-arrows style="background-color:transparent;height:110px">
 
     <v-slide-item v-show="shared" key="share" v-slot="{ active, toggle }">
-      <media-card-peer tile width="200" height="160" max-height="160" max-width="200" class="my-0 mx-1 pa-0" ref="share" name="Screen" @click.native="tooglePeer(null , active, toggle, 'share' )" />
+      <media-card-peer tile width="200" height="110" max-height="110" max-width="200" class="my-0 mx-1 pa-0" ref="share" name="Screen" @click.native="tooglePeer(null , active, toggle, 'share' )" />
     </v-slide-item>
 
     <v-slide-item v-if="peer" :key="peer.id" v-slot="{ active, toggle }">
-      <media-card-peer tile width="200" height="160" max-height="160" max-width="200" class="my-0 mx-1 pa-0" :ref="peer.id" :remote="peer" @click.native="tooglePeer(peer, active, toggle, peer.id)" :name="peer.id" />
+      <media-card-peer tile width="200" height="110" max-height="110" max-width="200" class="my-0 mx-1 pa-0" :ref="peer.id" :remote="peer" @click.native="tooglePeer(peer, active, toggle, peer.id)" :name="peer.id" />
     </v-slide-item>
 
     <v-slide-item v-for="(remotePeer, index) in peers" :key="index" v-slot="{ active, toggle }">
-      <media-card-peer tile width="200" height="160" max-height="160" max-width="200" class="my-0 mx-1 pa-0" :ref="remotePeer.id" :remote="remotePeer" @click.native="tooglePeer(remotePeer, active, toggle, index)" :name="remotePeer.id" />
+      <media-card-peer tile width="200" height="110" max-height="110" max-width="200" class="my-0 mx-1 pa-0" :ref="remotePeer.id" :remote="remotePeer" @click.native="tooglePeer(remotePeer, active, toggle, index)" :name="remotePeer.id" />
     </v-slide-item>
 
     <!--v-slide-item v-for="n in 10" :key="n" v-slot="{ active, toggle }">
-        <v-card :elevation="1" width="200" height="160" max-height="160" max-width="200" :key="n" class="my-0 mx-1 pa-0">
+        <v-card :elevation="1" width="200" height="110" max-height="110" max-width="200" :key="n" class="my-0 mx-1 pa-0">
           <v-row align="center" justify="center">
             {{n}}
           </v-row>

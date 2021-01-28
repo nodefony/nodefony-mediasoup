@@ -1,96 +1,84 @@
 <template>
-<v-card :loading="loading" class="">
-  <v-toolbar color="" flat dense fixed top>
-    <v-toolbar-title>{{ room ? room.name : ''}}</v-toolbar-title>
-    <v-spacer></v-spacer>
-  </v-toolbar>
+<v-container v-if="room" fluid class="ma-0 pa-0">
+  <room-tool-bar-top :roomid="roomid" v-on:quit="close" />
+  <v-row style="margin-top:65px">
 
-  <template slot="progress">
-    <v-progress-linear color="deep-purple" height="10" indeterminate></v-progress-linear>
-  </template>
+    <v-col cols="6" class="pa-10 ma-0" style='height:100%;width:100%'>
+      <v-row justify="center" align="center" style='height:100%;width:100%'>
+        <media-card-peer init spectrum ref="peer" :remote="peer" width="100%" @endsharescreen='endsharescreen' :name="getProfileUsername" showOptions>
+          <template slot="peer">
+            <v-container fluid class="pa-0">
+              <v-card-title class="ml-10">
+                <p class="ml-3">
+                  {{getProfileName}} {{getProfileSurname}}
+                </p>
+              </v-card-title>
 
-  <v-container v-if="room" fluid class="mt-5">
-    <v-row no-gutters>
-      <v-col cols="6" class="pa-3 ma-0">
-        <v-row justify="center">
-          <media-card-peer init spectrum ref="peer" :remote="peer" @endsharescreen='endsharescreen' :name="getProfileUsername" showOptions>
-            <template slot="peer">
-              <v-container fluid class="pa-0">
-                <!--v-btn color="primary" fab rounded absolute top left>
-                    {{getTrigramme}}
-                  </v-btn-->
-                <v-card-title class="ml-10">
-                  <p class="ml-3">
-                    {{getProfileName}} {{getProfileSurname}}
-                  </p>
-                </v-card-title>
+            </v-container>
+          </template>
+        </media-card-peer>
+      </v-row>
+    </v-col>
 
-              </v-container>
-            </template>
-          </media-card-peer>
-        </v-row>
-      </v-col>
+    <v-col cols="6" class="px-10">
+      <v-row justify="center">
+        <v-card width="100%" flat tile>
+          <v-card-title>Medias Settings</v-card-title>
+          <v-row justify="center" class="mt-0 mb-5 mx-5">
 
-      <v-col cols="6" class="px-10">
-        <v-row justify="center">
-          <v-card width="100%" flat tile>
-            <v-card-title>Medias Settings</v-card-title>
-            <v-row justify="space-between" class="mt-0 mb-5 mx-5">
-
-              <v-col cols="3">
-                <v-btn small color="blue-grey" class="ma-2 white--text" fab>
-                  <v-icon v-if="hasAudio">mdi-volume-high</v-icon>
-                  <v-icon v-else dark>mdi-volume-off</v-icon>
-                </v-btn>
-                <v-switch v-model="medias" value="audio" label="Audio" hide-details v-on:change='changeMedia("audio")'></v-switch>
-              </v-col>
-
-              <v-col cols="3">
-                <v-btn small color="blue-grey" class="ma-2 white--text" fab>
-                  <v-icon v-if="hasVideo">mdi-video-box</v-icon>
-                  <v-icon v-else dark>mdi-video-box-off</v-icon>
-                </v-btn>
-                <v-switch v-model="medias" value="video" label="Video" hide-details v-on:change='changeMedia("video")'></v-switch>
-              </v-col>
-
-              <v-col cols="3">
-                <v-btn small color="blue-grey" class="ma-2 white--text" fab>
-                  <v-icon v-if="hasScreen">mdi-monitor-share</v-icon>
-                  <v-icon v-else dark>mdi-monitor-off</v-icon>
-                </v-btn>
-                <v-switch v-model="medias" value="screen" label="Screen" hide-details v-on:change='changeMedia("screen")'></v-switch>
-              </v-col>
-
-              <v-col cols="3">
-                <v-btn small color="blue-grey" class="ma-2 white--text" fab>
-                  <v-icon v-if="hasNoise">mdi-monitor-share</v-icon>
-                  <v-icon v-else dark>mdi-monitor-off</v-icon>
-                </v-btn>
-                <v-switch v-model="medias" value="noise" label="Noise" hide-details v-on:change='changeMedia("noise")'></v-switch>
-              </v-col>
-
-            </v-row>
-            <v-divider class="mx-4"></v-divider>
-            <v-card-title>{{room? room.name : ""}}</v-card-title>
-
-            <v-row class="mt-0 mb-5 mx-5" width="100%">
-              <view-peers view="simpleTable" dense />
-            </v-row>
-            <v-row align="center" justify="space-around">
-              <v-btn @click.end="acceptConnect" rounded color="primary">
-                Join Room
+            <v-col cols="3">
+              <v-btn small color="blue-grey" class="ma-2 white--text" fab>
+                <v-icon v-if="hasAudio">mdi-volume-high</v-icon>
+                <v-icon v-else dark>mdi-volume-off</v-icon>
               </v-btn>
-              <v-btn @click.end="close" rounded color="primary">
+              <v-switch v-model="medias" value="audio" label="Audio" hide-details v-on:change='changeMedia("audio")'></v-switch>
+            </v-col>
+
+            <v-col cols="3">
+              <v-btn small color="blue-grey" class="ma-2 white--text" fab>
+                <v-icon v-if="hasVideo">mdi-video-box</v-icon>
+                <v-icon v-else dark>mdi-video-box-off</v-icon>
+              </v-btn>
+              <v-switch v-model="medias" value="video" label="Video" hide-details v-on:change='changeMedia("video")'></v-switch>
+            </v-col>
+
+            <v-col cols="3" v-if="false">
+              <v-btn small color="blue-grey" class="ma-2 white--text" fab>
+                <v-icon v-if="hasScreen">mdi-monitor-share</v-icon>
+                <v-icon v-else dark>mdi-monitor-off</v-icon>
+              </v-btn>
+              <v-switch v-model="medias" value="screen" label="Screen" hide-details v-on:change='changeMedia("screen")'></v-switch>
+            </v-col>
+
+            <v-col cols="3" v-if="false">
+              <v-btn small color="blue-grey" class="ma-2 white--text" fab>
+                <v-icon v-if="hasNoise">mdi-monitor-share</v-icon>
+                <v-icon v-else dark>mdi-monitor-off</v-icon>
+              </v-btn>
+              <v-switch v-model="medias" value="noise" label="Noise" hide-details v-on:change='changeMedia("noise")'></v-switch>
+            </v-col>
+
+          </v-row>
+          <v-divider class="mx-4"></v-divider>
+          <v-card-title>{{room? room.name : ""}}</v-card-title>
+
+          <v-row class="mt-0 mb-5 mx-5" width="100%">
+            <view-peers view="simpleTable" dense />
+          </v-row>
+          <v-row align="center" justify="space-around">
+            <v-btn @click.end="acceptConnect" rounded color="primary">
+              Join Room
+            </v-btn>
+            <!--v-btn @click.end="close" rounded color="primary">
                 Quit
-              </v-btn>
-            </v-row>
-          </v-card>
-        </v-row>
-      </v-col>
-    </v-row>
-  </v-container>
+              </v-btn-->
+          </v-row>
+        </v-card>
+      </v-row>
+    </v-col>
 
-</v-card>
+  </v-row>
+</v-container>
 </template>
 
 <script>
@@ -101,11 +89,13 @@ import {
 } from 'vuex';
 import MediaCardPeer from '@/components/meetings/medias/peers/MediaCardPeer';
 import ViewPeers from "@/components/meetings/peers/viewPeers";
+import RoomToolBarTop from '@/components/meetings/nav/RoomToolBarTop';
 export default {
   name: 'JoinMeeting',
   components: {
     "media-card-peer": MediaCardPeer,
-    "view-peers": ViewPeers
+    "view-peers": ViewPeers,
+    "room-tool-bar-top": RoomToolBarTop,
   },
   props: {
     roomid: {
@@ -121,11 +111,17 @@ export default {
       screen: false
     }
   },
+  beforeRouteLeave(to, from, next) {
+    this.openNavBar();
+    return next();
+  },
+
   created() {
     if (!this.room) {
       this.redirect("HomeMeeting")
         .then(() => {
-          this.notify(this.log("Room not ready", "WARNING"))
+          this.openNavBar();
+          //this.notify(this.log("Room not ready", "WARNING"))
         })
     }
   },
@@ -134,6 +130,8 @@ export default {
     this.$mediasoup.removeListener("waiting", this.onWaiting);
   },
   async mounted() {
+    this.closeDrawer();
+    this.closeNavBar();
     this.loading = true;
     await this.getDevices()
       .then(() => {
@@ -214,7 +212,10 @@ export default {
       'deleteMedias',
       'setAudioStream',
       'setVideoStream',
-      'setPeers'
+      'setPeers',
+      'closeDrawer',
+      'closeNavBar',
+      'openNavBar',
       //'changeWebcamResolution',
       //'changeWebcamDevice'
     ]),
@@ -239,8 +240,11 @@ export default {
     },
     async changeMedia(selected) {
       await this.peerComponent.changeMedia(selected)
-        .then(() => {
-          this.storeMedias(this.medias);
+        .then((response) => {
+          if (selected !== 'screen') {
+            this.storeMedias(this.medias);
+          }
+          return response
         })
         .catch(e => {
           if (e.type) {

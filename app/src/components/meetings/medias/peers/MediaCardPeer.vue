@@ -234,7 +234,6 @@ export default {
       'getDevicesVideoLabels',
       'getAudioDeviceByValue',
       'getVideoDeviceByValue',
-
     ]),
     cardWidth: {
       get() {

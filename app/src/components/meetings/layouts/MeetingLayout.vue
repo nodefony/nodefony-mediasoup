@@ -23,11 +23,11 @@
     </v-sheet>
   </v-row>
 
-  <v-row v-show="slider" style="bottom:0;position:fixed;z-index:1000;width:100%;height:160px" class="mb-2">
-    <v-expand-transition>
+  <v-fade-transition>
+    <v-row v-show="slider" style="bottom:0;position:fixed;z-index:1000;width:100%" class="mb-4">
       <slider-layout ref="slider" v-on:focus='focus' v-on:unfocus='unFocus' />
-    </v-expand-transition>
-  </v-row>
+    </v-row>
+  </v-fade-transition>
 
 </v-container>
 </template>

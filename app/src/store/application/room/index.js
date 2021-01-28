@@ -109,6 +109,9 @@ const mutations = {
     let index = state.medias.indexOf(type);
     if (index < 0) {
       state.medias.push(type);
+      if (type === 'screen' || type === 'noise'){
+        return;
+      }
       this.commit("storeMedias", state.medias);
     }
   },

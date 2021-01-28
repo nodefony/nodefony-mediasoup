@@ -156,7 +156,7 @@ export default {
       'openQuitDialog',
       'closeQuitDialog',
       'closeDrawer',
-      'openDrawer',
+      //'openDrawer',
       'openNavBar',
       'closeNavBar',
       'setClock',

@@ -6,44 +6,46 @@
       <img src="@/assets/mediasoup.png" />
       <span class="hidden-sm-and-down ml-2">{{roomid}}</span>
     </v-btn>
+    <span class="hidden-sm-and-down ml-2 subtitle-1">{{getRoomEntity.description}}</span>
   </v-toolbar-title>
   <v-spacer></v-spacer>
 
-
-  <v-btn x-small class="mx-4" fab @click="toogleAudio">
-    <v-icon v-if="hasAudio">
-      mdi-volume-high
-    </v-icon>
-    <v-icon v-else>
-      mdi-volume-off
-    </v-icon>
-
-  </v-btn>
-  <v-btn x-small class="mx-4" fab @click="toogleVideo">
-    <v-icon v-if="hasVideo">
-      mdi-video-outline
-    </v-icon>
-    <v-icon v-else>
-      mdi-video-off
-    </v-icon>
-
-  </v-btn>
-  <v-btn x-small class="mx-4" fab @click="toogleShare">
-    <v-icon v-if="hasScreen">
-      mdi-monitor-share
-    </v-icon>
-    <v-icon v-else>
-      mdi-monitor-off
-    </v-icon>
-  </v-btn>
-
-  <v-btn icon class="mx-4" @click="toogleSlider">
-    <v-badge :content="peers.length+1" :value="peers.length+1" color="green">
-      <v-icon>
-        mdi-account-group
+  <div v-if="peer && room">
+    <v-btn x-small class="mx-4" fab @click="toogleAudio">
+      <v-icon v-if="hasAudio">
+        mdi-volume-high
       </v-icon>
-    </v-badge>
-  </v-btn>
+      <v-icon v-else>
+        mdi-volume-off
+      </v-icon>
+
+    </v-btn>
+    <v-btn x-small class="mx-4" fab @click="toogleVideo">
+      <v-icon v-if="hasVideo">
+        mdi-video-outline
+      </v-icon>
+      <v-icon v-else>
+        mdi-video-off
+      </v-icon>
+
+    </v-btn>
+    <v-btn x-small class="mx-4" fab @click="toogleShare">
+      <v-icon v-if="hasScreen">
+        mdi-monitor-share
+      </v-icon>
+      <v-icon v-else>
+        mdi-monitor-off
+      </v-icon>
+    </v-btn>
+
+    <v-btn icon class="mx-4" @click="toogleSlider">
+      <v-badge :content="nbPeers" :value="nbPeers" color="green">
+        <v-icon>
+          mdi-account-group
+        </v-icon>
+      </v-badge>
+    </v-btn>
+  </div>
 
   <v-spacer></v-spacer>
 
@@ -56,7 +58,7 @@
 
   <v-spacer></v-spacer>
 
-  <v-menu :close-on-content-click="false" :nudge-width="200" offset-y>
+  <v-menu v-if="room" :close-on-content-click="false" :nudge-width="200" offset-y>
     <template v-slot:activator="{ on, attrs }">
       <v-btn small icon class="mx-2" v-bind="attrs" v-on="on">
         <v-icon>
@@ -94,8 +96,7 @@
     </v-card>
   </v-menu>
 
-
-  <v-btn-toggle v-model="drawer" rounded small>
+  <v-btn-toggle v-if="room" v-model="drawer" rounded small>
     <v-btn small>
       <v-badge :content="nbWaiting" :value="nbWaiting" color="green">
         <v-icon small dark>
@@ -150,6 +151,7 @@ export default {
       peer: 'getPeer'
     }),
     ...mapGetters([
+      'getRoomEntity',
       'isAuthenticated',
       'hasAudio',
       'hasVideo',
@@ -158,11 +160,11 @@ export default {
       'videoStream',
       'webcam',
       'microphone',
-      'peers',
+      //'peers',
+      'getPeers',
       'nbWaiting',
       'nbUnreadMessage'
     ]),
-
     drawer: {
       set(value) {
         this.setSideBar(value)
@@ -170,6 +172,14 @@ export default {
       get() {
         return this.getSideBar;
       }
+    },
+    nbPeers() {
+      const res = this.getPeers.filter((peer) => {
+        if (peer.status === 'joined') {
+          return peer
+        }
+      })
+      return res.length
     }
   },
   methods: {
