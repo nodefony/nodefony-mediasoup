@@ -30,6 +30,10 @@ export default {
     pdu: {
       type: Object,
       default: null
+    },
+    offset: {
+      type: Number,
+      default: 0
     }
   },
   data() {
@@ -41,7 +45,7 @@ export default {
   },
   computed: {
     margin() {
-      return (this.stacked * 68) + 'px'
+      return this.offset + (this.stacked * 68) + 'px'
     },
     newPdu() {
       if (this.pdu) {

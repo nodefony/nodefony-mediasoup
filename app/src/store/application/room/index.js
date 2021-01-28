@@ -23,7 +23,8 @@ const state = {
   dialogQuit: false,
   medias: getStorage("medias") || ["audio", "video"],
   peers: [],
-  slider: true
+  slider: true,
+  layout:true,
 };
 
 const getters = {
@@ -76,6 +77,9 @@ const getters = {
   // layouts
   slider(state) {
     return state.slider;
+  },
+  layout(state){
+    return state.layout;
   }
 }
 
@@ -85,6 +89,7 @@ const mutations = {
     state.clock = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`
   },
   setSideBar(state, value) {
+    this.commit('setUnreadMessage', 0)
     state.sideBar = (value === undefined) ? false : value;
     setStorage('roomsidebar', state.sideBar);
   },
@@ -140,8 +145,10 @@ const mutations = {
   //layout
   toogleSlider(state) {
     state.slider = !state.slider;
+  },
+  displayLayout(state) {
+    state.layout = true;
   }
-
 }
 
 const actions = {};

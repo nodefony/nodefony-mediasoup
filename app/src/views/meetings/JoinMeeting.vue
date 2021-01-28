@@ -1,9 +1,6 @@
 <template>
 <v-card :loading="loading" class="">
   <v-toolbar color="" flat dense fixed top>
-    <!--v-btn icon @click="close">
-      <v-icon>mdi-close</v-icon>
-    </v-btn-->
     <v-toolbar-title>{{ room ? room.name : ''}}</v-toolbar-title>
     <v-spacer></v-spacer>
   </v-toolbar>
@@ -78,49 +75,6 @@
 
             <v-row class="mt-0 mb-5 mx-5" width="100%">
               <view-peers view="simpleTable" dense />
-              <!--v-card-text>
-                  <v-text-field v-model="peerid" :disabled="isAuthenticated" label="User" :value="peerid"></v-text-field>
-                  <span class="caption grey--text text--darken-1">
-                    This is the name you will use to login to Room
-                  </span>
-                </v-card-text-->
-              <!--v-simple-table dense fixed-header height="200px" style="width:100%">
-                <template v-slot:top>
-                  <v-icon class="mx-5 my-3">mdi-account</v-icon>
-                  <span> Participants</span>
-                </template>
-                <template v-slot:default>
-                  <thead>
-                    <tr>
-                      <th class="text-left">
-                        Participants
-                      </th>
-                      <th class="text-left">
-                        Display Name
-                      </th>
-                      <th class="text-left">
-                        Status
-                      </th>
-                      <th v-if="true" class="text-left">
-
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody v-if="peers">
-
-                    <tr v-for="peer in peersFilter" :key="peer.username">
-                      <td>{{ peer.id }}</td>
-                      <td>{{ peer.displayName }}</td>
-                      <td>{{ peer.status }}</td>
-                      <td v-if="isRoomAdmin || isAdmin">
-                        <v-btn class="ml-1" x-small @click="authorise(peer)">Authorise</v-btn>
-                        <v-btn x-small @click="unauthorise(peer)">UnAuthorise</v-btn>
-                      </td>
-                    </tr>
-
-                  </tbody>
-                </template>
-              </v-simple-table-->
             </v-row>
             <v-row align="center" justify="space-around">
               <v-btn @click.end="acceptConnect" rounded color="primary">
@@ -158,7 +112,7 @@ export default {
       type: String
     }
   },
-  data(vm) {
+  data() {
     return {
       loading: false,
       message: null,

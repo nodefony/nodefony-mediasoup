@@ -2,7 +2,9 @@ const state = {
   room: null,
   roomEntity:null,
   peers:null,
-  chatMessages:[]
+  chatMessages:[],
+  unreadMessages:0,
+  nbWaiting:0
 }
 
 const getters = {
@@ -24,6 +26,12 @@ const getters = {
   },
   getChatMessages(state){
     return state.chatMessages;
+  },
+  nbWaiting(state){
+    return state.nbWaiting
+  },
+  nbUnreadMessage(state){
+    return state.unreadMessages
   }
 };
 
@@ -39,7 +47,17 @@ const mutations = {
     state.peers = value;
   },
   setChatMessage(state, message){
+    this.commit('setUnreadMessage');
     state.chatMessages.push( message);
+  },
+  setNbWaiting(state, value){
+    state.nbWaiting = value;
+  },
+  setUnreadMessage(state, value){
+    if (value === 0){
+      return state.unreadMessages = value;
+    }
+    return state.unreadMessages = state.unreadMessages +1;
   }
 };
 

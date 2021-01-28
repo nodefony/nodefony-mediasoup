@@ -147,7 +147,8 @@ class Meetings extends nodefony.Service {
             id: peer.id,
             displayName: peer.displayName,
             device: peer.device,
-            status:peer.status
+            status:peer.status,
+            user:peer.user
           });
         }
         break;

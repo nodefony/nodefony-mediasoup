@@ -84,12 +84,7 @@ class Nodefony extends nodefony.Kernel {
     this.client = nodefony;
   }
 
-  notify(pdu, options = {
-    top: true,
-    absolute: false,
-    right: true,
-    timeout: 5000
-  }, type = "snackBar", element = null) {
+  notify(pdu, options = {}, type = "snackBar", element = null) {
     let container = this.application.$el;
     if (element) {
       container = element;
@@ -98,6 +93,12 @@ class Nodefony extends nodefony.Kernel {
       container = document.body;
     }
     let ComponentClass = null;
+    options = nodefony.extend( {
+      top: true,
+      absolute: false,
+      right: true,
+      timeout: 5000
+    },options);
     switch (type) {
     case "alert":
       ComponentClass = this.vue.extend({
@@ -107,6 +108,7 @@ class Nodefony extends nodefony.Kernel {
       break;
     case "snackBar":
     default:
+
       ComponentClass = this.vue.extend({
         mixins: [snackBar],
         parent: this.application

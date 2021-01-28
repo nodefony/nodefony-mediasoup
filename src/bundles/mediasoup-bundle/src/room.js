@@ -126,6 +126,7 @@ class Room extends nodefony.Service {
         status: peer[1].status,
         joined: peer[1].joined,
         displayName: peer[1].displayName,
+        user:peer[1].user
       });
     }
     return peers;
@@ -214,8 +215,6 @@ class Room extends nodefony.Service {
       rtpCapabilities,
       sctpCapabilities
     } = message.data;
-    // Store client data into the protoo Peer data object.
-    //peer.joined = true;
     peer.displayName = displayName;
     peer.device = device;
     peer.rtpCapabilities = rtpCapabilities;

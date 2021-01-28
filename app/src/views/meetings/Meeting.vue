@@ -1,25 +1,17 @@
 <template>
-<v-container fluid fill-height class="ma-0 pa-0">
+<v-container v-if="ready" fluid class="ma-0 pa-0">
 
-  <v-container v-show="joined" fluid fill-height class="pa-0 ma-0">
+  <room-tool-bar-top :roomid="roomid" v-on:quit="quit" v-on:layoutchange="selectLayout" />
 
-    <v-flex fill-height>
-      <room-tool-bar-top :roomid="roomid" v-on:quit="quit" v-on:layoutchange="selectLayout" />
+  <!--meeting-layout v-show="joined"  ref="layout" /-->
 
-      <!--room-grid-layout v-show="grid" :layout="grid" ref="grid" />
+  <meeting-layout v-if="focus" :layout="focus" ref="focus" />
 
-      <room-focus-layout v-show="focus" :layout="focus" ref="focus" /-->
+  <grid-layout v-if=" grid" :layout="grid" ref="grid" />
 
-      <meeting-layout ref="layout" />
+  <room-side-bar />
 
-
-      <room-side-bar />
-      <!--room-tool-bar-bottom v-on:quit="quit" /-->
-
-
-      <room-quit-meeting v-if="dialogQuit" :roomid="room.id" v-on:response="leave" />
-    </v-flex>
-  </v-container>
+  <room-quit-meeting v-if="dialogQuit" :roomid="room.id" v-on:response="leave" />
 
 </v-container>
 </template>
@@ -35,6 +27,7 @@ import DialogQuit from '@/components/meetings/RoomDialogQuit';
 import RoomToolBarTop from '@/components/meetings/nav/RoomToolBarTop';
 import RoomSideBar from '@/components/meetings/nav/sidebar/RoomSideBar';
 import MettingLayout from '@/components/meetings/layouts/MeetingLayout.vue';
+import GridLayout from '@/components/meetings/layouts/GridLayout';
 
 export default {
   name: 'Meeting',
@@ -42,54 +35,56 @@ export default {
     "room-quit-meeting": DialogQuit,
     "room-tool-bar-top": RoomToolBarTop,
     "room-side-bar": RoomSideBar,
-    "meeting-layout": MettingLayout
+    "meeting-layout": MettingLayout,
+    "grid-layout": GridLayout
   },
   props: {
     roomid: {
       type: String
     }
   },
-  data(vm) {
+  data() {
     return {
       message: null,
       intevalTime: null,
       grid: false,
-      focus: false,
+      focus: true,
       joined: false,
-      connected: false
+      connected: false,
+      ready: false
     }
   },
+
   async beforeRouteEnter(to, from, next) {
-    /*if (to.name === from.name) {
-      return next((vm) => {
-        return vm.redirect()
-      });
-    }*/
     return next();
   },
   beforeRouteLeave(to, from, next) {
-    //console.log("passs beforeRouteLeave ")
-    //this.openDrawer();
-    //console.log(to.name, to.name)
     this.openNavBar();
-    return next();
-    /*return this.close()
-      .then(() => {
-        this.openNavBar();
-        return next();
-      });*/
+    return next(async () => {
+      return await this.leaveRoom();
+    });
   },
-  //beforeMount() {
+
   async beforeCreate() {},
   async created() {},
+  beforeMount() {
+    if (!this.getMediasoupStatus) {
+      return this.$router.replace({
+        name: "HomeMeeting",
+        params: {
+          roomid: this.roomid
+        }
+      });
+    }
+  },
   mounted() {
+    if (!this.getMediasoupStatus) {
+      return this.$destroy();
+    }
+    this.ready = true;
     //console.trace("passss mount meeting")
     this.closeDrawer();
     this.closeNavBar();
-    //this.openJoinDialog();
-    /*if (!this.getRoomEntity) {
-      return;
-    }*/
     return this.acceptConnect();
   },
   watch: {
@@ -133,7 +128,7 @@ export default {
       'audioStream',
       'videoStream',
       'getMediasoupStatus',
-      'getMediasoupActivity',
+      //'getMediasoupActivity',
       'dialogQuit',
       'getSideBar'
     ]),
@@ -151,20 +146,6 @@ export default {
       },
       set(value) {
         return this.setPeer(value)
-      }
-    },
-    getMsStatusColorStatus() {
-      if (this.getMediasoupStatus) {
-        return "success";
-      } else {
-        return "error";
-      }
-    },
-    getMsColorActivity() {
-      if (this.getMediasoupActivity) {
-        return "blue";
-      } else {
-        return "green";
       }
     }
   },
@@ -283,14 +264,12 @@ export default {
         this.setMedia("audio");
       });
       this.room.on("activeSpeaker", (peerId, volume) => {
-        this.log(`${peerId} volume : ${volume}`, "DEBUG");
+        //this.log(`${peerId} volume : ${volume}`, "DEBUG");
         let component = this.getPeerComponent(peerId);
         if (component) {
           component.volume = volume || -100;
         }
-        //if (volume > -20) {
         this.getLayout().focusPeer(peerId, volume);
-        //}
       });
       this.room.on("newPeer", (peer) => {
         this.log(`New Peer : ${peer.id}`);
@@ -339,11 +318,12 @@ export default {
       this.room.on("consumerClosed", async (consumerId, peerId, appData) => {
         this.log(`consumerClosed : ${peerId} condumeId =${consumerId} `, "DEBUG");
         try {
-          if (appData.share) {
-            this.getLayout().stopDisplayShare();
-          }
           let peer = this.getRemotePeer(peerId);
           if (peer) {
+            if (appData.share) {
+              peer.deleteConsumer(consumerId);
+              return this.getLayout().stopDisplayShare();
+            }
             let consumer = peer.hasConsumer(consumerId);
             if (consumer) {
               let component = this.getPeerComponent(peerId);
@@ -417,26 +397,18 @@ export default {
       this.grid = false;
       this.focus = false;
       switch (selectedLayout) {
-        case 0:
+        case 1:
           this.grid = true;
           break;
-        case 1:
+        case 0:
           this.focus = true;
           break;
         default:
-          this.grid = true;
+          this.focus = true;
       }
     },
     getPeerComponent(peerId) {
-      let layout = this.getLayout();
-      if (!layout) {
-        return null;
-      }
-      let ref = layout.$refs;
-      if (ref[peerId][0]) {
-        return ref[peerId][0];
-      }
-      return ref[peerId];
+      return this.getLayout().getPeerComponent(peerId);
     },
 
     close() {
@@ -511,10 +483,5 @@ export default {
 </script>
 
 <style scoped>
-footer {
-  position: fixed;
-  z-index: 1000;
-  width: 100%;
-  bottom: 0px;
-}
+
 </style>

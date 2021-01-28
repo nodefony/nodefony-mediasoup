@@ -133,6 +133,9 @@ export default {
         return parser;
       });
       return tab.slice().reverse()
+    },
+    getUnreadMessage() {
+      return this.chatMessages.length
     }
   },
 
@@ -257,10 +260,6 @@ export default {
             time,
             buffer: null
           };
-          /*this.setChatMessage({
-            peer: this.peer,
-            message: proto
-          });*/
           this.room.sendChatMessage(JSON.stringify(proto));
           this.input = "";
         }

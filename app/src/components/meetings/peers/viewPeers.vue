@@ -1,44 +1,41 @@
 <template>
 <v-container fluid>
   <!-- LIST -->
-  <v-list v-bind="{...$props, ...$attrs}" v-if="view === 'list'" two-line>
+  <v-list v-bind="{...$props, ...$attrs}" v-if="view === 'list'" one-line>
     <header>{{room.id}}</header>
-    <!--v-list-item v-if="local" :key="peer.id">
-      <v-list-item-avatar>
-        <v-avatar color="primary" class="white--text" :size="50">{{ getTrigramme  }}</v-avatar>
-      </v-list-item-avatar>
-
-      <v-list-item-content>
-        <v-list-item-title v-html="peer.id"></v-list-item-title>
-        <v-list-item-subtitle v-html="peer.id"></v-list-item-subtitle>
-      </v-list-item-content>
-
-      <v-list-item-action>
-        <v-btn icon>
-          <v-icon color="grey lighten-1">mdi-information</v-icon>
-        </v-btn>
-      </v-list-item-action>
-    </v-list-item-->
 
     <template v-for="(peer, index) in peers">
 
       <v-list-item :key="index">
         <v-list-item-avatar>
-          <v-avatar color="primary" class="white--text">{{ peer.id  }}</v-avatar>
+          <v-avatar color="primary" class="white--text">{{displayInitial(peer)}}</v-avatar>
         </v-list-item-avatar>
 
         <v-list-item-content>
-          <v-list-item-title v-html="peer.id"></v-list-item-title>
-          <v-list-item-subtitle v-html="peer.status"></v-list-item-subtitle>
+          <v-list-item-title class="subtitle-1">
+            {{getDisplayname(peer)}}
+
+          </v-list-item-title>
+          <v-list-item-subtitle v-if="peer.status === 'joined'">
+            {{peer.status}}
+            <v-icon dense class="ml-4" color="">mdi-volume-high</v-icon>
+            <v-icon dense color="">mdi-video-box</v-icon>
+          </v-list-item-subtitle>
+          <v-list-item-subtitle v-else-if="peer.status === 'waiting' || peer.status === 'authorised'">
+            {{peer.status}}
+            <v-progress-linear color="deep-purple accent-4" indeterminate rounded height="6"></v-progress-linear>
+          </v-list-item-subtitle>
         </v-list-item-content>
 
         <v-list-item-action>
-          <v-btn icon>
-            <v-icon color="grey lighten-1">mdi-information</v-icon>
-          </v-btn>
-          <v-icon :color="peer.active ? 'deep-purple accent-4' : 'grey'">
-            mdi-message-outline
-          </v-icon>
+          <div v-if="isRoomAdmin">
+            <v-btn v-if="peer.status !== 'joined'" icon class="ml-1">
+              <v-icon dense @click="authorise(peer)" color="blue">mdi-account-plus</v-icon>
+            </v-btn>
+            <v-btn v-if="peer.status !== 'joined'" icon>
+              <v-icon dense @click="unauthorise(peer)" color="red">mdi-account-remove</v-icon>
+            </v-btn>
+          </div>
         </v-list-item-action>
 
       </v-list-item>
@@ -59,7 +56,10 @@
             Participants
           </th>
           <th class="text-left">
-            Display Name
+            Name
+          </th>
+          <th class="text-left">
+            Surname
           </th>
           <th class="text-left">
             Status
@@ -73,11 +73,29 @@
 
         <tr v-for="peer in peersFilter" :key="peer.username">
           <td>{{ peer.id }}</td>
-          <td>{{ peer.displayName }}</td>
-          <td>{{ peer.status }}</td>
-          <td v-if="isRoomAdmin || isAdmin">
-            <v-btn class="ml-1" x-small @click="authorise(peer)">Authorise</v-btn>
-            <v-btn x-small @click="unauthorise(peer)">UnAuthorise</v-btn>
+          <td>{{ peer.user.name }}</td>
+          <td>{{ peer.user.surname }}</td>
+          <td>
+            <div v-if="peer.status === 'joined'">
+              {{peer.status}}
+              <v-icon dense class="ml-4" color="">mdi-volume-high</v-icon>
+              <v-icon dense color="">mdi-video-box</v-icon>
+            </div>
+            <div v-else-if="peer.status === 'waiting' || peer.status === 'authorised'">
+              {{peer.status}}
+              <v-progress-linear color="deep-purple accent-4" indeterminate rounded height="6"></v-progress-linear>
+            </div>
+          </td>
+          <td>
+
+            <div v-if="isRoomAdmin">
+              <v-btn v-if="peer.status !== 'joined'" icon class="ml-1">
+                <v-icon dense @click="authorise(peer)" color="blue">mdi-account-plus</v-icon>
+              </v-btn>
+              <v-btn v-if="peer.status !== 'joined'" icon>
+                <v-icon dense @click="unauthorise(peer)" color="red">mdi-account-remove</v-icon>
+              </v-btn>
+            </div>
           </td>
         </tr>
 
@@ -110,10 +128,6 @@ export default {
     view: {
       type: String,
       default: "list"
-    },
-    local: {
-      type: Boolean,
-      default: true
     }
   },
   destroyed() {
@@ -168,29 +182,62 @@ export default {
       }
       return false;
     },
+
   },
   watch: {
     message(value) {
-      this.notify(value);
+      this.notify(value, {
+        offset: 65,
+      });
+    },
+    peers() {
+      this.nbPeersWainting();
     }
   },
   methods: {
     ...mapMutations([
-      'setPeers'
+      'setPeers',
+      'setNbWaiting'
     ]),
     onWaiting(message) {
-      console.log(message)
       let pdu = this.log(message.message, "DEBUG");
       this.message = pdu;
       if (message.peers) {
         this.peers = message.peers;
       }
     },
+    nbPeersWainting() {
+      let size = 0;
+      if (this.peers) {
+        size = this.peers.filter((peer) => {
+          if (peer.status === "waiting") {
+            return peer;
+          }
+        }).length;
+      }
+      this.setNbWaiting(size)
+      return size;
+    },
+    getDisplayname(peer) {
+      if (peer.user) {
+        return `${peer.user.name} ${peer.user.surname}`;
+      }
+      return peer.displayName || peer.usrnane;
+    },
     displayTrigramme(peer) {
-      return "cci";
+      if (peer.user) {
+        let size = peer.user.surname.length;
+        let trg = `${peer.user.name.substr(0, 1)}${peer.user.surname.substr(0, 1)}${peer.user.surname.substr(size-1,1)}`;
+        return trg.toLowerCase();
+      }
+      return peer.displayName || peer.usrnane;
     },
     displayInitial(peer) {
-      return "cc";
+      if (peer.user) {
+        let trg = `${peer.user.name.substr(0, 1)}${peer.user.surname.substr(0, 1)}`;
+        return trg.toLowerCase();
+      }
+      return peer.displayName || peer.usrnane;
     },
 
     authorise(peer) {

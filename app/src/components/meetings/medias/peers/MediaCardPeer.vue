@@ -409,6 +409,9 @@ export default {
             .then(() => {
               this.audio = true;
               return track;
+            })
+            .catch(e => {
+              this.log(e, "ERROR");
             });
         case "video":
           await this.addVideoTrack(track);
@@ -417,6 +420,9 @@ export default {
             .then(() => {
               this.video = true;
               return track;
+            })
+            .catch(e => {
+              this.log(e, "ERROR");
             });
       }
     },

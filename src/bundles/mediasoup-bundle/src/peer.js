@@ -2,6 +2,7 @@ class Peer extends nodefony.Service {
   constructor(peerid, transport, container) {
     super(`Peer`, container);
     this.id = peerid;
+    this.user = null;
     this.transport = transport;
     if (this.transport) {
       this.transport.once("onClose", () => {

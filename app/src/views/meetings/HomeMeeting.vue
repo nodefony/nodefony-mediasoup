@@ -91,34 +91,7 @@
         </v-simple-table>
       </v-col>
       <v-col v-if="peers" cols="auto">
-        <v-simple-table dense fixed-header dark height="200px">
-          <template v-slot:top>
-            <v-icon class="mx-5 my-3">mdi-account</v-icon> Room Participants
-          </template>
-          <template v-slot:default>
-            <thead>
-              <tr>
-                <th class="text-left">
-                  Participants
-                </th>
-                <th class="text-left">
-                  Status
-                </th>
-                <th class="text-left">
-                  display name
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="peer in peers" :key="peer.username">
-                <td>{{ peer.id }}</td>
-                <td>{{ peer.status }}</td>
-                <td>{{ peer.displayName }}</td>
-              </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
-
+        <view-peers view="simpleTable" dense />
       </v-col>
     </v-row>
   </v-container>
@@ -129,11 +102,15 @@
 <script>
 import {
   mapGetters,
-  mapActions,
+  //mapActions,
   mapMutations
 } from 'vuex';
+import ViewPeers from "@/components/meetings/peers/viewPeers";
 export default {
   name: 'HomeMeeting',
+  components: {
+    "view-peers": ViewPeers
+  },
   props: {
     roomid: {
       type: String
