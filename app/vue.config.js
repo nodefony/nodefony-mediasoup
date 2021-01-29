@@ -92,10 +92,10 @@ module.exports = {
     appleMobileWebAppCapable: 'yes',
     appleMobileWebAppStatusBarStyle: 'black',
     // configure the workbox plugin
-    workboxPluginMode: 'InjectManifest',
+    //workboxPluginMode: 'InjectManifest',
     workboxOptions: {
       // swSrc is required in InjectManifest mode.
-      swSrc: 'src/pwa/registerServiceWorker.js',
+      //swSrc: 'src/pwa/registerServiceWorker.js',
       // ...other Workbox options...
     },
     manifestOptions: {

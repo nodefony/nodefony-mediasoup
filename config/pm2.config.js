@@ -17,7 +17,7 @@ module.exports = {
     args: "pm2",
     //node_args           : "--expose-gc",
     watch: false,
-    exec_mode: "cluster",
+    exec_mode: "fork_mode", //"cluster",
     instances: 1,
     max_memory_restart: "1024M",
     autorestart: true,
