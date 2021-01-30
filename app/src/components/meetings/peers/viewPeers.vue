@@ -103,9 +103,7 @@
     </template>
   </v-simple-table>
 
-
   <!-- DATA TABLE -->
-
 
 </v-container>
 </template>

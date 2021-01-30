@@ -21,7 +21,7 @@
     "@babel/plugin-syntax-dynamic-import": "^7.8.3",
     "@babel/preset-env": "^7.12.11",
     "@babel/preset-react": "^7.12.10",
-    "autoprefixer": "^10.2.3",
+    "autoprefixer": "^10.2.4",
     "babel-loader": "^8.2.2",
     "babel-register": "^6.26.0",
     "bootstrap": "^4.6.0",
@@ -51,10 +51,10 @@
     "sass-loader": "^10.1.1",
     "style-loader": "^2.0.0",
     "svg-inline-loader": "^0.8.2",
-    "swagger-ui": "^3.40.0",
-    "swagger-ui-dist": "^3.40.0",
+    "swagger-ui": "^3.41.1",
+    "swagger-ui-dist": "^3.41.1",
     "terser-webpack-plugin": "^5.1.1",
-    "webpack": "^5.18.0",
+    "webpack": "^5.19.0",
     "webpack-merge": "^5.7.3"
   },
   "devDependencies": {

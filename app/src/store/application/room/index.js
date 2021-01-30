@@ -22,9 +22,9 @@ const state = {
   dialogJoin: true,
   dialogQuit: false,
   medias: getStorage("medias") || ["audio", "video"],
+  media:false,
   peers: [],
-  slider: true,
-  layout:true,
+  slider: true
 };
 
 const getters = {
@@ -40,7 +40,6 @@ const getters = {
   dialogQuit(state) {
     return state.dialogQuit;
   },
-
   // user medias
   hasAudio(state) {
     return state.medias.includes("audio");
@@ -57,7 +56,6 @@ const getters = {
   getMedias(state) {
     return state.medias;
   },
-
   // remote peers
   peers(state) {
     return state.peers;
@@ -78,8 +76,9 @@ const getters = {
   slider(state) {
     return state.slider;
   },
-  layout(state){
-    return state.layout;
+  // media application
+  media(state){
+    return state.media;
   }
 }
 
@@ -127,7 +126,6 @@ const mutations = {
       this.commit("storeMedias", state.medias);
     }
   },
-
   // remote peer
   addRemotePeer(state, value) {
     state.peers.push(value);
@@ -149,8 +147,11 @@ const mutations = {
   toogleSlider(state) {
     state.slider = !state.slider;
   },
-  displayLayout(state) {
-    state.layout = true;
+  toogleMedia(state){
+     state.media = !state.media;
+  },
+  showMedia(state){
+    state.media = true;
   }
 }
 

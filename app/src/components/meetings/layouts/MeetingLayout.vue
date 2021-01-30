@@ -8,11 +8,21 @@
       <v-container fluid class="pa-0 ma-0 vid-container">
 
         <v-expand-transition>
-          <video v-show="body" :class="shared ? 'vid-share':'vid-video'" muted playsinline :controls="false" ref="body" />
+          <video v-show="screen" :class="shared ? 'vid-share':'vid-video'" muted playsinline :controls="false" ref="screen" />
+        </v-expand-transition>
+
+        <v-expand-transition>
+          <media-viewer v-if="room && media" :roomid="room.id" type="video">
+            <template v-slot:media="{ type }">
+              <v-row align="center" justify="center">
+                <h1>{{type}} </h1>
+              </v-row>
+            </template>
+          </media-viewer>
         </v-expand-transition>
 
         <!--/v-card-->
-        <!--div v-show="!body" class="pa-3">
+        <!--div v-show="!screen" class="pa-3">
           <v-card width="100%" height="100%" class=" d-flex flex-wrap" color="black" flat tile>
             <v-card v-for="(ele ,index) in myfocusTab" :key="index" class="pa-2" width="33%" height="50%" min-width="200px" min-height="200px" outlined tile style="background-color:transparent;border: white 1px solid;">
               <video :ref="`focus-${index}`" class="pa-0 ma-0 vid-video" muted playsinline :controls="true" />
@@ -36,7 +46,7 @@
 <script>
 //import MediaCardPeer from '@/components/meetings/medias/peers/MediaCardPeer';
 import SliderLayout from '@/components/meetings/layouts/SliderLayout';
-
+import MediaViewer from '@/components/meetings/medias/MediaViewer';
 import {
   mapGetters,
   //mapMutations,
@@ -48,13 +58,13 @@ export default {
   components: {
     //"media-card-peer": MediaCardPeer,
     "slider-layout": SliderLayout,
-
+    "media-viewer": MediaViewer
   },
   props: {},
   data( /*vm*/ ) {
     return {
       shared: false,
-      body: false,
+      screen: false,
       audioThreshold: -50,
       selectedPeer: null,
       focusTab: []
@@ -64,13 +74,13 @@ export default {
   computed: {
     ...mapGetters({
       //peer: 'getPeer',
-      //room: 'getRoom',
-
+      room: 'getRoom',
     }),
     ...mapGetters([
       'peers',
       //'getRemotePeer',
-      'slider'
+      'slider',
+      'media'
     ]),
     myfocusTab() {
       return this.focusTab.map((peerid, index) => {
@@ -104,15 +114,15 @@ export default {
         }
         stream = peer.videoStream.stream;
       }
-      this.$refs.body.srcObject = stream;
-      return this.$refs.body.play()
+      this.$refs.screen.srcObject = stream;
+      return this.$refs.screen.play()
         .then(() => {
-          this.body = true;
+          this.screen = true;
           this.selectedPeer = peer;
           return Promise.resolve(this.selectedPeer);
         })
         .catch(e => {
-          this.body = false;
+          this.screen = false;
           this.selectedPeer = null
           this.log(e, "DEBUG")
         });
@@ -154,10 +164,10 @@ export default {
     },
     unFocus() {
       return new Promise((resolve) => {
-        this.body = false;
+        this.screen = false;
         this.selectedPeer = null;
         setTimeout(() => {
-          this.$refs.body.srcObject = null;
+          this.$refs.screen.srcObject = null;
           return resolve()
         }, 200);
       });

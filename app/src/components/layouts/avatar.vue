@@ -1,5 +1,5 @@
 <template>
-<v-btn icon v-if="isAuthenticated" class="text-transform-none">
+<v-btn icon v-bind="{...$props, ...$attrs}" v-if="isAuthenticated" class="text-transform-none">
   <v-menu v-model="account" :close-on-content-click="false" :nudge-width="200" offset-x>
     <template v-slot:activator="{ on, attrs }">
       <v-list-item-avatar v-bind="attrs" v-on="on" color="blue-grey">

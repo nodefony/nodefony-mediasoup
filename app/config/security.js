@@ -1,7 +1,7 @@
 /**
  *  Firewall Config  service Security
  **/
- 
+
 module.exports = {
   security: {
     /**
@@ -46,28 +46,10 @@ module.exports = {
      *    }]
      */
     access_control: [],
-    /**
-     * FIREWALL  AREAS
-     *  Example :
-     *  SECURITY AREA MONITORING  <passport-local>
-     * nodefony_area: {
-     *   pattern: /^\/nodefony/,
-     *   provider: "nodefony",
-     *   form_login: {
-     *     login_path: "/login/nodefony",
-     *     check_path: "/login/check",
-     *     default_target_path: "/"
-     *   },
-     *   "passport-local": {
-     *     usernameField: 'username',
-     *     passwordField: 'passwd'
-     *   },
-     *   logout: "/logout",
-     *   context: null,
-     *   redirectHttps: true
-     * }
-     **/
-    firewalls: {}
+
+    firewalls: {
+
+
+    }
   }
 };
-

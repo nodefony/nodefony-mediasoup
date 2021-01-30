@@ -2,7 +2,7 @@
 <v-toolbar fixed outlined flat width="100%" class="ma-0 pa-0" style="top: 0;position:fixed; z-index:1000">
 
   <v-toolbar-title>
-    <v-btn text @click="displayLayout">
+    <v-btn text @click="showMedia">
       <img src="@/assets/mediasoup.png" />
       <span class="hidden-sm-and-down ml-2">{{roomid}}</span>
     </v-btn>
@@ -10,7 +10,7 @@
   </v-toolbar-title>
   <v-spacer></v-spacer>
 
-  <div v-if="peer && room">
+  <v-row v-if="peer && room" align="center">
     <v-btn x-small class="mx-4" fab @click="toogleAudio">
       <v-icon v-if="hasAudio">
         mdi-volume-high
@@ -38,27 +38,37 @@
       </v-icon>
     </v-btn>
 
-    <v-btn icon class="mx-4" @click="toogleSlider">
+    <v-spacer></v-spacer>
+    <v-btn icon @click="toogleSlider">
       <v-badge :content="nbPeers" :value="nbPeers" color="green">
         <v-icon>
           mdi-account-group
         </v-icon>
       </v-badge>
     </v-btn>
-  </div>
+
+    <v-btn x-small class="ml-4" fab @click="toogleMedia">
+      <v-icon v-if="media">
+        mdi-application-import
+      </v-icon>
+      <v-icon v-else>
+        mdi-application-export
+      </v-icon>
+    </v-btn>
+    <v-spacer></v-spacer>
+
+    <v-btn small dark rounded color="red" @click="quit">
+      <v-icon small class="ml-1 mr-2">
+        mdi-location-exit
+      </v-icon>
+      {{$t('Exit')}}
+    </v-btn>
+
+  </v-row>
 
   <v-spacer></v-spacer>
 
-  <v-btn small class="mx-6" dark rounded color="red" @click="quit">
-    <v-icon small class="mx-1">
-      mdi-close
-    </v-icon>
-    Quitter
-  </v-btn>
-
-  <v-spacer></v-spacer>
-
-  <v-menu v-if="room" :close-on-content-click="false" :nudge-width="200" offset-y>
+  <!--v-menu class="ml-5" v-if="room" :close-on-content-click="false" :nudge-width="200" offset-y>
     <template v-slot:activator="{ on, attrs }">
       <v-btn small icon class="mx-2" v-bind="attrs" v-on="on">
         <v-icon>
@@ -94,7 +104,7 @@
         </v-list-item-group>
       </v-list>
     </v-card>
-  </v-menu>
+  </v-menu-->
 
   <v-btn-toggle v-if="room" v-model="drawer" rounded small>
     <v-btn small>
@@ -112,7 +122,8 @@
       </v-badge>
     </v-btn>
   </v-btn-toggle>
-  <bar-avatar color="primary" v-if="isAuthenticated" class="ml-5" />
+
+  <bar-avatar class="mr-2 ml-8" color="blue" v-if="isAuthenticated" />
 </v-toolbar>
 </template>
 
@@ -163,7 +174,9 @@ export default {
       //'peers',
       'getPeers',
       'nbWaiting',
-      'nbUnreadMessage'
+      'nbUnreadMessage',
+      'media',
+
     ]),
     drawer: {
       set(value) {
@@ -188,7 +201,9 @@ export default {
       'displayLayout',
       'deleteMedias',
       'setMedia',
-      'setSideBar'
+      'setSideBar',
+      'toogleMedia',
+      'showMedia'
     ]),
     selectLayout(event) {
       this.$emit("layoutchange", this.selectedLayout, event);
@@ -241,7 +256,6 @@ export default {
           this.setMedia("screen")
         })
     }
-
   }
 }
 </script>

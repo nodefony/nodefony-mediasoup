@@ -1,6 +1,6 @@
 <template>
-<v-card max-width="450" class="mx-auto">
-  <v-toolbar color="teal" dark class="fixed-bar">
+<v-card height="100%" width="100%" style="border:none" flat tile>
+  <v-toolbar width="100%" color="teal darken-4" dark class="fixed-bar">
     <v-btn icon class="">
       <v-icon dark @click="setSideBar(undefined)">
         mdi-message-text
@@ -9,18 +9,17 @@
     <v-toolbar-title>Messages</v-toolbar-title>
 
     <v-spacer></v-spacer>
-
   </v-toolbar>
-  <v-timeline dense clipped>
-    <v-timeline-item fill-dot class="white--text mb-12 fixed-bar" color="orange" dense key="input" style="top:84px">
+  <v-timeline dense clipped class=" pa-0" height="100%" width="100%" style="margin-top:250px">
+    <v-timeline-item color="teal darken-4" fill-dot class="white--text fixed-bar pt-3" dense key="input" style="top:65px;z-index:999;background-color:#E0F2F1;width:100%;">
       <template v-slot:icon>
         <span>{{peer.id}}</span>
       </template>
 
       <v-textarea v-model="input" @keydown.enter="eventsImput" @paste="eventsImput" @dragstart="eventsImput" @dragenter="eventsImput" @dragleave="eventsImput" @dragover="eventsImput" @drop.prevent.stop="eventsImput" label="Leave a comment.."
-        auto-grow outlined rows="3" row-height="30" shaped dense>
+        outlined rows="3" row-height="30" shaped dense class="mr-3">
         <template v-slot:append>
-          <v-btn small class="mx-0" depressed @click="eventsImput">
+          <v-btn small depressed @click="eventsImput" style="position:absolute;bottom:-40px;right:15px">
             Post
           </v-btn>
         </template>
@@ -29,7 +28,7 @@
 
     <v-slide-x-transition v-if="timeline.length" group name="fade">
 
-      <v-timeline-item v-for="(message, index) in timeline" :key="index" class="mb-4" color="orange" dense>
+      <v-timeline-item v-for="(message, index) in timeline" :key="index" class="mb-4" color="teal accent-4" dense>
         <template v-slot:icon>
           <span v-text="message.from.id"></span>
         </template>
@@ -271,8 +270,7 @@ export default {
 
 <style scoped lang="scss">
 .fixed-bar {
-    position: sticky;
-    position: -webkit-sticky;
+    position: fixed;
     top: 0;
     /* for Safari */
     z-index: 1000;

@@ -12,14 +12,12 @@
       <v-row class="pa-0 ma-0">
         <v-container v-show="video || screen || noise" fluid class="pa-0 ma-0">
 
-          <v-container fluid fill-height class="pa-0 ma-0">
-            <v-row justify="center" align="center" class="pa-0 ma-0">
-              <div v-show="hover || !video" style="position:absolute">
-                <v-avatar color="primary" class="white--text" :size="local ? (remote ? 50 : 120) :50">{{local ? getTrigramme : (remote ? remote.id : "") }}</v-avatar>
-              </div>
-              <video style="width:100%;border-radius:8px 8px 0 0;" class="pa-0 ma-0" muted playsinline :controls="false" ref="prevideo" />
-            </v-row>
-          </v-container>
+          <v-row justify="center" align="center" class="pa-0 ma-0">
+            <div v-show="hover || !video" style="position:absolute">
+              <v-avatar color="primary" class="white--text" :size="local ? (remote ? 50 : 120) :50">{{local ? getTrigramme : (remote ? remote.id : "") }}</v-avatar>
+            </div>
+            <video style="width:100%;border-radius:8px 8px 0 0;" class="pa-0 ma-0" muted playsinline :controls="false" ref="prevideo" />
+          </v-row>
 
         </v-container>
 

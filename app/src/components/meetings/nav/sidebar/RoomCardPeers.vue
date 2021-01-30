@@ -1,18 +1,16 @@
 <template>
-<v-card max-width="450" class="mx-auto" style="border:none">
-  <v-toolbar color="teal" dark class="fixed-bar">
+<v-card height="100%" width="100%" style="border:none" flat tile>
+  <v-toolbar width="100%" color="teal darken-4" dark class="fixed-bar">
     <v-btn icon class="">
       <v-icon dark @click="setSideBar(undefined)">
         mdi-account-multiple
       </v-icon>
     </v-btn>
     <v-toolbar-title>Participants</v-toolbar-title>
-
     <v-spacer></v-spacer>
-
   </v-toolbar>
 
-  <view-peers view="list" dense />
+  <view-peers view="list" dense class="fixed-bar" style="margin-top:65px" />
 
 </v-card>
 </template>
@@ -59,10 +57,9 @@ export default {
 
 <style scoped lang="scss">
 .fixed-bar {
-    position: sticky;
-    position: -webkit-sticky;
-    /* for Safari */
+    position: fixed;
     top: 0;
+    /* for Safari */
     z-index: 1000;
 }
 </style>

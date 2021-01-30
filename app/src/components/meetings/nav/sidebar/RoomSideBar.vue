@@ -1,5 +1,5 @@
 <template>
-<v-navigation-drawer v-if="room" width="25%" v-model="displaybar" right class="" style="position:fixed;top:64px;z-index:1000">
+<v-navigation-drawer v-if="room" width="25%" v-model="displaybar" right class="" style="position:fixed;top:65px;z-index:1000">
 
   <room-card-peers v-show="menu === 'peers'" />
 
