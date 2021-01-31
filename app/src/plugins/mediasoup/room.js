@@ -59,7 +59,7 @@ class Room extends nodefony.Service {
     this.id = id;
     this.mediasoup = mediasoup;
     this.handlerName = mediasoupClient.detectDevice();
-    this.displayName = this.options.displayName || id;
+    this.displayName = this.options.displayName || "";
     this.consumers = null;
     this.dataConsumers = null;
     this.webcams = null;

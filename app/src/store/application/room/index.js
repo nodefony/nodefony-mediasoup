@@ -151,7 +151,11 @@ const mutations = {
      state.media = !state.media;
   },
   showMedia(state){
-    state.media = true;
+    state.media = false;
+    setTimeout(()=>{
+      state.media = true;
+    },10)
+
   }
 }
 

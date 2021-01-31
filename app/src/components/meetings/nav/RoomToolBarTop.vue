@@ -11,7 +11,7 @@
   <v-spacer></v-spacer>
 
   <v-row v-if="peer && room" align="center">
-    <v-btn x-small class="mx-4" fab @click="toogleAudio">
+    <v-btn x-small retain-focus-on-click class="mx-4" fab @click="toogleAudio" :color="hasAudio?'green lighten-2' : 'red lighten-1'">
       <v-icon v-if="hasAudio">
         mdi-volume-high
       </v-icon>
@@ -20,7 +20,7 @@
       </v-icon>
 
     </v-btn>
-    <v-btn x-small class="mx-4" fab @click="toogleVideo">
+    <v-btn x-small class="mx-4" fab @click="toogleVideo" :color="hasVideo?'green lighten-2' : 'red lighten-1'">
       <v-icon v-if="hasVideo">
         mdi-video-outline
       </v-icon>
@@ -29,7 +29,7 @@
       </v-icon>
 
     </v-btn>
-    <v-btn x-small class="mx-4" fab @click="toogleShare">
+    <v-btn x-small class="mx-4" fab @click="toogleShare" :color="hasScreen?'green lighten-2' : 'red lighten-1'">
       <v-icon v-if="hasScreen">
         mdi-monitor-share
       </v-icon>
@@ -47,23 +47,33 @@
       </v-badge>
     </v-btn>
 
-    <v-btn x-small class="ml-4" fab @click="toogleMedia">
+    <!-- TODO ADD MEDIA STOP MEDIA -->
+    <!--v-btn x-small class="ml-4" fab @click="toogleMedia">
       <v-icon v-if="media">
         mdi-application-import
       </v-icon>
       <v-icon v-else>
         mdi-application-export
       </v-icon>
+    </v-btn-->
+    <v-btn v-if="media" icon class="ml-3" @click="showMedia">
+      <v-icon>
+        mdi-focus-field
+      </v-icon>
+      <!--v-icon v-else>
+        mdi-dots-grid
+      </v-icon-->
     </v-btn>
     <v-spacer></v-spacer>
+  </v-row>
 
+  <v-row class="ma-0" align="center" justify="center">
     <v-btn small dark rounded color="red" @click="quit">
       <v-icon small class="ml-1 mr-2">
         mdi-location-exit
       </v-icon>
       {{$t('Exit')}}
     </v-btn>
-
   </v-row>
 
   <v-spacer></v-spacer>
@@ -123,7 +133,16 @@
     </v-btn>
   </v-btn-toggle>
 
-  <bar-avatar class="mr-2 ml-8" color="blue" v-if="isAuthenticated" />
+  <bar-avatar class="mr-2 ml-8" v-if="isAuthenticated">
+    <template v-slot:actions>
+      <v-btn small dark rounded color="red" @click="quit">
+        <v-icon small class="ml-1 mr-2">
+          mdi-location-exit
+        </v-icon>
+        {{$t('Exit')}}
+      </v-btn>
+    </template>
+  </bar-avatar>
 </v-toolbar>
 </template>
 

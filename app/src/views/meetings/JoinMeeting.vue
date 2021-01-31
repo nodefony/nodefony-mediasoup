@@ -261,7 +261,7 @@ export default {
       this.setVideoStream(this.peerComponent.videoStream);
       return this.redirect("Meeting");
     },
-    authorise(peer) {
+    /*authorise(peer) {
       if (this.isRoomAdmin) {
         this.loading = true;
         return this.$mediasoup.request(`meetings/${this.room.name}/${peer.id}/authorise`, "PUT")
@@ -288,7 +288,7 @@ export default {
             this.message = this.log(e.message, "ERROR");
           });
       }
-    },
+    },*/
     async close() {
       await this.$mediasoup.leaveRoom()
         .then(() => {

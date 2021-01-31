@@ -2,7 +2,7 @@
 <v-btn icon v-bind="{...$props, ...$attrs}" v-if="isAuthenticated" class="text-transform-none">
   <v-menu v-model="account" :close-on-content-click="false" :nudge-width="200" offset-x>
     <template v-slot:activator="{ on, attrs }">
-      <v-list-item-avatar v-bind="attrs" v-on="on" color="blue-grey">
+      <v-list-item-avatar v-bind="attrs" v-on="on" :color="color">
         <!--img src="" alt=""-->
         <span class="white--text">{{getTrigramme}}</span>
       </v-list-item-avatar>
@@ -10,7 +10,7 @@
     <v-card>
       <v-list>
         <v-list-item>
-          <v-list-item-avatar color="blue-grey">
+          <v-list-item-avatar :color="color">
             <!--img src="" alt=""-->
             <span class="white--text">{{getTrigramme}}</span>
           </v-list-item-avatar>
@@ -29,13 +29,14 @@
       <v-divider></v-divider>
       <v-card-actions v-if="isAuthenticated">
         <v-spacer></v-spacer>
-        <v-btn text @click="deconnect">
-          Logout
-        </v-btn>
+        <slot name="actions">
+          <v-btn text @click="deconnect">
+            Logout
+          </v-btn>
+        </slot>
       </v-card-actions>
     </v-card>
   </v-menu>
-
 </v-btn>
 </template>
 
@@ -49,7 +50,12 @@ import {
 export default {
   name: 'barAvatar',
   components: {},
-  props: {},
+  props: {
+    color: {
+      type: String,
+      default: 'indigo darken-1'
+    }
+  },
   data() {
     return {
       account: false,

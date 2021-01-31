@@ -97,6 +97,7 @@ class Peer extends nodefony.Service {
         this.log(e, "WARNING");
       }
     }
+
     this.fire("close", this);
     this.log(`Close Peer : ${this.id}`);
     return this;

@@ -185,6 +185,10 @@ export default {
     }
   },
   methods: {
+    ...mapMutations({
+      setProfile: 'USER_PROFILE',
+      clearProfile: 'USER_ERROR'
+    }),
     ...mapMutations([
       'setRoomEntity',
       'closeDrawer',
@@ -233,7 +237,25 @@ export default {
           }).catch(() => {})
         });
     },
-    connect() {
+    // todo better management
+    async createPublicProfile() {
+      let user = {
+        username: this.username,
+        surname: "",
+        name: "",
+        roles: []
+      }
+      return this.setProfile(user);
+    },
+    async connect() {
+      if (this.room.access === "public") {
+        if (!this.isAuthenticated) {
+          await this.createPublicProfile();
+        }
+      }
+      if (!this.getProfileUsername) {
+        throw new Error('Bad profile');
+      }
       const body = {
         password: this.password,
         username: this.getProfileUsername,
@@ -250,12 +272,25 @@ export default {
         .then((response) => {
           this.password = "";
           this.loading = false;
+          console.log("PASSSS ok ", response)
           if (response.result.access === "authorized") {
             return this.connectMediasoup();
           }
+          if (!this.isAuthenticated) {
+            console.log("clear")
+            this.clearProfile()
+          }
+
           throw new Error(response.result.access);
         })
         .catch(e => {
+          console.log("PASSSS catch", e)
+
+          if (!this.isAuthenticated) {
+            console.log("clear")
+            this.clearProfile()
+          }
+
           this.loading = false;
           this.progress = null;
           if (e.response) {

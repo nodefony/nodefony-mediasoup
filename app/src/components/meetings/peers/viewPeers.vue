@@ -71,29 +71,28 @@
       </thead>
       <tbody v-if="peers">
 
-        <tr v-for="peer in peersFilter" :key="peer.username">
-          <td>{{ peer.id }}</td>
-          <td>{{ peer.user.name }}</td>
-          <td>{{ peer.user.surname }}</td>
+        <tr v-for="mypeer in peers /*peersFilter*/" :key="mypeer.username">
+          <td>{{ mypeer.id }}</td>
+          <td>{{ mypeer.user ? mypeer.user.name : '' }}</td>
+          <td>{{ mypeer.user ? mypeer.user.surname: '' }}</td>
           <td>
-            <div v-if="peer.status === 'joined'">
-              {{peer.status}}
+            <div v-if="mypeer.status === 'joined'">
+              {{mypeer.status}}
               <v-icon dense class="ml-4" color="">mdi-volume-high</v-icon>
               <v-icon dense color="">mdi-video-box</v-icon>
             </div>
-            <div v-else-if="peer.status === 'waiting' || peer.status === 'authorised'">
-              {{peer.status}}
+            <div v-else-if="mypeer.status === 'waiting' || mypeer.status === 'authorised'">
+              {{mypeer.status}}
               <v-progress-linear color="deep-purple accent-4" indeterminate rounded height="6"></v-progress-linear>
             </div>
           </td>
           <td>
-
-            <div v-if="isRoomAdmin">
-              <v-btn v-if="peer.status !== 'joined'" icon class="ml-1">
-                <v-icon dense @click="authorise(peer)" color="blue">mdi-account-plus</v-icon>
+            <div v-if="isRoomAdmin && mypeer.id !== getProfileUsername">
+              <v-btn v-if="mypeer.status !== 'joined'" icon class="ml-1">
+                <v-icon dense @click="authorise(mypeer)" color="blue">mdi-account-plus</v-icon>
               </v-btn>
-              <v-btn v-if="peer.status !== 'joined'" icon>
-                <v-icon dense @click="unauthorise(peer)" color="red">mdi-account-remove</v-icon>
+              <v-btn v-if="mypeer.status !== 'joined'" icon>
+                <v-icon dense @click="unauthorise(mypeer)" color="red">mdi-account-remove</v-icon>
               </v-btn>
             </div>
           </td>
@@ -128,6 +127,7 @@ export default {
       default: "list"
     }
   },
+  mounted() {},
   destroyed() {
     this.log(`destroy peers component `, "DEBUG");
     this.$mediasoup.removeListener("waiting", this.onWaiting);
@@ -220,7 +220,7 @@ export default {
       if (peer.user) {
         return `${peer.user.name} ${peer.user.surname}`;
       }
-      return peer.displayName || peer.usrnane;
+      return peer.displayName || peer.id;
     },
     displayTrigramme(peer) {
       if (peer.user) {

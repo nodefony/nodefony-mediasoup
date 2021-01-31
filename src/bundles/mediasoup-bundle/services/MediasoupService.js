@@ -57,11 +57,17 @@ module.exports = class Mediasoup extends nodefony.Service {
         }
 
         // peer
-        peer = await mdroom.createPeer(query.peerId, context);
+        try{
+          peer = await mdroom.createPeer(query.peerId, context);
+        }catch(e){
+          this.log(e, "WARNING");
+          throw new nodefony.Error(e, 5006);
+        }
+
         if (!peer) {
           context.close("1006", "closed can't create peer");
         }
-
+        
         // events room
         // close
         const close = () => {

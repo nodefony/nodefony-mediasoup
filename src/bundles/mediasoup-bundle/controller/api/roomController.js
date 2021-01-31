@@ -246,6 +246,12 @@ class apiRoomController extends nodefony.Controller {
    *    @Firewall ({bypass:true})
    */
   async checkRoomAccessAction(name) {
+    if( ! this.query.password){
+      throw new nodefony.Error('Bad password', 401)
+    }
+    if( ! this.query.username ){
+      throw new nodefony.Error('Bad Request no user', 401)
+    }
     const room = await this.roomsService.findOne(name);
     if (room && room.secure) {
       return this.secureAction(name);
@@ -265,6 +271,12 @@ class apiRoomController extends nodefony.Controller {
    */
   async secureAction(name) {
     try {
+      if( ! this.query.password){
+        throw new nodefony.Error('Bad password', 401)
+      }
+      if( ! this.query.username ){
+        throw new nodefony.Error('Bad Request no user', 401)
+      }
       const entity = this.getNodefonyEntity("room");
       const encoder = entity.getEncoder();
       const room = await this.roomsService.findOne(name);

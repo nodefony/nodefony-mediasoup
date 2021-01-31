@@ -316,6 +316,10 @@ export default {
         }
       });
       this.room.on("consumerClosed", async (consumerId, peerId, appData) => {
+        if (appData.share) {
+          //peer.deleteConsumer(consumerId);
+          return this.getLayout().stopDisplayShare();
+        }
         this.log(`consumerClosed : ${peerId} condumeId =${consumerId} `, "DEBUG");
         try {
           let peer = this.getRemotePeer(peerId);

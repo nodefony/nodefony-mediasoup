@@ -3,16 +3,16 @@
 
   <v-slide-group v-model="slide" class="px-3" show-arrows style="background-color:transparent;height:110px">
 
-    <v-slide-item v-show="shared" key="share" v-slot="{ active, toggle }">
-      <media-card-peer tile width="200" height="110" class="my-0 mx-1 pa-0" ref="share" name="Screen" @click.native="tooglePeer(null , active, toggle, 'share' )" />
+    <v-slide-item key="share" v-show="shared" :elevation="focus" v-slot="{ active, toggle }">
+      <media-card-peer width="200" height="110" class="my-0 mx-1 pa-0" ref="share" name="Screen" @click.native="tooglePeer(null , active, toggle, 'share' )" />
     </v-slide-item>
 
-    <v-slide-item v-if="peer" :key="peer.id" v-slot="{ active, toggle }">
-      <media-card-peer tile width="200" height="110" class="my-0 mx-1 pa-0" :ref="peer.id" :remote="peer" @click.native="tooglePeer(peer, active, toggle, peer.id)" :name="peer.id" />
+    <v-slide-item :key="peer.id" v-if="peer" :elevation="focus" v-slot="{ active, toggle }">
+      <media-card-peer width="200" height="110" class="my-0 mx-1 pa-0" :ref="peer.id" :remote="peer" @click.native="tooglePeer(peer, active, toggle, peer.id)" :name="peer.id" />
     </v-slide-item>
 
     <v-slide-item v-for="(remotePeer, index) in peers" :key="index" v-slot="{ active, toggle }">
-      <media-card-peer tile width="200" height="110" class="my-0 mx-1 pa-0" :ref="remotePeer.id" :remote="remotePeer" @click.native="tooglePeer(remotePeer, active, toggle, index)" :name="remotePeer.id" />
+      <media-card-peer :elevation="focus" width="200" height="110" class="my-0 mx-1 pa-0" :ref="remotePeer.id" :remote="remotePeer" @click.native="tooglePeer(remotePeer, active, toggle, index)" :name="remotePeer.id" />
     </v-slide-item>
 
     <!--v-slide-item v-for="n in 10" :key="n" v-slot="{ active, toggle }">
@@ -46,7 +46,8 @@ export default {
       slide: null,
       shared: false,
       shareStream: null,
-      sharePeer: null
+      sharePeer: null,
+      hasfocus: 0
     }
   },
   mounted() {},
@@ -75,28 +76,39 @@ export default {
       this.shared = false;
     },
     async tooglePeer(peer, active, toggle, index) {
-      if (toggle) {
-        toggle();
-      }
+      toggle();
       if (index === "share") {
         if (this.$refs.share && this.$refs.share.videoStream && this.$refs.share.videoStream.stream) {
-          this.focus(peer, this.$refs.share.videoStream.stream)
+          if (!active) {
+
+            this.focus(peer, this.$refs.share.videoStream.stream, active, toggle, index)
+          } else {
+
+            return this.unFocus(peer, null, active, toggle, index);
+          }
         }
         return;
       }
       if (peer && !active) {
         if (peer.videoStream.stream) {
-          return this.focus(peer);
+          return this.focus(peer, null, active, toggle, index);
         }
       } else {
-        return this.unFocus(peer);
+
+        return this.unFocus(peer, active, toggle, index);
       }
     },
-    focus(peer, stream) {
-      this.$emit('focus', peer, stream);
+    focus(peer, stream, active, toggle, index) {
+      this.hasfocus = 12;
+      this.$emit('focus', peer, stream, active, toggle, index);
     },
-    unFocus(peer) {
-      this.$emit('unfocus', peer, this.getPeerComponent(peer.id))
+    unFocus( /*peer, active, toggle, index*/ ) {
+      this.hasfocus = 0;
+      /*let component = null;
+      if (peer) {
+        component = this.getPeerComponent(peer.id)
+      }*/
+      this.$emit('unfocus' /*peer, component, active, toggle, index*/ );
     },
     getShareComponent() {
       if (this.$refs.share) {
@@ -117,7 +129,6 @@ export default {
       }
       return component;
     }
-
   }
 }
 </script>

@@ -17,7 +17,7 @@ import {
 const Api = new baseApi("auth", {
   baseUrl:"/api/jwt"
 });
-
+console.log(`Storage : `, window.sessionStorage.getItem('username'))
 const state = {
   token: Api.token,
   username: window.sessionStorage.getItem('username'),

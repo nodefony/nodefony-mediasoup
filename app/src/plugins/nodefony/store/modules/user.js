@@ -107,7 +107,8 @@ const mutations = {
   },
   [USER_ERROR]: (state, error) => {
     state.status = 'error'
-    state.error = error
+    state.error = error;
+    state.user = null;
   },
   [AUTH_LOGOUT]: (state) => {
     state.status = ''
