@@ -2,7 +2,7 @@
 <v-toolbar fixed outlined flat width="100%" class="ma-0 pa-0" style="top: 0;position:fixed; z-index:1000">
 
   <v-toolbar-title>
-    <v-btn text @click="showMedia">
+    <v-btn text @click="showLayout">
       <img src="@/assets/mediasoup.png" />
       <span class="hidden-sm-and-down ml-2">{{roomid}}</span>
     </v-btn>
@@ -224,6 +224,9 @@ export default {
       'toogleMedia',
       'showMedia'
     ]),
+    showLayout() {
+
+    },
     selectLayout(event) {
       this.$emit("layoutchange", this.selectedLayout, event);
     },

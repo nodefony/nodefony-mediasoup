@@ -34,6 +34,10 @@
         </media-viewer>
       </v-expand-transition>
 
+      <!-- Main layout -->
+      <v-expand-transition>
+        <grid-layout ref="main" v-show="true" :focusPeers="focusTab" class="" />
+      </v-expand-transition>
     </v-container>
   </v-sheet>
 
@@ -42,9 +46,10 @@
 
 
 <script>
-//import MediaCardPeer from '@/components/meetings/medias/peers/MediaCardPeer';
 import SliderLayout from '@/components/meetings/layouts/SliderLayout';
+import GridLayout from '@/components/meetings/layouts/GridLayout';
 import MediaViewer from '@/components/meetings/medias/MediaViewer';
+
 import {
   mapGetters,
   mapMutations,
@@ -54,7 +59,7 @@ import {
 export default {
   name: 'MettingLayout',
   components: {
-    //"media-card-peer": MediaCardPeer,
+    "grid-layout": GridLayout,
     "slider-layout": SliderLayout,
     "media-viewer": MediaViewer
   },
@@ -69,12 +74,12 @@ export default {
     }
   },
   mounted() {
-    this.toogleMedia();
+    //this.toogleMedia();
   },
   computed: {
     ...mapGetters({
-      //peer: 'getPeer',
-      room: 'getRoom',
+      peer: 'getPeer',
+      room: 'getRoom'
     }),
     ...mapGetters([
       'peers',
@@ -82,25 +87,6 @@ export default {
       'slider',
       'media'
     ]),
-    myfocusTab() {
-      return this.focusTab.map((peerid, index) => {
-        let component = this.getPeerComponent(peerid);
-        if (component && component.videoStream && component.videoStream.stream) {
-          setTimeout(() => {
-            let video = this.$refs[`focus-${index}`];
-            if (!video) {
-              return
-            }
-            if (video[0]) {
-              video = video[0];
-            }
-            video.srcObject = component.videoStream.stream;
-            return video.play();
-          }, 500);
-        }
-        return peerid;
-      });
-    }
   },
   watch: {
     media(value) {
@@ -143,36 +129,48 @@ export default {
         });
     },
 
-    focusPeer(peerid, volume) {
+    focusPeer(peer, volume, component) {
       if (volume && volume >= this.audioThreshold) {
-        let component = this.getPeerComponent(peerid);
+        //let component = this.getPeerComponent(peerid);
         if (component) {
           if (!component.focus) {
-            this.log(`Focus Audio peer : ${peerid}`, "DEBUG");
-            this.addFocusTab(peerid);
+            this.log(`Focus Audio peer : ${peer.id}`, "DEBUG");
             component.focus = true;
             setTimeout(() => {
               component.focus = false;
             }, 2000);
           }
         }
+        this.addFocusTab(peer);
       }
     },
-    addFocusTab(peerid) {
-      if (!peerid) {
+    addFocusTab(peer) {
+      if (!peer) {
         return this.focusTab;
       }
-      const found = this.focusTab.find(id => id === peerid);
+      if (!peer) {
+        return;
+      }
+      const found = this.focusTab.find(ele => ele.id === peer.id);
       if (found) {
+        //console.log(`found peer in array ${peer.id}`)
+        this.sortFocusPeer();
+        return this.focusTab;
+      } else {
+        if (this.focusTab.length < 7) {
+          //console.log(`PUSH peer in array ${peer.id}`)
+          this.focusTab.push(peer)
+        } else {
+          //console.log(`POP and place frist peer in array ${peer.id}`)
+          this.focusTab.pop();
+          this.focusTab.unshift(peer)
+        }
         return this.focusTab;
       }
-      if (this.focusTab.length < 4) {
-        this.focusTab.push(peerid)
-      } else {
-        this.focusTab.pop();
-        this.focusTab.unshift(peerid)
-      }
-      return this.focusTab;
+    },
+
+    sortFocusPeer() {
+      //console.log("sort")
     },
 
     // slider events

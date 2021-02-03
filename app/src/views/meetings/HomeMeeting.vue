@@ -272,25 +272,18 @@ export default {
         .then((response) => {
           this.password = "";
           this.loading = false;
-          console.log("PASSSS ok ", response)
           if (response.result.access === "authorized") {
             return this.connectMediasoup();
           }
           if (!this.isAuthenticated) {
-            console.log("clear")
             this.clearProfile()
           }
-
           throw new Error(response.result.access);
         })
         .catch(e => {
-          console.log("PASSSS catch", e)
-
           if (!this.isAuthenticated) {
-            console.log("clear")
             this.clearProfile()
           }
-
           this.loading = false;
           this.progress = null;
           if (e.response) {

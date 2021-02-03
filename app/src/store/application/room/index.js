@@ -147,6 +147,12 @@ const mutations = {
   toogleSlider(state) {
     state.slider = !state.slider;
   },
+  showSlider(state){
+    state.slider = true;
+  },
+  hideSlider(state){
+    state.slider = false;
+  },
   toogleMedia(state){
      state.media = !state.media;
   },

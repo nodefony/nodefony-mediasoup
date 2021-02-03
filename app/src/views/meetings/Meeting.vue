@@ -265,18 +265,26 @@ export default {
       });
       this.room.on("activeSpeaker", (peerId, volume) => {
         //this.log(`${peerId} volume : ${volume}`, "DEBUG");
+        let peer = this.getPeerById(peerId);
+        peer.volume = volume || -100;
+        if (!peer) {
+          this.log(`peer not found ${peerId}`, "ERROR")
+          return;
+        }
         let component = this.getPeerComponent(peerId);
         if (component) {
-          component.volume = volume || -100;
+          component.volume = peer.volume;
         }
-        this.getLayout().focusPeer(peerId, volume);
+        this.getLayout().focusPeer(peer, volume, component);
       });
       this.room.on("newPeer", (peer) => {
         this.log(`New Peer : ${peer.id}`);
         this.addRemotePeer(peer);
       });
       this.room.on("peerClosed", (peerId) => {
-        this.log(`peerClosed : ${peerId}`)
+        this.log(`peerClosed : ${peerId}`);
+        let peer = this.getRemotePeer(peerId);
+        peer.close();
         this.removePeer(peerId);
       });
       this.room.on("addProducer", async (producer) => {
@@ -297,8 +305,7 @@ export default {
         this.peer.deleteProducer(producer.id);
         return component.deleteProducer(producer);
       });
-      this.room.on("disableShare", async (room) => {
-        //await room.enableWebcam();
+      this.room.on("disableShare", async ( /*room*/ ) => {
         this.deleteMedias("screen");
         this.getLayout().stopDisplayShare();
       });
@@ -414,7 +421,16 @@ export default {
     getPeerComponent(peerId) {
       return this.getLayout().getPeerComponent(peerId);
     },
-
+    getPeerById(peerid) {
+      if (this.peer.id === peerid) {
+        return this.peer
+      }
+      return this.peers.find((peer) => {
+        if (peer.id === peerid) {
+          return peer;
+        }
+      });
+    },
     close() {
       return this.redirect();
     },
@@ -442,8 +458,8 @@ export default {
       return await this.$mediasoup.leaveRoom()
         .then((ele) => {
           this.connected = false;
-          this.peer = null;
-          this.room = null;
+          //this.peer = null;
+          //this.room = null;
           return ele;
         });
     },

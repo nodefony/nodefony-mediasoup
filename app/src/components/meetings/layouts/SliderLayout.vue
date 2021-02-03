@@ -11,7 +11,7 @@
       <media-card-peer width="200" height="110" class="my-0 mx-1 pa-0" :ref="peer.id" :remote="peer" @click.native="tooglePeer(peer, active, toggle, peer.id)" :name="peer.id" />
     </v-slide-item>
 
-    <v-slide-item v-for="(remotePeer, index) in peers" :key="index" v-slot="{ active, toggle }">
+    <v-slide-item v-for="(remotePeer, index) in peers" :key="remotePeer.id" v-slot="{ active, toggle }">
       <media-card-peer :elevation="focus" width="200" height="110" class="my-0 mx-1 pa-0" :ref="remotePeer.id" :remote="remotePeer" @click.native="tooglePeer(remotePeer, active, toggle, index)" :name="remotePeer.id" />
     </v-slide-item>
 
@@ -50,6 +50,9 @@ export default {
       hasfocus: 0
     }
   },
+  beforeDestroy() {
+    this.close();
+  },
   mounted() {},
   computed: {
     ...mapGetters({
@@ -80,10 +83,8 @@ export default {
       if (index === "share") {
         if (this.$refs.share && this.$refs.share.videoStream && this.$refs.share.videoStream.stream) {
           if (!active) {
-
             this.focus(peer, this.$refs.share.videoStream.stream, active, toggle, index)
           } else {
-
             return this.unFocus(peer, null, active, toggle, index);
           }
         }
@@ -94,7 +95,6 @@ export default {
           return this.focus(peer, null, active, toggle, index);
         }
       } else {
-
         return this.unFocus(peer, active, toggle, index);
       }
     },
@@ -109,6 +109,9 @@ export default {
         component = this.getPeerComponent(peer.id)
       }*/
       this.$emit('unfocus' /*peer, component, active, toggle, index*/ );
+    },
+    close() {
+      //console.log('close slider layout')
     },
     getShareComponent() {
       if (this.$refs.share) {

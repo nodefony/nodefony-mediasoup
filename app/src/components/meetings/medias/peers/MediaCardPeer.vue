@@ -75,7 +75,7 @@
 import {
   mapGetters,
   mapMutations,
-  mapActions
+  //mapActions
 } from 'vuex';
 import Volume from '@/components/meetings/medias/peers/MediaVolumePeer';
 
@@ -201,9 +201,10 @@ export default {
     if (this.$spectrum) {
       await this.$spectrum.stop();
     }
+    console.log(`destroy peer component `)
     return;
   },
-  destroyed() {
+  async destroyed() {
     this.log(`Destroy peer ${this.name}`)
   },
 

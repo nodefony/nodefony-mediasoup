@@ -246,9 +246,6 @@ class apiRoomController extends nodefony.Controller {
    *    @Firewall ({bypass:true})
    */
   async checkRoomAccessAction(name) {
-    if( ! this.query.password){
-      throw new nodefony.Error('Bad password', 401)
-    }
     if( ! this.query.username ){
       throw new nodefony.Error('Bad Request no user', 401)
     }
