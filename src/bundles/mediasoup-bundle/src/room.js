@@ -118,16 +118,17 @@ class Room extends nodefony.Service {
     this.peers.delete(peerid);
   }
 
-  getPeers(){
+  getPeers() {
     let peers = [];
     for (const peer of this.peers) {
-      peers.push({
+      peers.push(peer[1].peerInfos())
+      /*peers.push({
         id: peer[1].id,
         status: peer[1].status,
         joined: peer[1].joined,
         displayName: peer[1].displayName,
-        user:peer[1].user
-      });
+        user: peer[1].user
+      });*/
     }
     return peers;
   }
@@ -190,15 +191,15 @@ class Room extends nodefony.Service {
     return this.fire("close", this);
   }
 
-  authorisePeer(peer){
-    if( peer.status === 'waiting'){
+  authorisePeer(peer) {
+    if (peer.status === 'waiting') {
       peer.status = "authorised";
       this.fire("authorise", peer, this);
       return peer.status;
     }
   }
-  unauthorisePeer(peer){
-    if( peer.status === 'waiting'){
+  unauthorisePeer(peer) {
+    if (peer.status === 'waiting') {
       peer.status = "unauthorised";
       this.fire("unauthorise", peer, this);
       return peer.status;
@@ -223,8 +224,8 @@ class Room extends nodefony.Service {
       ...this.getJoinedPeers(),
       ...this.broadcasters.values()
     ];
-    this.log(peer.rtpCapabilities ,"DEBUG", `${peer.id} rtpCapabilities`)
-    this.log(peer.sctpCapabilities ,"DEBUG", `${peer.id} sctpCapabilities`)
+    //this.log(peer.rtpCapabilities, "DEBUG", `${peer.id} rtpCapabilities`)
+    //this.log(peer.sctpCapabilities, "DEBUG", `${peer.id} sctpCapabilities`)
     // Reply now the request with the list of joined peers (all but the new one).
     // Mark the new Peer as joined.
     peer.joined = true;
@@ -232,12 +233,7 @@ class Room extends nodefony.Service {
     this.fire("join", peer);
     const peerInfos = joinedPeers
       .filter((joinedPeer) => joinedPeer.id !== peer.id)
-      .map((joinedPeer) => ({
-        id: joinedPeer.id,
-        displayName: joinedPeer.displayName,
-        device: joinedPeer.device,
-        status:joinedPeer.status
-      }));
+      .map((joinedPeer) => (joinedPeer.peerInfos() ) );
     return peerInfos;
   }
 
@@ -356,7 +352,7 @@ class Room extends nodefony.Service {
       appData
       // keyFrameRequestDelay: 5000
     });
-    peer.producers.set(producer.id, producer);
+    peer.setProducer(producer.id, producer)
     // Set Producer events.
     producer.on('score', (score) => {
       // logger.debug(
@@ -379,6 +375,18 @@ class Room extends nodefony.Service {
       this.log(`producer "trace" event [producerId:${producer.id}, trace.type:${trace.type}`, "DEBUG");
       this.log(trace, "DEBUG");
     });
+
+    producer.observer.on("close", ()=>{
+      //this.fire('producerclose', producer);
+    }),
+
+    producer.observer.on('resume', () => {
+      this.fire('producerresume', producer);
+    });
+    producer.observer.on('pause', () => {
+      this.fire('producerpause', producer)
+    });
+    this.fire('producercreate', producer);
     return producer;
   }
 
@@ -482,6 +490,12 @@ class Room extends nodefony.Service {
     });
     // Send a protoo request to the remote Peer with Consumer parameters.
     try {
+      // Now that we got the positive response from the remote endpoint, resume
+      // the Consumer so the remote endpoint will receive the a first RTP packet
+      // of this new stream once its PeerConnection is already ready to process
+      // and associate it.
+      await consumer.resume();
+      //console.log(consumer)
       consumerPeer.send(this, 'newConsumer', {
         peerId: producerPeer.id,
         producerId: producer.id,
@@ -492,11 +506,6 @@ class Room extends nodefony.Service {
         appData: producer.appData,
         producerPaused: consumer.producerPaused
       });
-      // Now that we got the positive response from the remote endpoint, resume
-      // the Consumer so the remote endpoint will receive the a first RTP packet
-      // of this new stream once its PeerConnection is already ready to process
-      // and associate it.
-      await consumer.resume();
       consumerPeer.notify(this, 'consumerScore', {
         consumerId: consumer.id,
         score: consumer.score
@@ -562,7 +571,7 @@ class Room extends nodefony.Service {
       this.log('_createDataConsumer()', "WARNING");
       this.log(error, "ERROR")
     }
-    return dataConsumer ;
+    return dataConsumer;
   }
 
   // BROADCASTER

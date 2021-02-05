@@ -39,10 +39,10 @@ module.exports = class Mediasoup extends nodefony.Service {
       let peer = null;
       let room = null;
       let mdroom = null;
-      let message = null;
+
       let info = `Waiting connection :
       [roomId:${query.roomId}, address:${context.remoteAddress}, origin:${context.origin}]`;
-      this.log(info);
+      this.log(info, "DEBUG");
       try {
         if (!query.roomId) {
           context.close("1006", "closed no roomId ");
@@ -55,19 +55,16 @@ module.exports = class Mediasoup extends nodefony.Service {
         if (!mdroom) {
           context.close("1006", "closed can't create room");
         }
-
         // peer
-        try{
+        try {
           peer = await mdroom.createPeer(query.peerId, context);
-        }catch(e){
+        } catch (e) {
           this.log(e, "WARNING");
           throw new nodefony.Error(e, 5006);
         }
-
         if (!peer) {
           context.close("1006", "closed can't create peer");
         }
-        
         // events room
         // close
         const close = () => {
@@ -76,17 +73,10 @@ module.exports = class Mediasoup extends nodefony.Service {
           }, 1000);
         }
         mdroom.once("close", close);
-
         // ACCESS
         // get administrators
         room = await this.roomsService.getUserRoom(query.roomId);
-        message = `Waiting Authorisation`;
-        let status = "waiting";
-        if (room.waitingconnect) {
-          status = "waiting";
-        } else {
-          status = "authorised";
-        }
+
         let administrators = room.users;
 
         if (room.waitingconnect && administrators.length === 0) {
@@ -95,93 +85,76 @@ module.exports = class Mediasoup extends nodefony.Service {
           }, 1000);
           return;
         }
-        // is administrator
-        let admin = null;
-        administrators.filter((user) => {
-          if (user.username === query.peerId) {
-            admin = user;
-            status = "authorised";
-            peer.status = "authorised";
-            return user
-          }
-        });
 
-        // event peer join
-        const newPeer = (peer) => {
-          const sendMessage = {
+        // EVENTS
+        const sendWaitingMessage = (event, message = null, obj = {}) => {
+          const sendMessage = nodefony.extend({
             method: "waiting",
+            event: event,
             peers: mdroom.getPeers(),
             administrators: administrators,
             room: room,
             to: query.peerId,
-            message: `peer ${peer.id} joined room`
-          };
+            message: message
+          }, obj);
           return context.send(JSON.stringify(sendMessage));
+        }
+        // event peer join
+        const newPeer = (peer) => {
+          return sendWaitingMessage("join", `peer ${peer.id} joined room`);
         };
         mdroom.on("join", newPeer);
 
         // event peer enter
         const peerEnter = (peer) => {
-          const sendMessage = {
-            method: "waiting",
-            peers: mdroom.getPeers(),
-            administrators: administrators,
-            room: room,
-            to: query.peerId,
-            message: `peer ${peer.id} enter room  status : ${peer.status}`
-          };
-          return context.send(JSON.stringify(sendMessage));
+          return sendWaitingMessage("peerEnter", `peer ${peer.id} enter room  status : ${peer.status}`);
         };
         mdroom.on("peerEnter", peerEnter);
 
         // authorise
         const authorise = (peer) => {
-          //console.log(peer, mdroom.getPeers())
-          //if (peer.id === query.peerId) {
-          const sendMessage = {
-            method: "waiting",
-            room: room,
-            peers: mdroom.getPeers(),
-            administrators: administrators,
-            to: query.peerId,
-            message: `peer ${peer.id} accepted`
-          };
+          let obj = {}
           if (peer.id === query.peerId) {
-            sendMessage.authorise = true;
+            obj.authorise = true;
           }
-          return context.send(JSON.stringify(sendMessage));
-          //}
+          return sendWaitingMessage("authorise", `peer ${peer.id} accepted`, obj);
         }
         mdroom.on("authorise", authorise);
+
         // unauthorise
         const unauthorise = (peer) => {
-          const sendMessage = {
-            method: "waiting",
-            room: room,
-            peers: mdroom.getPeers(),
-            administrators: administrators,
-            to: query.peerId,
-            message: `peer ${peer.id} refused`
-          };
+          let obj = {}
           if (peer.id === query.peerId) {
-            sendMessage.authorise = false;
+            obj.authorise = false;
           }
-          return context.send(JSON.stringify(sendMessage));
+          return sendWaitingMessage("unauthorise", `peer ${peer.id} refused`, obj);
         }
         mdroom.on("unauthorise", unauthorise);
 
         const peerQuit = (peer) => {
-          const sendMessage = {
-            method: "waiting",
-            peers: mdroom.getPeers(),
-            room: room,
-            administrators: administrators,
-            to: query.peerId,
-            message: `peer ${peer.id} Quit `
-          };
-          return context.send(JSON.stringify(sendMessage));
+          return sendWaitingMessage("peerQuit", `peer ${peer.id} Quit `);
         }
         mdroom.on("peerQuit", peerQuit);
+
+        const producerResume = (producer) => {
+          return sendWaitingMessage("producerresume");
+        };
+        mdroom.on("producerresume", producerResume);
+
+        const producerPause = (producer) => {
+          return sendWaitingMessage("producerpause");
+        };
+        mdroom.on("producerpause", producerResume);
+
+        const producerClose = (producer) => {
+          return sendWaitingMessage("producerclose");
+        };
+        mdroom.on("producerclose", producerClose);
+
+        const producerCreate = (producer) => {
+          return sendWaitingMessage("producerCreate");
+        };
+        mdroom.on("producercreate", producerCreate);
 
         // socket
         context.once('onClose', () => {
@@ -192,6 +165,30 @@ module.exports = class Mediasoup extends nodefony.Service {
           mdroom.removeListener("peerEnter", peerEnter);
           mdroom.removeListener("unauthorise", unauthorise);
           mdroom.removeListener("authorise", authorise);
+          mdroom.removeListener("producerpause", producerResume);
+          mdroom.removeListener("producerresume", producerResume);
+          mdroom.removeListener("producerclose", producerClose);
+          mdroom.removeListener("producerCreate", producerCreate);
+        });
+
+        let message = null;
+        let status = null;
+        if (room.waitingconnect) {
+          message = `Waiting Authorisation`;
+          status = "waiting";
+        } else {
+          message = "Authorised"
+          status = "authorised";
+        }
+        // is administrator
+        //let admin = null;
+        administrators.filter((user) => {
+          if (user.username === query.peerId) {
+            //admin = user;
+            status = "authorised";
+            peer.status = "authorised";
+            return user
+          }
         });
 
         let sendMessage = {
@@ -201,7 +198,7 @@ module.exports = class Mediasoup extends nodefony.Service {
           room: room,
           to: query.peerId,
           administrators: administrators,
-          message: message,
+          message: message
         };
         return context.send(JSON.stringify(sendMessage));
       } catch (e) {

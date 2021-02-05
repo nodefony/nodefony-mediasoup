@@ -24,9 +24,9 @@ class Meetings extends nodefony.Service {
     return new Promise(async (resolve, reject) => {
       try {
         // Create a mediasoup Router.
-        this.log({
-          mediaCodecs
-        });
+        //this.log({
+        //  mediaCodecs
+        //});
         const router = await worker.createRouter({
           mediaCodecs
         });
@@ -138,18 +138,11 @@ class Meetings extends nodefony.Service {
         }
         // Create DataConsumers for bot DataProducer.
         //await room.createDataConsumer(peer, null, room.bot.dataProducer);
-
         // Notify the new Peer to all other Peers.
         for (const otherPeer of room.getJoinedPeers({
             excludePeer: peer
           })) {
-          otherPeer.notify(room, 'newPeer', {
-            id: peer.id,
-            displayName: peer.displayName,
-            device: peer.device,
-            status:peer.status,
-            user:peer.user
-          });
+          otherPeer.notify(room, 'newPeer', peer.peerInfos());
         }
         break;
       }
@@ -218,6 +211,7 @@ class Meetings extends nodefony.Service {
         }
         let producerId = message.data.producerId;
         await peer.closeProducer(producerId);
+        room.fire('producerclose', producerId);
         peer.send(room, "closeProducer", {
           producerId: producerId
         });
@@ -415,7 +409,7 @@ class Meetings extends nodefony.Service {
     room.on('close', () => this.rooms.delete(roomid));
   }
 
-  async getRoomInfo(room){
+  async getRoomInfo(room) {
     let ele = {};
     ele.id = room.id;
     ele.status = await room.logStatus();
@@ -424,14 +418,14 @@ class Meetings extends nodefony.Service {
     return ele;
   }
 
-  getPeersInfo(room){
-    return new Promise(async (resolve , reject)=>{
+  getPeersInfo(room) {
+    return new Promise(async (resolve, reject) => {
       let peers = [];
       let i = room.peers.size;
-      if(i === 0 ){
+      if (i === 0) {
         return resolve(peers);
       }
-      room.peers.forEach( (peer, key, map)=>{
+      room.peers.forEach((peer, key, map) => {
         let ele = {};
         ele.id = peer.id;
         ele.status = peer.status;
@@ -441,7 +435,7 @@ class Meetings extends nodefony.Service {
         ele.dataProducers = peer.dataProducers.size;
         ele.dataConsumers = peer.dataConsumers.size;
         peers.push(ele);
-        if(i === 1){
+        if (i === 1) {
           return resolve(peers);
         }
         i--;
@@ -451,25 +445,25 @@ class Meetings extends nodefony.Service {
   }
 
   getRoomsInfos(room) {
-    return new Promise(async (resolve , reject)=>{
-      try{
-        if (room){
-          return resolve( await this.getRoomInfo(room));
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (room) {
+          return resolve(await this.getRoomInfo(room));
         }
         let rows = [];
         let i = this.rooms.size;
-        if(i === 0 ){
+        if (i === 0) {
           return resolve(rows);
         }
-        this.rooms.forEach(async (room, key, map)=>{
+        this.rooms.forEach(async (room, key, map) => {
           let ele = await this.getRoomInfo(room)
           rows.push(ele);
-          if(i === 1){
+          if (i === 1) {
             return resolve(rows);
           }
           i--;
         })
-      }catch(e){
+      } catch (e) {
         return reject(e);
       }
     })

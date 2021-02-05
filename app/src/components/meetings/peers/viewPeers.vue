@@ -4,9 +4,9 @@
   <v-list v-bind="{...$props, ...$attrs}" v-if="view === 'list'" one-line>
     <header>{{room.id}}</header>
 
-    <template v-for="(peer, index) in peers">
+    <template v-for="(peer, index) in peersStatus">
 
-      <v-list-item :key="index">
+      <v-list-item :key="peer.id">
         <v-list-item-avatar>
           <v-avatar color="primary" class="white--text">{{displayInitial(peer)}}</v-avatar>
         </v-list-item-avatar>
@@ -14,12 +14,19 @@
         <v-list-item-content>
           <v-list-item-title class="subtitle-1">
             {{getDisplayname(peer)}}
-
           </v-list-item-title>
           <v-list-item-subtitle v-if="peer.status === 'joined'">
             {{peer.status}}
-            <v-icon dense class="ml-4" color="">mdi-volume-high</v-icon>
-            <v-icon dense color="">mdi-video-box</v-icon>
+            <span v-if="peer.audio !== 'none'">
+              <!--v-icon dense class="ml-4" color="">mdi-volume-high</v-icon-->
+              <v-icon v-if="peer.audio === 'demute'" dense class="ml-4" color="">mdi-volume-high</v-icon>
+              <v-icon v-else dense class="ml-4" color="">mdi-volume-off</v-icon>
+            </span>
+            <span v-if="peer.video !== 'none'">
+              <v-icon v-if="peer.video ==='demute'" dense color="">mdi-video-box</v-icon>
+              <v-icon v-else dense color="">mdi-video-box-off</v-icon>
+            </span>
+            <!--v-icon dense color="">mdi-video-box</v-icon-->
           </v-list-item-subtitle>
           <v-list-item-subtitle v-else-if="peer.status === 'waiting' || peer.status === 'authorised'">
             {{peer.status}}
@@ -70,16 +77,21 @@
         </tr>
       </thead>
       <tbody v-if="peers">
-
-        <tr v-for="mypeer in peers /*peersFilter*/" :key="mypeer.username">
+        <tr v-for="mypeer in peersStatus /*peersFilter*/" :key="mypeer.id">
           <td>{{ mypeer.id }}</td>
           <td>{{ mypeer.user ? mypeer.user.name : '' }}</td>
           <td>{{ mypeer.user ? mypeer.user.surname: '' }}</td>
           <td>
             <div v-if="mypeer.status === 'joined'">
               {{mypeer.status}}
-              <v-icon dense class="ml-4" color="">mdi-volume-high</v-icon>
-              <v-icon dense color="">mdi-video-box</v-icon>
+              <span v-if="mypeer.audio !== 'none'">
+                <v-icon v-if="mypeer.audio === 'demute'" dense class="ml-4" color="">mdi-volume-high</v-icon>
+                <v-icon v-else dense class="ml-4" color="">mdi-volume-off</v-icon>
+              </span>
+              <span v-if="mypeer.video !== 'none'">
+                <v-icon v-if="mypeer.video ==='demute'" dense color="">mdi-video-box</v-icon>
+                <v-icon v-else dense color="">mdi-video-box-off</v-icon>
+              </span>
             </div>
             <div v-else-if="mypeer.status === 'waiting' || mypeer.status === 'authorised'">
               {{mypeer.status}}
@@ -156,6 +168,19 @@ export default {
         this.setPeers(value);
       }
     },
+    peersStatus() {
+      let peers = [];
+      for (let peer of this.peers) {
+        peers.push({
+          id: peer.id,
+          status: peer.status,
+          audio: this.getPeerAudioStatus(peer),
+          video: this.getPeerVideoStatus(peer),
+          user: peer.user
+        });
+      }
+      return peers;
+    },
     peersFilter() {
       if (this.peers) {
         return this.peers.filter((peer) => {
@@ -184,9 +209,11 @@ export default {
   },
   watch: {
     message(value) {
-      this.notify(value, {
-        offset: 65,
-      });
+      if (value) {
+        this.notify(value, {
+          offset: 65,
+        });
+      }
     },
     peers() {
       this.nbPeersWainting();
@@ -198,8 +225,10 @@ export default {
       'setNbWaiting'
     ]),
     onWaiting(message) {
-      let pdu = this.log(message.message, "DEBUG");
-      this.message = pdu;
+      if (message.message) {
+        let pdu = this.log(message.message, "DEBUG");
+        this.message = pdu;
+      }
       if (message.peers) {
         this.peers = message.peers;
       }
@@ -265,6 +294,34 @@ export default {
             this.message = this.log(e.message, "ERROR");
           });
       }
+    },
+    getPeerAudioStatus(peer) {
+      let status = 'none';
+      for (let produc in peer.producers) {
+        let producer = peer.producers[produc];
+        if (producer.kind === "audio") {
+          if (producer.paused) {
+            status = 'mute'
+          } else {
+            status = 'demute'
+          }
+        }
+      }
+      return status;
+    },
+    getPeerVideoStatus(peer) {
+      let status = 'none';
+      for (let produc in peer.producers) {
+        let producer = peer.producers[produc];
+        if (producer.kind === "video") {
+          if (producer.paused) {
+            status = 'mute'
+          } else {
+            status = 'demute'
+          }
+        }
+      }
+      return status;
     }
   }
 

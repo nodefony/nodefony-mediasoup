@@ -300,6 +300,11 @@ export default {
           this.getLayout().focusPeer(this.peer.id, 0);
         }
       });
+      // bind button on this event for pause audio (only audio , video stop produce)
+      /*this.room.on("pauseProducer", (id, message) => {
+      });
+      this.room.on("resumeProducer", (id, message) => {
+      });*/
       this.room.on("disableWebcam", (producer) => {
         let component = this.getPeerComponent(this.peer.id);
         this.peer.deleteProducer(producer.id);

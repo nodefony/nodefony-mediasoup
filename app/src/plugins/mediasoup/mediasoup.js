@@ -187,6 +187,12 @@ class Mediasoup extends nodefony.Service {
         case "newConsumer":
           this.fire("newConsumer", message, this);
           break;
+        case "pauseProducer":
+          this.fire("pauseProducer", message, this);
+          break;
+        case "resumeProducer":
+          this.fire("resumeProducer", message, this);
+          break;
         default:
           this.fire("message", message, this);
           return;

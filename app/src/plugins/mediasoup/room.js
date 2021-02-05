@@ -214,6 +214,12 @@ class Room extends nodefony.Service {
     this.mediasoup.on("produceData", async (message) => {
       return this.fire("produceData", message.data.id, message, this);
     });
+    this.mediasoup.on("pauseProducer", async (message) => {
+      return this.fire("pauseProducer", message.peerid, message, this);
+    });
+    this.mediasoup.on("resumeProducer", async (message) => {
+      return this.fire("resumeProducer", message.peerid, message, this);
+    });
     this.mediasoup.on("newConsumer", async (message) => {
       await this.newConsumer(message.data);
       return this.fire("newConsumer", message.data, message, this);
@@ -235,6 +241,7 @@ class Room extends nodefony.Service {
         }
       case "newPeer":
         {
+          console.log(message)
           const peer = message.data.data;
           let newPeer = this.mediasoup.createPeer(peer.id, { ...peer
           });
@@ -601,9 +608,9 @@ class Room extends nodefony.Service {
       rtpParameters,
       //type,
       appData,
-      //producerPaused
+      producerPaused
     } = data;
-    //console.log(peerId, producerId);
+    this.log(`peerId (consumer)  producer status paused : ${producerPaused} `);
     try {
       const consumer = await this.recvTransport.consume({
         id,
@@ -746,7 +753,7 @@ class Room extends nodefony.Service {
               let res = this.peer.dataConsumers.has(dataConsumer.id);
               if (res) {
                 from = this.peer;
-              }else{
+              } else {
                 this.log('DataConsumer "message" from unknown peer', "DEBUG");
                 break;
               }
@@ -816,16 +823,16 @@ class Room extends nodefony.Service {
         if (!stream || !stream.stream) {
           mute = !stream.stream;
           let options = null;
-          if(!this.microphone){
+          if (!this.microphone) {
             options = true;
-          }else{
-            if( this.microphone.device){
+          } else {
+            if (this.microphone.device) {
               options = {
-                deviceId:{
-                  ideal:this.microphone.device.deviceId
+                deviceId: {
+                  ideal: this.microphone.device.deviceId
                 }
               }
-            }else{
+            } else {
               options = true;
             }
           }
@@ -858,7 +865,7 @@ class Room extends nodefony.Service {
         // codec : this._mediasoupDevice.rtpCapabilities.codecs
         // 	.find((codec) => codec.mimeType.toLowerCase() === 'audio/pcma')
       });
-      if(mute){
+      if (mute) {
         this.muteMic();
       }
       this.micProducer.on('transportclose', () => {
@@ -974,9 +981,9 @@ class Room extends nodefony.Service {
         }
         device = this.webcam.device;
         if (!device) {
-          if (webcam){
+          if (webcam) {
             device = await this.updateWebcams();
-          }else{
+          } else {
             throw new Error('no webcam devices');
           }
         }
@@ -1373,7 +1380,7 @@ class Room extends nodefony.Service {
   }
 
   async restartIce() {}
-  async changeDisplayName(displayName) {}
+  async changeDisplayName() {}
   async setMaxSendingSpatialLayer() {}
   async setConsumerPreferredLayers() {}
 

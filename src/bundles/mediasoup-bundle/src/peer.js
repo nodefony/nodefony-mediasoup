@@ -1,3 +1,45 @@
+const parserMediasoupApi = function (struct, type) {
+  switch (type) {
+  case "producer":
+    return {
+      kind: struct.kind,
+      type: struct.type,
+      appData: struct.appData,
+      paused: struct.paused,
+      closed: struct.closed
+    };
+  case "dataProducer":
+    return {
+      kind: "data",
+      type: struct.type,
+      appData: struct.appData,
+      closed: struct.closed,
+      label:struct.label,
+      protocol:struct.protocol
+    }
+  case "consumer":
+    return {
+      kind: struct.kind,
+      type: struct.type,
+      producerPaused: struct.producerPaused,
+      appData: struct.appData,
+      paused: struct.paused,
+      closed: struct.closed
+    };
+  case "dataConsumer":
+    return {
+      kind: "data",
+      type: struct.type,
+      appData: struct.appData,
+      closed: struct.closed,
+      label:struct.label,
+      protocol:struct.protocol
+    }
+  default:
+    return {}
+  }
+}
+
 class Peer extends nodefony.Service {
   constructor(peerid, transport, container) {
     super(`Peer`, container);
@@ -9,7 +51,7 @@ class Peer extends nodefony.Service {
         this.close(false);
       });
     }
-    this.consume = null;
+    //this.consume = null;
     this.joined = false;
     this.status = "waiting"; // connected | waiting  | joined | disconnected
     this.displayName = null;
@@ -24,6 +66,37 @@ class Peer extends nodefony.Service {
     // record
     this.process = null;
     this.remotePorts = [];
+  }
+
+  peerInfos() {
+    let producers = {};
+    let consumers = {};
+    let dataProducers = {};
+    let dataConsumers = {};
+    this.producers.forEach((producer, index) => {
+      producers[index] = parserMediasoupApi(producer, "producer");
+    });
+    this.consumers.forEach((consumer, index) => {
+      consumers[index] = parserMediasoupApi(consumer, "consumer");
+    });
+    this.dataProducers.forEach((producer, index) => {
+      dataProducers[index] = parserMediasoupApi(producer, "dataProducer");
+    });
+    this.dataConsumers.forEach((consumer, index) => {
+      dataConsumers[index] = parserMediasoupApi(consumer, "dataConsumer");
+    });
+    const res=  {
+      id: this.id,
+      displayName: this.displayName,
+      status: this.status,
+      device: this.device,
+      user: this.user,
+      producers: producers,
+      consumers: consumers,
+      dataProducers: dataProducers,
+      dataConsumers: dataConsumers
+    }
+    return res;
   }
 
   hasConsumer(consumerId) {

@@ -201,7 +201,7 @@ export default {
     if (this.$spectrum) {
       await this.$spectrum.stop();
     }
-    console.log(`destroy peer component `)
+    //console.log(`destroy peer component `)
     return;
   },
   async destroyed() {
@@ -744,17 +744,16 @@ export default {
     },
     muteTag() {
       let tag = this.$refs["preaudio"];
-      this.log(`Mute audio `);
+      this.log(`${this.name} Mute audio `, "DEBUG");
       tag.muted = true;
       this.audio = false;
     },
     demuteTag() {
       let tag = this.$refs["preaudio"];
-      this.log(`Demute audio `);
+      this.log(`${this.name} Demute audio `, "DEBUG");
       tag.muted = false;
       this.audio = true;
     }
-
   }
 }
 </script>

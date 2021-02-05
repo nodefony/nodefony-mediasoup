@@ -203,7 +203,11 @@ export default {
   },
   watch: {
     message(value) {
-      this.notify(value);
+      if (value) {
+        this.notify(value, {
+          offset: 65,
+        });
+      }
     }
   },
   methods: {
@@ -223,8 +227,10 @@ export default {
       'getDevices'
     ]),
     onWaiting(message) {
-      let pdu = this.log(message.message, "DEBUG");
-      this.message = pdu;
+      if (message.message) {
+        let pdu = this.log(message.message, "DEBUG");
+        this.message = pdu;
+      }
       if (message.peers) {
         this.peers = message.peers;
       }
