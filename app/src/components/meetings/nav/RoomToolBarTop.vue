@@ -72,7 +72,7 @@
       <v-icon small class="ml-1 mr-2">
         mdi-location-exit
       </v-icon>
-      {{$t('Exit')}}
+      {{$t('rooms.exit')}}
     </v-btn>
   </v-row>
 
@@ -139,7 +139,7 @@
         <v-icon small class="ml-1 mr-2">
           mdi-location-exit
         </v-icon>
-        {{$t('Exit')}}
+        {{$t('rooms.exit')}}
       </v-btn>
     </template>
   </bar-avatar>

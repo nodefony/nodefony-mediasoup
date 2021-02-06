@@ -242,9 +242,12 @@ export default {
         await this.playShare(peer, component.videoStream.stream);
       }
     },
-    stopDisplayShare() {
-      this.$refs.slider.stopDisplayShare();
-      return this.unFocus(this.currentToogle, "share");
+    stopDisplayShare(id = null) {
+      let res = this.$refs.slider.stopDisplayShare(id);
+      if (res) {
+        return this.unFocus(this.currentToogle, "share");
+      }
+      this.screen = true;
     }
   }
 }

@@ -17,16 +17,18 @@
           </v-list-item-title>
           <v-list-item-subtitle v-if="peer.status === 'joined'">
             {{peer.status}}
-            <span v-if="peer.audio !== 'none'">
+            <span v-if="peer.audio">
               <!--v-icon dense class="ml-4" color="">mdi-volume-high</v-icon-->
               <v-icon v-if="peer.audio === 'demute'" dense class="ml-4" color="">mdi-volume-high</v-icon>
               <v-icon v-else dense class="ml-4" color="">mdi-volume-off</v-icon>
             </span>
-            <span v-if="peer.video !== 'none'">
+            <span v-if="peer.video">
               <v-icon v-if="peer.video ==='demute'" dense color="">mdi-video-box</v-icon>
               <v-icon v-else dense color="">mdi-video-box-off</v-icon>
             </span>
-            <!--v-icon dense color="">mdi-video-box</v-icon-->
+            <span v-if="peer.share">
+              <v-icon dense color="">mdi-monitor-share</v-icon>
+            </span>
           </v-list-item-subtitle>
           <v-list-item-subtitle v-else-if="peer.status === 'waiting' || peer.status === 'authorised'">
             {{peer.status}}
@@ -84,13 +86,16 @@
           <td>
             <div v-if="mypeer.status === 'joined'">
               {{mypeer.status}}
-              <span v-if="mypeer.audio !== 'none'">
+              <span v-if="mypeer.audio">
                 <v-icon v-if="mypeer.audio === 'demute'" dense class="ml-4" color="">mdi-volume-high</v-icon>
                 <v-icon v-else dense class="ml-4" color="">mdi-volume-off</v-icon>
               </span>
-              <span v-if="mypeer.video !== 'none'">
+              <span v-if="mypeer.video">
                 <v-icon v-if="mypeer.video ==='demute'" dense color="">mdi-video-box</v-icon>
                 <v-icon v-else dense color="">mdi-video-box-off</v-icon>
+              </span>
+              <span v-if="mypeer.share">
+                <v-icon dense color="">mdi-monitor-share</v-icon>
               </span>
             </div>
             <div v-else-if="mypeer.status === 'waiting' || mypeer.status === 'authorised'">
@@ -171,11 +176,13 @@ export default {
     peersStatus() {
       let peers = [];
       for (let peer of this.peers) {
+        let status = this.getPeerStatus(peer)
         peers.push({
           id: peer.id,
           status: peer.status,
-          audio: this.getPeerAudioStatus(peer),
-          video: this.getPeerVideoStatus(peer),
+          audio: status.audio,
+          video: status.video,
+          share: status.share,
           user: peer.user
         });
       }
@@ -295,36 +302,35 @@ export default {
           });
       }
     },
-    getPeerAudioStatus(peer) {
-      let status = 'none';
+    getPeerStatus(peer) {
+      let status = {
+        audio: false,
+        video: false,
+        share: false
+      };
       for (let produc in peer.producers) {
         let producer = peer.producers[produc];
-        if (producer.kind === "audio") {
+        if (producer.kind === "video" && producer.appData.share) {
+          status.share = true;
+        }
+        if (producer.kind === "video" && producer.appData.video) {
           if (producer.paused) {
-            status = 'mute'
+            status.video = 'mute'
           } else {
-            status = 'demute'
+            status.video = 'demute'
           }
         }
-      }
-      return status;
-    },
-    getPeerVideoStatus(peer) {
-      let status = 'none';
-      for (let produc in peer.producers) {
-        let producer = peer.producers[produc];
-        if (producer.kind === "video") {
+        if (producer.kind === "audio") {
           if (producer.paused) {
-            status = 'mute'
+            status.audio = 'mute'
           } else {
-            status = 'demute'
+            status.audio = 'demute'
           }
         }
       }
       return status;
     }
   }
-
 }
 </script>
 

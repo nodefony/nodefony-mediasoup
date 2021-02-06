@@ -11,7 +11,7 @@
   "dependencies": {
     "clean-webpack-plugin": "^3.0.0",
     "core-js": "^3.8.3",
-    "mediasoup-client": "^3.6.27",
+    "mediasoup-client": "^3.6.28",
     "nodefony-client": "^6.0.0-beta.14",
     "ogp-parser": "^0.5.4",
     "register-service-worker": "^1.7.2",
@@ -42,7 +42,7 @@
     "vue-cli-plugin-vuetify": "^2.1.0",
     "vue-loader": "^15.9.6",
     "vue-template-compiler": "^2.6.11",
-    "vuetify-loader": "^1.7.1"
+    "vuetify-loader": "^1.7.2"
   },
   "eslintConfig": {
     "root": true,

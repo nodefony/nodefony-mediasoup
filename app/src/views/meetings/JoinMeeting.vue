@@ -128,6 +128,7 @@ export default {
   destroyed() {
     this.log(`destroy join component `, "DEBUG");
     this.$mediasoup.removeListener("waiting", this.onWaiting);
+    this.$mediasoup.removeListener("closeSock", this.sockClose);
   },
   async mounted() {
     this.closeDrawer();
@@ -142,6 +143,7 @@ export default {
       });
     this.peerComponent = this.$refs["peer"];
     this.$mediasoup.on("waiting", this.onWaiting);
+    this.$mediasoup.once("closeSock", this.sockClose);
   },
   computed: {
     ...mapGetters({
@@ -267,34 +269,9 @@ export default {
       this.setVideoStream(this.peerComponent.videoStream);
       return this.redirect("Meeting");
     },
-    /*authorise(peer) {
-      if (this.isRoomAdmin) {
-        this.loading = true;
-        return this.$mediasoup.request(`meetings/${this.room.name}/${peer.id}/authorise`, "PUT")
-          .then((data) => {
-            this.loading = false;
-            return data.result;
-          })
-          .catch(async (e) => {
-            this.loading = false;
-            this.message = this.log(e.message, "ERROR");
-          });
-      }
+    sockClose() {
+      this.redirect("HomeMeeting")
     },
-    unauthorise(peer) {
-      if (this.isRoomAdmin) {
-        this.loading = true;
-        return this.$mediasoup.request(`meetings/${this.room.name}/${peer.id}/unauthorise`, "PUT")
-          .then((data) => {
-            this.loading = false;
-            return data.result;
-          })
-          .catch(async (e) => {
-            this.loading = false;
-            this.message = this.log(e.message, "ERROR");
-          });
-      }
-    },*/
     async close() {
       await this.$mediasoup.leaveRoom()
         .then(() => {

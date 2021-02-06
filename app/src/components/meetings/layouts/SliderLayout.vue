@@ -69,14 +69,20 @@ export default {
       this.shareStream = stream;
       this.shared = true;
     },
-    stopDisplayShare() {
-      let component = this.getShareComponent()
+    stopDisplayShare(id) {
+      let component = this.getShareComponent();
+      if (id) {
+        if (id !== component.idMediasoup) {
+          return false
+        }
+      }
       if (component && component.videoStream && component.videoStream.stream) {
         component.videoStream.stop();
       }
       this.shareStream = null;
       this.sharePeer = null;
       this.shared = false;
+      return true
     },
     async tooglePeer(peer, active, toggle, index) {
       toggle();

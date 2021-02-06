@@ -17,7 +17,8 @@
     "peers": "Participants",
     "waiting":"Salle d'attente",
     "hall": "Sas d'entrée",
-    "meeting":"Salles de Réunion"
+    "meeting":"Salles de Réunion",
+    "exit":"Quitter"
   },
   "meetings": {
     "meetings": "Réunions",

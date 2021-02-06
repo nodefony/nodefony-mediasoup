@@ -106,6 +106,7 @@ class Room extends nodefony.Service {
     this.webcamProducer = null;
 
     this.shareProducer = null;
+    this.hasShareConsumer = false;
 
     if (this.externalVideo) {
       this.externalVideo = document.createElement('video');
@@ -241,7 +242,6 @@ class Room extends nodefony.Service {
         }
       case "newPeer":
         {
-          console.log(message)
           const peer = message.data.data;
           let newPeer = this.mediasoup.createPeer(peer.id, { ...peer
           });
@@ -288,6 +288,10 @@ class Room extends nodefony.Service {
             peerId
           } = consumer.appData;
           this.fire("consumerClosed", consumerId, peerId, consumer.appData);
+          let peer = this.peers.get(peerId);
+          if( peer){
+            peer.deleteConsumer(consumerId);
+          }
           break;
         }
       case 'consumerPaused':
@@ -610,7 +614,12 @@ class Room extends nodefony.Service {
       appData,
       producerPaused
     } = data;
-    this.log(`peerId (consumer)  producer status paused : ${producerPaused} `);
+    this.log(`peerId (consumer)  producer status paused : ${producerPaused} `, "DEBUG");
+    if (appData.share) {
+      if (this.shareProducer) {
+        await this.disableShare(this.shareProducer.id);
+      }
+    }
     try {
       const consumer = await this.recvTransport.consume({
         id,
@@ -639,6 +648,7 @@ class Room extends nodefony.Service {
         //this.pauseConsumer(consumer);
       }
       let peer = this.peers.get(consumer._appData.peerId);
+      peer.addConsumer(consumer);
       this.fire("consume", consumer, peer, spatialLayers, temporalLayers);
       return consumer;
     } catch (error) {
@@ -963,8 +973,6 @@ class Room extends nodefony.Service {
   async enableWebcam(stream, webcam) {
     if (this.webcamProducer) {
       return this.webcamProducer;
-    } else if (this.shareProducer) {
-      //await this.disableShare();
     }
     if (!this.mediasoupDevice.canProduce('video')) {
       this.log('enableWebcam() | cannot produce video', "ERROR");
@@ -1153,6 +1161,7 @@ class Room extends nodefony.Service {
     }
     try {
       this.fire("disableWebcam", this.webcamProducer);
+      this.peer.deleteProducer(this.webcamProducer.id);
       this.webcamProducer.close();
       this.mediasoup.send('closeProducer', {
         producerId: this.videoProducerId
@@ -1249,11 +1258,8 @@ class Room extends nodefony.Service {
   async enableShare() {
     this.log(`Enable share screen`, "DEBUG");
     if (this.shareProducer) {
-      //return;
+      await this.disableShare(this.shareProducer.id);
     }
-    /*if (this.webcamProducer) {
-      await this.disableWebcam();
-    }*/
     if (!this.mediasoupDevice.canProduce('video')) {
       this.log('enableShare() | cannot produce video', "ERROR");
       return;
@@ -1335,7 +1341,7 @@ class Room extends nodefony.Service {
       this.shareProducer.on('trackended', () => {
         this.log(`Share disconnected`, "WARNING");
         //this.fire("error", new Error(`Share disconnected`))
-        this.disableShare()
+        this.disableShare(this.shareProducer.id)
           .catch(() => {});
       });
       this.fire("addProducer", {
@@ -1358,25 +1364,31 @@ class Room extends nodefony.Service {
     }
   }
 
-  async disableShare() {
-    try {
-      this.log(`Disable share screen`);
-      if (!this.shareProducer) {
-        return;
+  disableShare(id) {
+    return new Promise((resolve, reject) => {
+      try {
+        this.log(`Disable share screen`);
+        if (this.shareProducer) {
+          this.shareProducer.close();
+          this.mediasoup.send('closeProducer', {
+            producerId: this.shareProducerId
+          });
+          this.fire("disableShare", id);
+          this.shareProducer = null;
+          this.shareProducerId = null;
+          return resolve(this);
+        } else {
+          this.fire("disableShare", id);
+          /*this.once('disableShare', () => {
+            return resolve(this);
+          });*/
+        }
+      } catch (error) {
+        this.fire("error", error)
+        this.log(error);
+        return reject(error);
       }
-      this.shareProducer.close();
-      this.mediasoup.send('closeProducer', {
-        producerId: this.shareProducerId
-      });
-      this.shareProducer = null;
-      this.shareProducerId = null;
-      this.fire("disableShare", this);
-      return this;
-    } catch (error) {
-      this.fire("error", error)
-      this.log(error);
-      throw error;
-    }
+    });
   }
 
   async restartIce() {}

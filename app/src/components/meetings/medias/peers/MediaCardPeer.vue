@@ -150,6 +150,7 @@ export default {
       level: -100,
       audioStream: null,
       videoStream: null,
+      idMediasoup: null,
       options: {
         videos: ['hd', 'vga', 'qvga'],
         constrains: vm.$mediasoup.VIDEO_CONSTRAINS
@@ -165,19 +166,20 @@ export default {
       this.local = true;
     }
     if (this.remote) {
-      this.log(`initialize remote stream`)
+      this.log(`initialize remote stream`);
+      this.log(this.remote, "DEBUG")
       if (this.remote.audioStream) {
         this.audioStream = this.createAudioStream(this.remote.audioStream);
-        this.audioStream.mediaElement = this.$refs["preaudio"];
       } else {
         this.audioStream = this.createAudioStream();
       }
+      this.audioStream.mediaElement = this.$refs["preaudio"];
       if (this.remote.videoStream) {
         this.videoStream = this.createVideoStream(this.remote.videoStream);
-        this.videoStream.mediaElement = this.$refs["prevideo"];
       } else {
         this.videoStream = this.createVideoStream();
       }
+      this.videoStream.mediaElement = this.$refs["prevideo"];
     } else {
       if (this.init) {
         await this.initialize();
@@ -201,8 +203,6 @@ export default {
     if (this.$spectrum) {
       await this.$spectrum.stop();
     }
-    //console.log(`destroy peer component `)
-    return;
   },
   async destroyed() {
     this.log(`Destroy peer ${this.name}`)
@@ -284,9 +284,7 @@ export default {
     }
   },
   methods: {
-    ...mapGetters([
-
-    ]),
+    ...mapGetters([]),
     ...mapMutations([
       'deleteMedias',
       'changeWebcamResolution',
@@ -353,12 +351,17 @@ export default {
       } else {
         audioStream = new this.$nodefony.client.medias.Stream(this.$refs["preaudio"]);
       }
-      audioStream.on("onloadedmetadata", () => {
+      /*audioStream.on("onloadedmetadata", () => {
         this.log(`Audio Stream : ${audioStream.streamId} onloadedmetadata`, "DEBUG");
-      });
+      });*/
       audioStream.on("playing", () => {
         this.loading = false;
         this.log(`Audio Stream : ${audioStream.streamId} playing`, "DEBUG");
+        if (this.remote) {
+          this.audio = !this.remote.audioPaused
+        } else {
+          this.audio = true;
+        }
       });
       return audioStream;
     },
@@ -369,27 +372,37 @@ export default {
       } else {
         videoStream = new this.$nodefony.client.medias.Stream(this.$refs["prevideo"]);
       }
-      videoStream.on("onloadedmetadata", () => {
+      /*videoStream.on("onloadedmetadata", () => {
         this.log(`Video Stream : ${videoStream.streamId} onloadedmetadata`, "DEBUG");
-      });
+      });*/
       videoStream.on("playing", () => {
         this.loading = false;
         this.log(`Video Stream : ${videoStream.streamId} playing`, "DEBUG");
+        this.video = true;
+        if (this.remote) {
+          this.video = !this.remote.VIDEOPaused
+        } else {
+          this.video = true;
+        }
       });
       return videoStream;
     },
 
     // mediasoup
     addProducer(producer) {
+      this.idMediasoup = producer.id
       return this.addTracks(producer.track);
     },
     deleteProducer(producer) {
+      this.idMediasoup = null
       return this.deleteTracks(producer.track);
     },
     addConsumer(consumer) {
+      this.idMediasoup = consumer.id
       return this.addTracks(consumer.track);
     },
     deleteConsumer(consumer) {
+      this.idMediasoup = null
       return this.deleteTracks(consumer.track);
     },
 
@@ -404,22 +417,24 @@ export default {
             return track;
           }
           return await this.audioStream.attachStream()
-            .then(() => {
+            /*.then(() => {
               this.audio = true;
               return track;
-            })
+            })*/
             .catch(e => {
+              this.audio = false;
               this.log(e, "ERROR");
             });
         case "video":
           await this.addVideoTrack(track);
           this.log(`${this.name} Add video track ${track.id}`)
           return await this.videoStream.attachStream()
-            .then(() => {
+            /*.then(() => {
               this.video = true;
               return track;
-            })
+            })*/
             .catch(e => {
+              this.video = false;
               this.log(e, "ERROR");
             });
       }
@@ -444,7 +459,6 @@ export default {
           } catch (e) {
             this.log(e, "ERROR");
           }
-
         }
         return track
       }

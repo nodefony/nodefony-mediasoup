@@ -85,11 +85,14 @@ export default {
     //console.trace("passss mount meeting")
     this.closeDrawer();
     this.closeNavBar();
+    this.$mediasoup.once("closeSock", this.sockClose);
     return this.acceptConnect();
   },
   watch: {
     message(message) {
-      this.notify(message);
+      if (message) {
+        this.notify(message);
+      }
     }
   },
   async beforeDestroy() {
@@ -105,6 +108,7 @@ export default {
     }
     this.room = null;
     this.peer = null;
+    this.$mediasoup.removeListener("closeSock", this.sockClose);
   },
   beforeUpdate() {},
 
@@ -307,16 +311,16 @@ export default {
       });*/
       this.room.on("disableWebcam", (producer) => {
         let component = this.getPeerComponent(this.peer.id);
-        this.peer.deleteProducer(producer.id);
+        //this.peer.deleteProducer(producer.id);
         return component.deleteProducer(producer);
       });
-      this.room.on("disableShare", async ( /*room*/ ) => {
+      this.room.on("disableShare", async (id) => {
         this.deleteMedias("screen");
-        this.getLayout().stopDisplayShare();
+        this.getLayout().stopDisplayShare(id);
       });
       this.room.on("consume", async (consumer, peer) => {
         this.log(`Consume event : ${peer.id}`);
-        peer.addConsumer(consumer);
+        //peer.addConsumer(consumer);
         // media
         if (consumer.appData.share) {
           let component = this.getPeerComponent("share");
@@ -327,25 +331,24 @@ export default {
           await component.addConsumer(consumer);
         }
       });
+
       this.room.on("consumerClosed", async (consumerId, peerId, appData) => {
-        if (appData.share) {
-          //peer.deleteConsumer(consumerId);
-          return this.getLayout().stopDisplayShare();
-        }
-        this.log(`consumerClosed : ${peerId} condumeId =${consumerId} `, "DEBUG");
         try {
           let peer = this.getRemotePeer(peerId);
+          this.log(`consumerClosed : ${peerId} condumeId =${consumerId} `, "DEBUG");
           if (peer) {
-            if (appData.share) {
-              peer.deleteConsumer(consumerId);
-              return this.getLayout().stopDisplayShare();
+            if (!appData.share) {
+              let consumer = peer.hasConsumer(consumerId);
+              if (consumer) {
+                let component = this.getPeerComponent(peerId);
+                return await component.deleteConsumer(consumer);
+              }
+            } else {
+              return this.getLayout().stopDisplayShare(consumerId);
             }
-            let consumer = peer.hasConsumer(consumerId);
-            if (consumer) {
-              let component = this.getPeerComponent(peerId);
-              await component.deleteConsumer(consumer);
-              peer.deleteConsumer(consumerId);
-            }
+          }
+          if (appData.share) {
+            return this.getLayout().stopDisplayShare(consumerId);
           }
         } catch (e) {
           this.log(e, "WARNING");
@@ -364,9 +367,11 @@ export default {
         if (res) {
           let component = this.getPeerComponent(res.id);
           if (consumer.track.kind === "audio") {
+            this.log(`muteTag  peer = ${res.id} `, "WARNING");
             return component.muteTag();
           }
           if (consumer.track.kind === "video") {
+            this.log(`pauseVideoTag  peer = ${res.id} `, "WARNING");
             return component.pauseVideoTag();
           }
         }
@@ -501,6 +506,16 @@ export default {
           return reject(res)
         });
       })
+    },
+    sockClose() {
+      return this.$router.replace({
+          name: 'HomeMeeting',
+          params: {
+            roomid: this.roomid
+          },
+          force: true
+        })
+        .catch(() => {})
     }
   }
 

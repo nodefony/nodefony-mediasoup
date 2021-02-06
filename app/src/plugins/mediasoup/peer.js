@@ -1,23 +1,47 @@
 import nodefony from 'nodefony-client';
 
-const defaultOptions = {
-
-};
-
-class Peer extends nodefony.Service{
-  constructor(id, options, mediasoup) {
-    super("Peer", mediasoup.container, null, nodefony.extend({}, defaultOptions, options));
+class Peer {
+  constructor(id, mediasoupPeer, mediasoup) {
+    //super("Peer", mediasoup.container, null, nodefony.extend({}, defaultOptions, options));
     this.id = id;
     this.local = false;
     this.displayName = "";
     this.user = null;
-    this.mediasoup = mediasoup;
+    //this.mediasoup = mediasoup;
     this.consumers = [];
     this.producers = [];
     this.dataConsumers = new Map();
     this.audioStream = new nodefony.medias.Stream(null,{}, this);
     this.videoStream = new nodefony.medias.Stream(null,{}, this);
-    //console.log(this)
+    this.audioPaused = null;
+    this.videoPaused = null;
+    this.hydrate(mediasoupPeer);
+  }
+
+  hydrate(mdpeer){
+    if( mdpeer.user ){
+      this.user  = mdpeer.user
+    }
+    if( mdpeer.displayName){
+      this.displayName = mdpeer.displayName;
+    }
+    if( mdpeer.status ){
+      this.status = mdpeer.status;
+    }
+    if( mdpeer.device ){
+      this.device = mdpeer.device;
+    }
+    if (mdpeer.producers){
+      for( let id in mdpeer.producers){
+        let producer = mdpeer.producers[id];
+        if( producer.kind === "audio"){
+          this.audioPaused = producer.paused;
+        }
+        if( producer.kind === "video"){
+          this.videoPaused = producer.paused;
+        }
+      }
+    }
   }
 
   hasProducer(id){
@@ -63,7 +87,7 @@ class Peer extends nodefony.Service{
   }
   deleteConsumer(id){
     let res = this.consumers.findIndex((consumer) => {
-      return consumer.id === consumer;
+      return consumer.id === id;
     });
     if (res !== -1) {
       this.log(`remove Consumer : ${id}`)

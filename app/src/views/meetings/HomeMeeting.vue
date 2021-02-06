@@ -149,10 +149,15 @@ export default {
   destroyed() {
     this.log(`destroy home room component `, "DEBUG");
     this.$mediasoup.removeListener("waiting", this.onWaiting);
+    this.$mediasoup.removeListener("closeSock", this.sockClose);
   },
   watch: {
-    message(message) {
-      this.notify(message);
+    message(value) {
+      if (value) {
+        this.notify(value, {
+          offset: 65,
+        });
+      }
     },
     getProfileUsername(value) {
       this.username = value;
@@ -303,14 +308,7 @@ export default {
             .then((sock) => {
               this.socket = sock;
               this.$mediasoup.on("waiting", this.onWaiting);
-              this.$mediasoup.once("closeSock", (event) => {
-                if (event.reason) {
-                  let pdu = this.log(event.reason);
-                  this.progress = null;
-                  this.message = pdu;
-                }
-                this.waiting = false;
-              });
+              this.$mediasoup.once("closeSock", this.sockClose);
               this.waiting = true;
               return sock;
             })
@@ -324,11 +322,13 @@ export default {
         });
     },
     onWaiting(message) {
-      let pdu = this.log(message.message, "DEBUG");
+      if (message.message) {
+        let pdu = this.log(message.message, "DEBUG");
+        this.message = pdu;
+      }
       if (message.status) {
         this.progress = message.message;
       }
-      this.message = pdu;
       if (message.room && message.room.users) {
         this.administrators = message.room.users;
       }
@@ -356,12 +356,6 @@ export default {
       }
     },
     redirect() {
-      /*return this.$router.push({
-        name: "Meeting",
-        params: {
-          roomid: this.room.name
-        }
-      }).catch(() => {})*/
       return this.$router.push({
         name: "JoinMeeting",
         params: {
@@ -369,10 +363,25 @@ export default {
         }
       }).catch(() => {})
     },
+    sockClose(event) {
+      if (event.reason) {
+        let pdu = this.log(event.reason);
+        this.progress = null;
+        this.message = pdu;
+      }
+      this.waiting = false;
+      return this.$router.replace({
+          name: 'HomeMeeting',
+          params: {
+            roomid: this.roomid
+          },
+          force: true
+        })
+        .catch(() => {})
+    },
     quit() {
       this.progress = null;
       this.waiting = false;
-
       try {
         if (this.socket) {
           this.socket.close();

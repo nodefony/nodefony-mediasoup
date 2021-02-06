@@ -47,7 +47,7 @@ class Mediasoup extends nodefony.Service {
     this.api = new nodefony.Api(this.name, {
       baseUrl: "/mediasoup/api"
     });
-    //this.init();
+    this.host = window.location.host;
   }
 
   request(...args) {
@@ -90,18 +90,30 @@ class Mediasoup extends nodefony.Service {
     this.set("router", this.router);
     this.set("i18n", this.i18n);
     this.log(`Add Plugin mediasoup : ${this.version}`, "INFO");
-    this.log(`https://${this.domain}:${this.portHttps}`)
   }
 
   async init() {
-    return await this.api.http("/mediasoup/api/servers")
-      .then((response) => {
+    this.host = await this.getRemoteDomain();
+    return Promise.resolve(this);
+  }
+
+  async getRemoteDomain() {
+    return Promise.resolve(window.location.host);
+    /*return this.api.http("/mediasoup/api/servers")
+      .then((result) => {
         nodefony.extend(this.options, response.result);
-        return response;
-      })
-      .catch(e => {
-        throw e;
-      })
+        return result.result.domain.name;
+      });*/
+  }
+
+  getWssUrl(roomid, peerid) {
+    let uri = `/mediasoup/ws?roomId=${roomid}&peerId=${peerid}`;
+    return `wss://${this.host}${uri}`;
+  }
+
+  getWssStats() {
+    const uri = "ws/stats";
+    return `wss://${this.host}/mediasoup/${uri}`;
   }
 
   send(method, data = {}) {
@@ -114,27 +126,11 @@ class Mediasoup extends nodefony.Service {
     return this.sock.send(message);
   }
 
-  async getWssServer() {
-    return this.api.http("/mediasoup/api/servers")
-      .then((result) => {
-        return result.result.domain.name;
-      });
-  }
-
-  getWssUrl() {
-    return `wss://${this.domain}:${this.portHttps}/mediasoup/ws`;
-  }
-
-  getWssWaitingUrl() {
-    return `wss://${this.domain}:${this.portHttps}/mediasoup/waiting`;
-  }
-
   // websocket connect
   connect(roomid = null, peerid = null, options = {}) {
     return new Promise(async (resolve, reject) => {
-      this.domain = await this.getWssServer();
-      const url = `wss://${this.domain}:5152/mediasoup/ws?roomId=${roomid}&peerId=${peerid}`;
-      this.sock = new WebSocket(url);
+      //this.domain = await this.getRemoteDomain();
+      this.sock = new WebSocket(this.getWssUrl(roomid, peerid));
       this.sock.onopen = (event) => {
         this.log(`Mediasoup Websocket Connect peer ${peerid} room : ${roomid}`);
         try{
@@ -274,10 +270,9 @@ class Mediasoup extends nodefony.Service {
     }
   }
 
-  connectStats(uri = "ws/stats", port = "5152"){
+  connectStats(){
     return new Promise( (resolve, reject) => {
-      const url = `wss://${this.domain}:${port}/mediasoup/${uri}`;
-      this.sockStats = new WebSocket(url);
+      this.sockStats = new WebSocket(this.getWssStats());
       this.sockStats.onopen = (event) => {
         this.log(`Mediasoup Websocket Connect Stats`);
         try{
