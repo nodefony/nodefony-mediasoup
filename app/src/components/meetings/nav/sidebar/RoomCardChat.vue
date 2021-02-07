@@ -16,14 +16,16 @@
         <span>{{peer.id}}</span>
       </template>
 
-      <v-textarea v-model="input" @keydown.enter="eventsImput" @paste="eventsImput" @dragstart="eventsImput" @dragenter="eventsImput" @dragleave="eventsImput" @dragover="eventsImput" @drop.prevent.stop="eventsImput" label="Leave a comment.."
-        outlined rows="3" row-height="30" shaped dense class="mr-3">
-        <template v-slot:append>
+      <v-container fluid>
+        <v-textarea v-model="input" clear-icon="mdi-close-circle" @keydown.enter="eventsImput" @paste="eventsImput" @dragstart="eventsImput" @dragenter="eventsImput" @dragleave="eventsImput" @dragover="eventsImput" @drop.prevent.stop="eventsImput"
+          auto-grow no-resize clearable label="Leave a comment.." rows="1" row-height="50" class="ml-1">
+          <!--template v-slot:append>
           <v-btn small depressed @click="eventsImput" style="position:absolute;bottom:-40px;right:15px">
             Post
           </v-btn>
-        </template>
-      </v-textarea>
+        </template-->
+        </v-textarea>
+      </v-container>
     </v-timeline-item>
 
     <v-slide-x-transition v-if="timeline.length" group name="fade">
@@ -200,6 +202,13 @@ export default {
 
     async eventsImput(event) {
       switch (event.type) {
+        case "keydown":
+          {
+            if (!event.shiftKey) {
+              return this.post(null, this.input);
+            }
+            break;
+          }
         case "click":
           //case "keydown":
           {

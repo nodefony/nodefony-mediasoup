@@ -2,21 +2,22 @@
 <template>
 <v-container fluid class="ma-0 pt-5 pa-3" style="width:100%;height:100%;">
 
+  <v-row v-if="!peers.length" justify="center" align=center class="mb-5" style="color:black;width:100%;height:100%">
+
+    <v-card color="primary" dark min-width="300px">
+      <v-card-text>
+        Waiting Participants
+        <v-progress-linear indeterminate color="white" class="mb-0"></v-progress-linear>
+      </v-card-text>
+    </v-card>
+  </v-row>
   <v-row v-show="focusPeers" class="mb-5" style="flex-wrap: nowrap;background-justify-space-between;color:black;width:100%;height:100%">
 
-    <!--v-col cols="4" style="width:100%;height:100%" class="flex-grow-0 flex-shrink-0 px-1">
-      <v-card rounded flat width="100%" style="background:transparent" class="ma-1">
-        <video :ref="`video-${peer.id}`" style="width:100%;border-radius:8px;" />
-      </v-card>
-    </v-col-->
-
     <v-col cols="12" style="width:100%;height:100%;" class="d-flex align-content-start justify-space-around flex-wrap px-1">
-      <v-card max-width="300px" min-width="200px" rounded flat style="background:transparent" class="ma-1 mb-3">
-        <video :ref="`video-${peer.id}`" style="max-width:300px;border-radius:8px;" />
-      </v-card>
-      <v-card max-width="300px" min-width="200px" rounded outlined v-for="(mypeer) in peers" :key="mypeer.id" style="background:transparent" class="ma-1 mb-3">
-        <video :ref="`video-${mypeer.id}`" style="max-width:300px;border-radius:8px;" />
-      </v-card>
+
+      <!--preview-peer max-width="300px" min-width="200px" rounded flat style="background:transparent" class="ma-1 mb-3" :peer="peer" /-->
+
+      <preview-peer max-width="300px" min-width="200px" rounded flat style="background:transparent" class="ma-1 mb-3" v-for="(mypeer, index) in peers" :key="`preview-${index}`" :peer="mypeer" />
 
       <!--v-card max-width="300px" min-width="200px" rounded outlined v-for="nb in 100" :key="`vid-${nb}`" style="border:solid 1px white;background:transparent" class="ma-1 mb-3">
         <video :ref="`video-${nb}`" style="max-width:300px;border-radius:8px;" />
@@ -35,11 +36,12 @@ import {
   mapMutations,
   //mapActions
 } from 'vuex';
+import PreviewPeer from '@/components/meetings/medias/peers/PreviewPeer'
 
 export default {
   name: 'GridLayout',
   components: {
-
+    'preview-peer': PreviewPeer
   },
   props: {
     focusPeers: {
@@ -52,13 +54,9 @@ export default {
     }
   },
   async mounted() {
-    setTimeout(() => {
-      this.$nextTick(async () => {
-        await this.playPeer(this.peer);
-        this.hideSlider();
-        await this.displayPeers();
-      });
-    }, 1000);
+    if (this.peers.length) {
+      this.hideSlider();
+    }
   },
   computed: {
     ...mapGetters({
@@ -106,75 +104,18 @@ export default {
   },
   watch: {
     peers() {
-      setTimeout(() => {
-        this.displayPeers();
-      }, 200);
-    },
-    /*focusPeers() {
-      console.log(`focus change`, this.focusPeers)
-      this.displayPeers();
-    }*/
+      if (this.peers.length) {
+        this.hideSlider();
+      } else {
+        this.showSlider();
+      }
+    }
   },
   methods: {
-    ...mapMutations(['hideSlider']),
-    displayPeers() {
-      return new Promise((resolve, reject) => {
-        try {
-          this.peers.map(async (peer, index) => {
-            await this.playPeer(peer, index)
-          })
-          return resolve(this.peers)
-        } catch (e) {
-          return reject(e);
-        }
-      });
-    },
-    playPeer(peer) {
-      if (peer && peer.videoStream && peer.videoStream.stream) {
-        let indexTag = `video-${peer.id}`;
-        let videoTag = this.$refs[indexTag];
-        if (!videoTag) {
-          return Promise.resolve();
-        }
-        if (videoTag[0]) {
-          videoTag = videoTag[0];
-        }
-        videoTag.srcObject = peer.videoStream.stream;
-        return videoTag.play()
-          .catch(e => {
-            this.log(e, "ERROR");
-          });
-      }
-      return Promise.resolve();
-    },
-    /*playPeer(peer, index) {
-      let videoTag = null;
-      let indexTag = null;
-      if (index === 0) {
-        indexTag = `video-lead`;
-      } else {
-        indexTag = `video-${peer.id}`;
-      }
-      videoTag = this.$refs[indexTag];
-      console.log(indexTag, videoTag, this.$refs)
-      if (!videoTag) {
-        return Promise.resolve();
-      }
-      if (videoTag[0]) {
-        videoTag = videoTag[0];
-      }
-      console.log(peer.videoStream.stream)
-      if (peer && peer.videoStream && peer.videoStream.stream) {
-        videoTag.srcObject = peer.videoStream.stream;
-        console.log(videoTag)
-        this.log(`Layout play ${peer.id}`)
-        return videoTag.play()
-          .catch(e => {
-            this.log(e, "ERROR");
-          });
-      }
-      return Promise.resolve();
-    }*/
+    ...mapMutations([
+      'hideSlider',
+      'showSlider'
+    ])
   }
 }
 </script>

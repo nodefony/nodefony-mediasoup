@@ -56,7 +56,7 @@
         mdi-application-export
       </v-icon>
     </v-btn-->
-    <v-btn v-if="media" icon class="ml-3" @click="showMedia">
+    <v-btn v-if="mediaLayout" icon class="ml-3" @click="showMediaLayout">
       <v-icon>
         mdi-focus-field
       </v-icon>
@@ -194,7 +194,7 @@ export default {
       'getPeers',
       'nbWaiting',
       'nbUnreadMessage',
-      'media',
+      'mediaLayout',
 
     ]),
     drawer: {
@@ -221,12 +221,10 @@ export default {
       'deleteMedias',
       'setMedia',
       'setSideBar',
-      'toogleMedia',
-      'showMedia'
+      'toogleMediaLayout',
+      'showMediaLayout',
+      'showLayout'
     ]),
-    showLayout() {
-
-    },
     selectLayout(event) {
       this.$emit("layoutchange", this.selectedLayout, event);
     },

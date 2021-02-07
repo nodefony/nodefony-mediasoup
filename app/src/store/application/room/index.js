@@ -23,6 +23,7 @@ const state = {
   dialogQuit: false,
   medias: getStorage("medias") || ["audio", "video"],
   media:false,
+  layout:true,
   peers: [],
   slider: true
 };
@@ -77,8 +78,11 @@ const getters = {
     return state.slider;
   },
   // media application
-  media(state){
+  mediaLayout(state){
     return state.media;
+  },
+  layout(state){
+    return state.layout;
   }
 }
 
@@ -116,7 +120,7 @@ const mutations = {
   },
   storeMedias(state, value) {
     state.medias = value;
-    setStorage('medias', value);
+    //setStorage('medias', value);
     return state.medias;
   },
   deleteMedias(state, type) {
@@ -153,15 +157,32 @@ const mutations = {
   hideSlider(state){
     state.slider = false;
   },
-  toogleMedia(state){
+  toogleMediaLayout(state){
      state.media = !state.media;
   },
-  showMedia(state){
+  showMediaLayout(state){
     state.media = false;
     setTimeout(()=>{
       state.media = true;
-    },10)
-
+    },100)
+  },
+  hideMediaLayout(state){
+    //state.media = true;
+    setTimeout(()=>{
+      state.media = false;
+    },100)
+  },
+  showLayout(state){
+    state.layout = false;
+    setTimeout(()=>{
+      state.layout = true;
+    },100)
+  },
+  hideLayout(state){
+    state.layout = true;
+    setTimeout(()=>{
+      state.layout = false;
+    },100)
   }
 }
 

@@ -65,7 +65,6 @@ class Peer {
       return producer.id === id;
     });
     if (res !== -1) {
-      this.log(`remove Producer : ${id}`)
       this.producers.splice(res, 1);
     }
   }
@@ -90,7 +89,6 @@ class Peer {
       return consumer.id === id;
     });
     if (res !== -1) {
-      this.log(`remove Consumer : ${id}`)
       this.consumers.splice(res, 1);
     }
   }

@@ -25,7 +25,7 @@
 
       <!-- Media layout -->
       <v-expand-transition>
-        <media-viewer ref="media" v-if="room && media" :roomid="room.id" type="video">
+        <media-viewer ref="media" v-if="room && mediaLayout" :roomid="room.id" type="video">
           <template v-slot:media="{ type }">
             <v-row align="center" justify="center">
               <h1>{{type}} </h1>
@@ -36,7 +36,7 @@
 
       <!-- Main layout -->
       <v-expand-transition>
-        <grid-layout ref="main" v-show="true" :focusPeers="focusTab" class="" />
+        <grid-layout ref="main" v-show="room && layout" :focusPeers="focusTab" class="" />
       </v-expand-transition>
     </v-container>
   </v-sheet>
@@ -74,7 +74,7 @@ export default {
     }
   },
   mounted() {
-    //this.toogleMedia();
+    //this.toogleMediaLayout();
   },
   computed: {
     ...mapGetters({
@@ -85,25 +85,28 @@ export default {
       'peers',
       //'getRemotePeer',
       'slider',
-      'media'
+      'mediaLayout',
+      'layout'
     ]),
   },
   watch: {
-    media(value) {
+    mediaLayout(value) {
       if (value) {
         this.unFocus(this.currentToogle);
       }
     },
-    screen(value) {
+    layout(value) {
       if (value) {
-        //
+        this.hideMediaLayout();
+        this.selectedPeer = null;
       }
     }
   },
   methods: {
     ...mapMutations([
       //peer: 'getPeer',
-      'toogleMedia'
+      'toogleMediaLayout',
+      'hideMediaLayout'
     ]),
     getPeerComponent(peerId) {
       return this.$refs.slider.getPeerComponent(peerId);
