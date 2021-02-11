@@ -38,5 +38,30 @@ module.exports = {
     environment: ["SERVER"],
     class: nodefony.services.MediasoupStats,
     arguments: ["@container"]
+  },
+  media_viewer_rooms: {
+    environment: ["SERVER"],
+    class: nodefony.services.MediaViewerRooms,
+    arguments: ["@container"]
+  },
+  media_viewer_controller: {
+    environment: ["SERVER"],
+    class: nodefony.services.MediaViewerController,
+    arguments: ["@container"]
+  },
+  media_viewer_synchronizer: {
+    environment: ["SERVER"],
+    class: nodefony.services.MediaViewerSynchronizer,
+    arguments: ["@container"]
+  },
+  media_viewer_settings: {
+    environment: ["SERVER"],
+    class: nodefony.services.MediaViewerSettings,
+    arguments: ["@container"]
+  },
+  media_viewer_dispatcher: {
+    environment: ["SERVER"],
+    class: nodefony.services.MediaViewerDispatcher,
+    arguments: ["@container"]
   }
 };

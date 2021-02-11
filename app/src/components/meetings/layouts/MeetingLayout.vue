@@ -25,13 +25,7 @@
 
       <!-- Media layout -->
       <v-expand-transition>
-        <media-viewer ref="media" v-if="room && mediaLayout" :roomid="room.id" type="video">
-          <template v-slot:media="{ type }">
-            <v-row align="center" justify="center">
-              <h1>{{type}} </h1>
-            </v-row>
-          </template>
-        </media-viewer>
+        <pdf-viewer :roomid="room.id" />
       </v-expand-transition>
 
       <!-- Main layout -->
@@ -48,7 +42,7 @@
 <script>
 import SliderLayout from '@/components/meetings/layouts/SliderLayout';
 import GridLayout from '@/components/meetings/layouts/GridLayout';
-import MediaViewer from '@/components/meetings/medias/MediaViewer';
+import PdfViewer from '@/../../src/bundles/mediasoup-bundle/Resources/vue/components/PdfViewer';
 
 import {
   mapGetters,
@@ -61,7 +55,7 @@ export default {
   components: {
     "grid-layout": GridLayout,
     "slider-layout": SliderLayout,
-    "media-viewer": MediaViewer
+    "pdf-viewer": PdfViewer
   },
   props: {},
   data( /*vm*/ ) {

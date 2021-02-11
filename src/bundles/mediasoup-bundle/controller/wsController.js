@@ -11,6 +11,11 @@ class wsController extends nodefony.Controller {
     super(container, context);
     this.mediasoup = this.get("Mediasoup");
     this.mediasoupStats = this.get("MediasoupStats");
+
+    this.media_viewer = {
+      dispatcher: this.get('media_viewer_dispatcher'),
+      rooms: this.get('media_viewer_rooms')
+    };
   }
 
   /**
@@ -46,6 +51,26 @@ class wsController extends nodefony.Controller {
         break;
       default:
         throw new nodefony.Error("Bad request");
+    }
+  }
+
+  /**
+   *    @Route ("/ws/mediaviewer",
+   *      name="route-mediasoup-wss-mediaviewer")
+   */
+  async mediaViewerAction(message) {
+    if (this.method != "WEBSOCKET") {
+      throw new Error("Not a Websocket method");
+    }
+    try {
+      if (message) {
+        const message_obj = JSON.parse(message.utf8Data);
+        return this.media_viewer.dispatcher.handle(message_obj, this.context.client_app_data);
+      }
+      return await this.media_viewer.rooms.handshake(this.query.peerid, this.query.roomid, this.context);
+    } catch(e) {
+      this.log(e, "ERROR");
+      throw e;
     }
   }
 

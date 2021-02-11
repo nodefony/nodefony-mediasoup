@@ -39,6 +39,7 @@
     "pm2": "^4.5.4",
     "pm2-logrotate": "^2.7.0",
     "sequelize": "^6.3.5",
+    "nodefony-client": "^6.0.0-beta.14",
     "webpack": "^5.21.2",
     "webpack-dev-server": "^3.11.2"
   },
