@@ -3,6 +3,8 @@
   "no-specified": "Non renseigné",
   "close": "Fermer",
   "name": "Nom",
+  "save": "Sauvegarder",
+  "share":"Partager",
   "rooms": {
     "name": "Salles",
     "room": "Salle",
@@ -36,5 +38,10 @@
     "email": "Email",
     "info": "Informations",
     "roles": "Roles"
+  },
+  "medias":{
+    "admin_panel": "Panneau admin",
+    "control_policy": "Politique de prise de contrôle",
+    "media_url": "URL média"
   }
 }

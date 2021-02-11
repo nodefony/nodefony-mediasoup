@@ -3,6 +3,8 @@
   "no-specified": "Not specified",
   "close": "close",
   "name": "Name",
+  "save": "Save",
+  "share":"Share",
   "rooms": {
     "name": "Rooms",
     "room": "Room",
@@ -36,5 +38,11 @@
     "email": "Email",
     "info": "Informations",
     "roles": "Roles"
+  },
+  "medias":{
+    "admin_panel": "Admin panel",
+    "control_policy": "Control policy",
+    "media_url": "Media URL"
   }
+
 }

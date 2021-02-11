@@ -122,7 +122,7 @@ export default {
     //room: null,
     socket: null,
     administrators: null,
-    password: "12345678",
+    password: "",
     username: "",
     usernamedisabled: true,
     show: false,

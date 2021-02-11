@@ -1,9 +1,7 @@
 <template>
 <v-container class="nodefony--background" fluid>
-  <!-- v-col cols="12"-->
-  <v-row justify="center" align="center">
-    <!--v-col cols="12" sm="12"-->
-    <v-card dark min-width="600" min-height="400">
+  <v-row class="mt-10" justify="center" style="width:100%;height:100%">
+    <v-card dark width="60%" heigth="50%" max-height="50%">
       <v-row class="ma-5">
         <v-col>
           <v-row justify="center" align="center" class="mb-3">
@@ -57,8 +55,8 @@ export default {
   data: () => ({
     showPassword: false,
     valid: true,
-    username: 'admin',
-    password: 'admin',
+    username: '',
+    password: '',
     nameRules: [
       v => !!v || 'Name is required',
       v => (v && v.length <= 50) || 'Name must be less than 50 characters'
@@ -178,11 +176,11 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.nodefony--background {
+/*.nodefony--background {
     display: flex;
     align-items: center;
     justify-content: center;
-}
+}*/
 </style>
 
 <i18n>

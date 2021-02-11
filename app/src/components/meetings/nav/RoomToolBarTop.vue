@@ -10,8 +10,8 @@
   </v-toolbar-title>
   <v-spacer></v-spacer>
 
-  <v-row v-if="peer && room" align="center">
-    <v-btn x-small retain-focus-on-click class="mx-4" fab @click="toogleAudio" :color="hasAudio?'green lighten-2' : 'red lighten-1'">
+  <v-row v-if="peer && room" align="center" justify="space-between">
+    <v-btn small retain-focus-on-click class="mx-4" fab @click="toogleAudio" :color="hasAudio?'green lighten-2' : 'red lighten-1'">
       <v-icon v-if="hasAudio">
         mdi-volume-high
       </v-icon>
@@ -20,7 +20,7 @@
       </v-icon>
 
     </v-btn>
-    <v-btn x-small class="mx-4" fab @click="toogleVideo" :color="hasVideo?'green lighten-2' : 'red lighten-1'">
+    <v-btn small class="mx-4" fab @click="toogleVideo" :color="hasVideo?'green lighten-2' : 'red lighten-1'">
       <v-icon v-if="hasVideo">
         mdi-video-outline
       </v-icon>
@@ -29,7 +29,7 @@
       </v-icon>
 
     </v-btn>
-    <v-btn x-small class="mx-4" fab @click="toogleShare" :color="hasScreen?'green lighten-2' : 'red lighten-1'">
+    <v-btn small class="mx-4" fab @click="toogleShare" :color="hasScreen?'green lighten-2' : 'red lighten-1'">
       <v-icon v-if="hasScreen">
         mdi-monitor-share
       </v-icon>
@@ -64,6 +64,7 @@
         mdi-dots-grid
       </v-icon-->
     </v-btn>
+
     <v-spacer></v-spacer>
   </v-row>
 
@@ -116,6 +117,21 @@
     </v-card>
   </v-menu-->
 
+  <v-menu v-if="peer && room" v-model="menuMedia" :close-on-content-click="true" :close-on-click="true" :nudge-width="200" offset-x bottom origin="center center">
+    <template v-slot:activator="{ on, attrs }">
+
+      <v-btn small rounded class="mr-5" v-bind="attrs" v-on="on">
+        <v-icon small dark color="indigo">
+          <!--mdi-focus-field-->
+          mdi-movie-open-plus
+        </v-icon>
+      </v-btn>
+    </template>
+
+    <menu-media />
+
+  </v-menu>
+
   <v-btn-toggle v-if="room" v-model="drawer" rounded small>
     <v-btn small>
       <v-badge :content="nbWaiting" :value="nbWaiting" color="green">
@@ -154,11 +170,13 @@ import {
   //mapActions
 } from 'vuex';
 import BarAvatar from '@/components/layouts/avatar.vue';
+import MenuMedia from '@/components/meetings/nav/medias/MenuMedia.vue';
 
 export default {
   name: 'RoomToolBarTop',
   components: {
-    "bar-avatar": BarAvatar
+    "bar-avatar": BarAvatar,
+    "menu-media": MenuMedia
   },
   props: {
     selected: {
@@ -171,14 +189,16 @@ export default {
   },
   data(vm) {
     return {
-      selectedLayout: [vm.selected]
+      selectedLayout: [vm.selected],
+      menuMedia: false
     }
   },
   mounted() {},
   computed: {
     ...mapGetters({
       room: 'getRoom',
-      peer: 'getPeer'
+      peer: 'getPeer',
+      peers: 'getPeers'
     }),
     ...mapGetters([
       'getRoomEntity',
@@ -191,7 +211,7 @@ export default {
       'webcam',
       'microphone',
       //'peers',
-      'getPeers',
+      //'getPeers',
       'nbWaiting',
       'nbUnreadMessage',
       'mediaLayout',
@@ -206,7 +226,7 @@ export default {
       }
     },
     nbPeers() {
-      const res = this.getPeers.filter((peer) => {
+      const res = this.peers.filter((peer) => {
         if (peer.status === 'joined') {
           return peer
         }
