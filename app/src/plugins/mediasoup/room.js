@@ -172,8 +172,13 @@ class Room extends nodefony.Service {
       this.log(`Event : join `, "DEBUG");
       this.connected = true;
       const {
-        peers
+        peers,
+        user
       } = message.data;
+      // hydrate mdpeer with user back
+      if(user){
+        this.peer.user = user;
+      }
       for (const peer of peers) {
         let newPeer = this.mediasoup.createPeer(peer.id, { ...peer
         });
@@ -289,7 +294,7 @@ class Room extends nodefony.Service {
           } = consumer.appData;
           this.fire("consumerClosed", consumerId, peerId, consumer.appData);
           let peer = this.peers.get(peerId);
-          if( peer){
+          if (peer) {
             peer.deleteConsumer(consumerId);
           }
           break;
@@ -369,6 +374,13 @@ class Room extends nodefony.Service {
           this.fire("activeSpeaker", peerId, volume);
           break;
         }
+      case "producerresume":
+        this.fire("resumeMyProducer", message.data.data, this);
+        //this.fire("resumeProducer", message, this);
+        break;
+      case "producerpause":
+        this.fire("pauseMyProducer", message.data.data, this);
+        break;
       default:
         this.log(message.data.event, "NOTICE");
         this.log(message.data.data, "DEBUG");
@@ -816,7 +828,7 @@ class Room extends nodefony.Service {
     return stream;
   }*/
 
-  async enableMic(stream, microphone) {
+  async enableMic(stream, microphone, mute) {
     if (this.micProducer) {
       return this.micProducer;
     }
@@ -824,14 +836,12 @@ class Room extends nodefony.Service {
       this.log('enableMic() | cannot produce audio', "ERROR");
       return;
     }
-    let mute = !microphone.device;
     let track;
     try {
       if (!this.externalVideo) {
         this.log(`enableMic() mute : ${mute}`, "DEBUG");
         this.microphone = microphone;
         if (!stream || !stream.stream) {
-          mute = !stream.stream;
           let options = null;
           if (!this.microphone) {
             options = true;
@@ -850,7 +860,14 @@ class Room extends nodefony.Service {
           this.log(options, "DEBUG")
           stream = await navigator.mediaDevices.getUserMedia({
             audio: options
+          }).catch(e => {
+            this.log(e, "ERROR");
+            throw e;
           });
+          if (!stream) {
+            this.log(`Can't create Audio Stream `, "WARNING");
+            return;
+          }
         }
         track = stream.getAudioTracks()[0];
       } else {

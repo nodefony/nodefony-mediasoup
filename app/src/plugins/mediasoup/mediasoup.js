@@ -144,7 +144,7 @@ class Mediasoup extends nodefony.Service {
       this.sock.onmessage = (event) => {
         let message = null;
         //let sendMessage = null;
-        this.store.commit("mediasoupActivity");
+        //this.store.commit("mediasoupActivity");
         try {
           message = JSON.parse(event.data);
         } catch (e) {
@@ -284,7 +284,7 @@ class Mediasoup extends nodefony.Service {
       };
       this.sockStats.onmessage = (event) => {
         let message = null;
-        this.store.commit("mediasoupActivity");
+        //this.store.commit("mediasoupActivity");
         //let sendMessage = null;
         try {
           message = JSON.parse(event.data);

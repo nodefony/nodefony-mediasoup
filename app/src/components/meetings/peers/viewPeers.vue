@@ -259,19 +259,21 @@ export default {
       return peer.displayName || peer.id;
     },
     displayTrigramme(peer) {
+      //return peer.getTrigramme();
       if (peer.user) {
         let size = peer.user.surname.length;
         let trg = `${peer.user.name.substr(0, 1)}${peer.user.surname.substr(0, 1)}${peer.user.surname.substr(size-1,1)}`;
         return trg.toLowerCase();
       }
-      return peer.displayName || peer.usrnane;
+      return peer.displayName || peer.id;
     },
     displayInitial(peer) {
+      //return peer.getInitial();
       if (peer.user) {
         let trg = `${peer.user.name.substr(0, 1)}${peer.user.surname.substr(0, 1)}`;
         return trg.toLowerCase();
       }
-      return peer.displayName || peer.usrnane;
+      return peer.displayName || peer.id;
     },
 
     authorise(peer) {

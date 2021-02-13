@@ -4,7 +4,7 @@
   <v-slide-group v-model="slide" class="px-3" show-arrows style="background-color:transparent;height:110px">
 
     <v-slide-item key="share" v-show="shared" :elevation="focus" v-slot="{ active, toggle }">
-      <media-card-peer width="200" height="110" class="my-0 mx-1 pa-0" ref="share" name="Screen" @click.native="tooglePeer(null , active, toggle, 'share' )" />
+      <media-card-peer width="200" height="110" class="my-0 mx-1 pa-0" ref="share" name="Screen" :remote="peer" @click.native="tooglePeer(null , active, toggle, 'share' )" />
     </v-slide-item>
 
     <v-slide-item :key="peer.id" v-if="peer" :elevation="focus" v-slot="{ active, toggle }">

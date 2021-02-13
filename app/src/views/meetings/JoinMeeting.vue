@@ -13,7 +13,6 @@
                   {{getProfileName}} {{getProfileSurname}}
                 </p>
               </v-card-title>
-
             </v-container>
           </template>
         </media-card-peer>
@@ -42,7 +41,7 @@
               <v-switch v-model="medias" value="video" label="Video" hide-details v-on:change='changeMedia("video")'></v-switch>
             </v-col>
 
-            <v-col cols="3" v-if="false">
+            <!--v-col cols="3" v-if="false">
               <v-btn small color="blue-grey" class="ma-2 white--text" fab>
                 <v-icon v-if="hasScreen">mdi-monitor-share</v-icon>
                 <v-icon v-else dark>mdi-monitor-off</v-icon>
@@ -56,7 +55,7 @@
                 <v-icon v-else dark>mdi-monitor-off</v-icon>
               </v-btn>
               <v-switch v-model="medias" value="noise" label="Noise" hide-details v-on:change='changeMedia("noise")'></v-switch>
-            </v-col>
+            </v-col-->
 
           </v-row>
           <v-divider class="mx-4"></v-divider>
@@ -69,9 +68,6 @@
             <v-btn @click.end="acceptConnect" rounded color="primary">
               Join Room
             </v-btn>
-            <!--v-btn @click.end="close" rounded color="primary">
-                Quit
-              </v-btn-->
           </v-row>
         </v-card>
       </v-row>
@@ -106,9 +102,7 @@ export default {
     return {
       loading: false,
       message: null,
-      audio: true,
-      video: true,
-      screen: false
+      medias: null
     }
   },
   beforeRouteLeave(to, from, next) {
@@ -130,10 +124,14 @@ export default {
     this.$mediasoup.removeListener("waiting", this.onWaiting);
     this.$mediasoup.removeListener("closeSock", this.sockClose);
   },
-  async mounted() {
+  beforeMount() {
     this.closeDrawer();
     this.closeNavBar();
+    this.medias = ["audio", "video"];
+    this.storeMedias(this.medias);
     this.loading = true;
+  },
+  async mounted() {
     await this.getDevices()
       .then(() => {
         this.loading = false;
@@ -153,7 +151,6 @@ export default {
     ...mapGetters([
       'hasRole',
       'getPeers',
-      'getMedias',
       "hasAudio",
       "hasVideo",
       "hasScreen",
@@ -168,14 +165,6 @@ export default {
       },
       set(value) {
         this.setPeers(value);
-      }
-    },
-    medias: {
-      get() {
-        return this.getMedias;
-      },
-      set(value) {
-        return this.storeMedias(value);
       }
     },
     isAdmin() {
@@ -246,19 +235,28 @@ export default {
         })
         .catch(() => {})
     },
-    async changeMedia(selected) {
-      await this.peerComponent.changeMedia(selected)
-        .then((response) => {
-          if (selected !== 'screen') {
+    changeMedia(selected) {
+      this.$nextTick(async () => {
+        let status = null;
+        switch (selected) {
+          case "audio":
+            status = !this.hasAudio;
+            break;
+          case "video":
+            status = !this.hasVideo;
+            break;
+        }
+        await this.peerComponent.changeMedia(selected, status)
+          .then((response) => {
             this.storeMedias(this.medias);
-          }
-          return response
-        })
-        .catch(e => {
-          if (e.type) {
-            this.deleteMedias(e.type);
-          }
-        });
+            return response;
+          })
+          .catch(e => {
+            if (e.type) {
+              this.deleteMedias(e.type);
+            }
+          });
+      });
     },
     endsharescreen() {
       this.deleteMedias("screen");

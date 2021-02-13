@@ -93,6 +93,23 @@ class Peer {
     }
   }
 
+  getInitial() {
+    if (this.user) {
+      let trg = `${this.user.name.substr(0, 1)}${this.user.surname.substr(0, 1)}`;
+      return trg.toLowerCase();
+    }
+    return this.displayName || this.id;
+  }
+
+  getTrigramme() {
+    if (this.user) {
+      let size = this.user.surname.length;
+      let trg = `${this.user.name.substr(0, 1)}${this.user.surname.substr(0, 1)}${this.user.surname.substr(size-1,1)}`;
+      return trg.toLowerCase();
+    }
+    return this.displayName || this.id;
+  }
+
   close(){
     this.consumers.length = 0;
     this.producers.length = 0;

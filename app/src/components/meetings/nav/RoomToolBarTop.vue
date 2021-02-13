@@ -56,9 +56,9 @@
         mdi-application-export
       </v-icon>
     </v-btn-->
-    <v-btn v-if="mediaLayout" icon class="ml-3" @click="showMediaLayout">
-      <v-icon>
-        mdi-focus-field
+    <v-btn icon class="ml-3" @click="toogleMediaLayout">
+      <v-icon dark color="indigo">
+        mdi-movie-open
       </v-icon>
       <!--v-icon v-else>
         mdi-dots-grid
@@ -210,12 +210,9 @@ export default {
       'videoStream',
       'webcam',
       'microphone',
-      //'peers',
-      //'getPeers',
       'nbWaiting',
       'nbUnreadMessage',
-      'mediaLayout',
-
+      'mediaLayout'
     ]),
     drawer: {
       set(value) {
@@ -252,7 +249,8 @@ export default {
       this.$emit("quit", event);
     },
     async toogleVideo() {
-      this.log(`Video : `);
+      this.log(`Video toogle current status :  ${this.hasVideo}`, "DEBUG");
+      //this.log(this.webcam, "DEBUG");
       // tag
       if (this.hasVideo) {
         await this.room.disableWebcam();
@@ -265,9 +263,10 @@ export default {
       }
     },
     async toogleAudio() {
-      this.log(`Audio : `);
+      this.log(`Audio toogle current status : ${this.hasAudio}`, "DEBUG");
+      //this.log(this.microphone, "DEBUG");
       if (!this.room.micProducer) {
-        await this.room.enableMic(null, this.microphone);
+        await this.room.enableMic(null, this.microphone, false);
         this.setMedia("audio");
         return;
       }
@@ -275,25 +274,25 @@ export default {
       if (this.hasAudio) {
         await this.room.muteMic()
         //this.muteTag();
-        this.deleteMedias("audio")
+        //this.deleteMedias("audio")
       } else {
         await this.room.unmuteMic()
         //this.demuteTag();
-        this.setMedia("audio");
+        //this.setMedia("audio");
       }
 
     },
     toogleShare() {
-      this.log(`Share : `);
+      this.log(`Share Srceen toogle current status : ${this.hasScreen}`, "DEBUG");
       if (this.hasScreen) {
         return this.room.disableShare()
           .then(() => {
-            this.deleteMedias("screen")
+            this.deleteMedias("screen");
           })
       }
       return this.room.enableShare()
         .then(() => {
-          this.setMedia("screen")
+          this.setMedia("screen");
         })
     }
   }

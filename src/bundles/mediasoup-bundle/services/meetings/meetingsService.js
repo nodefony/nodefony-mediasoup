@@ -108,7 +108,8 @@ class Meetings extends nodefony.Service {
       {
         let peerInfos = await room.join(peer, message);
         peer.send(room, "join", {
-          peers: peerInfos
+          peers: peerInfos,
+          user:peer.user
         });
         this.fire("joinPeer", room, peerInfos);
         const joinedPeers = [

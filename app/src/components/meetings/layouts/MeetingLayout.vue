@@ -20,17 +20,18 @@
 
       <!-- Peer focus layout -->
       <v-expand-transition>
-        <video ref="peer" v-show="selectedPeer" class="vid-video" muted playsinline :controls="false" />
+        <!--video ref="peer" v-show="selectedPeer" class="vid-video" muted playsinline :controls="false" /-->
+        <peer-preview v-if="selectedPeer" :peer="selectedPeer" />
       </v-expand-transition>
 
       <!-- Media layout -->
       <v-expand-transition>
-        <pdf-viewer :roomid="room.id" />
+        <pdf-viewer v-if="mediaLayout" :roomid="room.id" />
       </v-expand-transition>
 
       <!-- Main layout -->
       <v-expand-transition>
-        <grid-layout ref="main" v-show="room && layout" :focusPeers="focusTab" class="" />
+        <grid-layout ref="main" v-show="room && layout && !selectedPeer" :focusPeers="focusTab" class="" />
       </v-expand-transition>
     </v-container>
   </v-sheet>
@@ -43,6 +44,7 @@
 import SliderLayout from '@/components/meetings/layouts/SliderLayout';
 import GridLayout from '@/components/meetings/layouts/GridLayout';
 import PdfViewer from '@/../../src/bundles/mediasoup-bundle/Resources/vue/components/PdfViewer';
+import PreviewPeer from '@/components/meetings/medias/peers/PreviewPeer'
 
 import {
   mapGetters,
@@ -55,7 +57,8 @@ export default {
   components: {
     "grid-layout": GridLayout,
     "slider-layout": SliderLayout,
-    "pdf-viewer": PdfViewer
+    "pdf-viewer": PdfViewer,
+    "peer-preview": PreviewPeer
   },
   props: {},
   data( /*vm*/ ) {
@@ -110,7 +113,7 @@ export default {
     },
 
     playPeer(peer) {
-      let stream = peer.videoStream.stream;
+      /*let stream = peer.videoStream.stream;
       if (!stream) {
         return Promise.resolve();
       }
@@ -123,7 +126,9 @@ export default {
         .catch(e => {
           this.selectedPeer = null
           this.log(e, "DEBUG")
-        });
+        });*/
+      this.selectedPeer = peer;
+      return Promise.resolve(this.selectedPeer);
     },
 
     focusPeer(peer, volume, component) {
@@ -197,11 +202,11 @@ export default {
               this.screen = false;
               break;
             case "peer":
-              this.$refs.peer.srcObject = null;
+              //this.$refs.peer.srcObject = null;
               this.selectedPeer = null;
               break;
             default:
-              this.$refs.peer.srcObject = null;
+              //this.$refs.peer.srcObject = null;
               this.$refs.screen.srcObject = null;
               this.screen = false;
               this.selectedPeer = null;

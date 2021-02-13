@@ -115,7 +115,7 @@ const mutations = {
       if (type === 'screen' || type === 'noise'){
         return;
       }
-      this.commit("storeMedias", state.medias);
+      //this.commit("storeMedias", state.medias);
     }
   },
   storeMedias(state, value) {
@@ -127,7 +127,6 @@ const mutations = {
     let index = state.medias.indexOf(type);
     if (index >= 0) {
       state.medias.splice(index, 1);
-      this.commit("storeMedias", state.medias);
     }
   },
   // remote peer

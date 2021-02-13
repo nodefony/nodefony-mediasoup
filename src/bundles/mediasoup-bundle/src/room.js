@@ -382,9 +382,21 @@ class Room extends nodefony.Service {
 
     producer.observer.on('resume', () => {
       this.fire('producerresume', producer);
+      peer.notify(this, 'producerresume', {
+        producerId: producer.id,
+        kind:data.kind,
+        transportid:data.transportId,
+        appData:data.appData
+      });
     });
     producer.observer.on('pause', () => {
-      this.fire('producerpause', producer)
+      this.fire('producerpause', producer);
+      peer.notify(this, 'producerpause', {
+        producerId: producer.id,
+        kind:data.kind,
+        transportid:data.transportId,
+        appData:data.appData
+      });
     });
     this.fire('producercreate', producer);
     return producer;

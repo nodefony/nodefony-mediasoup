@@ -132,6 +132,7 @@ export default {
       'audioStream',
       'videoStream',
       'getMediasoupStatus',
+      'hasAudio',
       //'getMediasoupActivity',
       'dialogQuit',
       'getSideBar'
@@ -198,7 +199,7 @@ export default {
           room,
           peer
         }) => {
-          this.log("initialize Mediasoup Room");
+          this.log("initialize Mediasoup Room", "DEBUG");
           this.peer = peer;
           this.peer.local = true;
           this.room = room;
@@ -238,7 +239,7 @@ export default {
         this.log(options, "DEBUG");
         try {
           this.peer = room.peer;
-          await room.enableMic(this.audioStream, this.microphone);
+          await room.enableMic(this.audioStream, this.microphone, !this.hasAudio);
           await room.enableWebcam(this.videoStream, /*this.webcam*/ );
           this.log(`joined : ${room.id}`)
           this.joined = true;
@@ -309,6 +310,34 @@ export default {
       });
       this.room.on("resumeProducer", (id, message) => {
       });*/
+      this.room.on("resumeMyProducer", (message) => {
+        switch (message.kind) {
+          case "audio":
+            this.setMedia("audio");
+            break;
+          case "video":
+            this.setMedia("video");
+            break;
+          default:
+            this.log(`Producer ${message.kind} Resumed :  ${message.producerId}`, "WARNING");
+            this.log(message, "DEBUG");
+        }
+      });
+
+      this.room.on("pauseMyProducer", (message) => {
+        switch (message.kind) {
+          case "audio":
+            this.deleteMedias("audio");
+            break;
+          case "video":
+            this.deleteMedias("video");
+            break;
+          default:
+            this.log(`Producer ${message.kind} Paused : ${message.producerId}`, "WARNING");
+            this.log(message, "DEBUG");
+        }
+      });
+
       this.room.on("disableWebcam", (producer) => {
         let component = this.getPeerComponent(this.peer.id);
         //this.peer.deleteProducer(producer.id);

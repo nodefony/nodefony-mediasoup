@@ -14,7 +14,7 @@
 
           <v-row justify="center" align="center" class="pa-0 ma-0">
             <div v-show="hover || !video " style="position:absolute">
-              <v-avatar color="primary" class="white--text" :size="local ? (remote ? 50 : 120) :50">{{local ? getTrigramme : (remote ? remote.id : "") }}</v-avatar>
+              <v-avatar color="primary" class="white--text" :size="50">{{remote ? remote.getInitial() : ""}}</v-avatar>
             </div>
             <video style="width:100%;border-radius:8px 8px 0 0;" class="pa-0 ma-0" muted playsinline :controls="false" ref="prevideo" />
           </v-row>
@@ -26,7 +26,7 @@
           <v-container fluid fill-height style="min-height:120px;background-color:#034750;opacity:0.5;border-radius:8px 8px 0 0;" class="pa-0 ma-0">
             <v-row justify="center" align="center">
               <div style="position:absolute">
-                <v-avatar color="primary" class="white--text" :size="local ? (remote ? 50 : 120) :50">{{local ? getTrigramme : (remote ? remote.id : "") }}</v-avatar>
+                <v-avatar color="primary" class="white--text" :size="50">{{remote ? remote.getInitial() : ""}}</v-avatar>
                 <h1 v-if="hover" style="color:white"></h1>
               </div>
             </v-row>
@@ -222,7 +222,7 @@ export default {
       "hasAudio",
       "hasVideo",
       "hasScreen",
-      "hasNoise",
+      //"hasNoise",
       'webcam',
       'microphone',
       'webcamDevice',
@@ -306,6 +306,9 @@ export default {
           }
         }
         await this.getVideoUserMedia(options)
+          .catch((e) => {
+            this.log(e, "WARNING")
+          })
       }
       if (this.hasAudio) {
         let options = {};
@@ -314,14 +317,23 @@ export default {
             ideal: this.microphone.device.deviceId
           }
         }
-        await this.getAudioUserMedia(options);
+        await this.getAudioUserMedia(options)
+          .catch((e) => {
+            this.log(e, "WARNING")
+          })
       }
-      if (this.hasScreen) {
-        await this.getUserScreen();
+      /*if (this.hasScreen) {
+        await this.getUserScreen()
+          .catch((e) => {
+            this.log(e, "WARNING")
+          })
       }
       if (this.hasNoise) {
-        await this.getWhiteNoise();
-      }
+        await this.getWhiteNoise()
+          .catch((e) => {
+            this.log(e, "WARNING")
+          })
+      }*/
     },
     async changeDevice(type) {
       switch (type) {
@@ -423,6 +435,7 @@ export default {
             })*/
             .catch(e => {
               this.audio = false;
+              //this.deleteMedias('audio');
               this.log(e, "ERROR");
             });
         case "video":
@@ -435,6 +448,7 @@ export default {
             })*/
             .catch(e => {
               this.video = false;
+              //this.deleteMedias('video');
               this.log(e, "ERROR");
             });
       }
@@ -490,6 +504,7 @@ export default {
         return await this.audioStream.detachStream()
           .then((res) => {
             this.audio = false;
+            //this.deleteMedias('audio');
             return res;
           });
         //this.audioStream = null;
@@ -504,6 +519,7 @@ export default {
         return await this.videoStream.detachStream()
           .then((res) => {
             this.video = false;
+            //this.deleteMedias('video');
             return res;
           });
         //this.videoStream = null;
@@ -582,6 +598,7 @@ export default {
         })
         .catch(e => {
           this.audio = false;
+          this.deleteMedias('audio');
           this.log(e, "ERROR");
           throw e;
         });
@@ -600,6 +617,7 @@ export default {
         })
         .catch(e => {
           this.video = false;
+          this.deleteMedias('video');
           this.log(e, "ERROR");
           throw e;
         });
@@ -621,130 +639,69 @@ export default {
         }
         return await this.getVideoUserMedia(options);
       }
-      if (this.screen) {
+      /*if (this.screen) {
         return await this.getUserScreen(this.$mediasoup.VIDEO_CONSTRAINS[format]);
       }
       if (this.noise) {
         return await
         this.getWhiteNoise(format)
-      }
+      }*/
     },
 
-    async changeMedia(selected) {
-      this.log(`changeMedia ${selected}`, "DEBUG");
+    async changeMedia(selected, status) {
+      this.log(`changeMedia ${selected} : ${status}`, "DEBUG");
       switch (selected) {
         case 'video':
-          if (this.screen) {
+          if (!status && this.video) {
             await this.videoStream.detachStream();
-            this.screen = false;
-            this.deleteMedias('screen');
           }
-          if (this.noise) {
-            await this.videoStream.detachStream();
-            this.noise = false;
-            this.deleteMedias('noise');
-          }
-          if (this.video && !this.hasVideo) {
-            await this.videoStream.detachStream();
-            this.video = false;
-          }
-          break;
-        case 'screen':
+          this.video = status;
           if (this.video) {
-            await this.videoStream.detachStream();
-            this.video = false;
-            this.deleteMedias('video');
-          }
-          if (this.noise) {
-            await this.videoStream.detachStream();
-            this.noise = false;
-            this.deleteMedias('noise');
-          }
-          if (this.screen && !this.hasScreen) {
-            await this.videoStream.detachStream();
-            this.screen = false;
+            let options = null;
+            if (this.webcam.resolution) {
+              options = { ...this.$mediasoup.VIDEO_CONSTRAINS[this.webcam.resolution]
+              }
+            }
+            if (this.webcam.device) {
+              options.deviceId = {
+                ideal: this.webcam.device.deviceId
+              }
+            }
+            return await this.getVideoUserMedia(options)
+              .catch(e => {
+                throw {
+                  type: "video",
+                  error: e
+                };
+              });
           }
           break;
         case 'audio':
-          if (this.audio && !this.hasAudio) {
+          if (!status && this.audio) {
             await this.audioStream.detachStream();
             if (this.$spectrum) {
               this.$spectrum.stop();
             }
-            this.audio = false;
           }
-          break;
-        case 'noise':
-          if (this.video) {
-            await this.videoStream.detachStream();
-            this.video = false;
-            this.deleteMedias('video');
-          }
-          if (this.screen) {
-            await this.videoStream.detachStream();
-            this.screen = false;
-            this.deleteMedias('screen');
-          }
-          if (this.noise && !this.hasNoise) {
-            await this.videoStream.detachStream();
-            this.noise = false;
+          this.audio = status;
+          if (this.audio) {
+            let options = {};
+            if (this.microphone.device) {
+              options.deviceId = {
+                ideal: this.microphone.device.deviceId
+              }
+            }
+            await this.getAudioUserMedia(options)
+              .catch(e => {
+                throw {
+                  type: "audio",
+                  error: e
+                };
+              });
           }
           break;
         default:
           return;
-      }
-
-      if (!this.audio && this.hasAudio) {
-        let options = {};
-        if (this.microphone.device) {
-          options.deviceId = {
-            ideal: this.microphone.device.deviceId
-          }
-        }
-        await this.getAudioUserMedia(options)
-          .catch(e => {
-            throw {
-              type: "audio",
-              error: e
-            };
-          });
-      }
-      if (!this.noise && this.hasNoise) {
-        return await this.getWhiteNoise()
-          .catch(e => {
-            throw {
-              type: "noise",
-              error: e
-            };
-          });
-      }
-      if (!this.screen && this.hasScreen) {
-        return await this.getUserScreen()
-          .catch(e => {
-            throw {
-              type: "screen",
-              error: e
-            };
-          });
-      }
-      if (!this.video && this.hasVideo) {
-        let options = null;
-        if (this.webcam.resolution) {
-          options = { ...this.$mediasoup.VIDEO_CONSTRAINS[this.webcam.resolution]
-          }
-        }
-        if (this.webcam.device) {
-          options.deviceId = {
-            ideal: this.webcam.device.deviceId
-          }
-        }
-        return await this.getVideoUserMedia(options)
-          .catch(e => {
-            throw {
-              type: "video",
-              error: e
-            };
-          });
       }
     },
     toggle() {

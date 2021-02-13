@@ -37,12 +37,12 @@ export default {
   props: {},
   computed: {
     ...mapGetters({
-      room: 'getRoom',
-      peer: 'getPeer'
+      //room: 'getRoom',
+      //peer: 'getPeer'
     }),
     ...mapGetters([
-      'peers',
-      'getTrigramme'
+      //'peers',
+      //'getTrigramme'
     ]),
 
   },
