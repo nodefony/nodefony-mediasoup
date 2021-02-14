@@ -15,11 +15,9 @@
 
     <v-col cols="12" style="width:100%;height:100%;" class="d-flex align-content-start justify-space-around flex-wrap px-1">
 
-      <!--preview-peer max-width="300px" min-width="200px" rounded flat style="background:transparent" class="ma-1 mb-3" :peer="peer" /-->
+      <preview-peer max-width="300px" min-width="200px" rounded flat style="background:transparent" class="ma-1 mb-3" v-for="(mypeer, index) in peers" :key="`preview-${index}`" :peerid="mypeer.id" />
 
-      <preview-peer max-width="300px" min-width="200px" rounded flat style="background:transparent" class="ma-1 mb-3" v-for="(mypeer, index) in peers" :key="`preview-${index}`" :peer="mypeer" />
-
-      <!--v-card max-width="300px" min-width="200px" rounded outlined v-for="nb in 100" :key="`vid-${nb}`" style="border:solid 1px white;background:transparent" class="ma-1 mb-3">
+      <!--v-card max-width="300px" min-width="200px" rounded outlined v-for="nb in 15" :key="`vid-${nb}`" style="border:solid 1px white;background:transparent" class="ma-1 mb-3">
         <video :ref="`video-${nb}`" style="max-width:300px;border-radius:8px;" />
       </v-card-->
     </v-col>

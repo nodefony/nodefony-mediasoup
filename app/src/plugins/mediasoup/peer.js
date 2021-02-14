@@ -15,6 +15,7 @@ class Peer {
     this.videoStream = new nodefony.medias.Stream(null,{}, this);
     this.audioPaused = null;
     this.videoPaused = null;
+    this.volume = 100;
     this.hydrate(mediasoupPeer);
   }
 
@@ -98,7 +99,13 @@ class Peer {
       let trg = `${this.user.name.substr(0, 1)}${this.user.surname.substr(0, 1)}`;
       return trg.toLowerCase();
     }
-    return this.displayName || this.id;
+    if( this.displayName){
+      let trg = `${this.displayName.substr(0, 1)}${this.displayName.substr(1, 2)}`;
+      return trg.toLowerCase();
+    }else{
+      let trg = `${this.id.substr(0, 1)}${this.id.substr(1, 2)}`;
+      return trg.toLowerCase();
+    }
   }
 
   getTrigramme() {

@@ -3,13 +3,16 @@
 
   <v-hover v-slot="{ hover }" :disabled="hoverDisabled">
 
-    <!--media-volume-peer fab rounded top left color="cyan accent-4" :volume="volume" :muted="audio" /-->
-
     <v-row class="pa-0 ma-0" style="width:100%;height:100%" justify="center" align="center">
 
-      <v-icon class="ma-2" color="blue-grey" left style="position:absolute;top:0px;left:0px">
+      <!--v-icon v-if="!peer.audioPaused" class="ma-2" color="blue-grey" left style="position:absolute;top:0px;left:0px">
         mdi-volume-high
       </v-icon>
+      <v-icon v-else class="ma-2" color="blue-grey" left style="position:absolute;top:0px;left:0px">
+        mdi-volume-off
+      </v-icon-->
+
+      <media-volume-peer fab absolute rounded top left color="blue-grey" :volume="volume" :muted="audio" class="mt-5" />
 
       <v-avatar v-if="!video" style="position:absolute;" color="primary" class="white--text" :size="50">
         {{peer.getInitial()}}
@@ -20,7 +23,7 @@
           <v-icon left>
             mdi-volume-high
           </v-icon>
-          {{peer.user.name}} {{peer.user.surname}}
+          {{name}} {{surname}}
         </v-chip>
       </div>
 
@@ -33,7 +36,7 @@
 
 <script>
 import {
-  //mapGetters,
+  mapGetters,
   //mapMutations,
   //mapActions
 } from 'vuex';
@@ -45,9 +48,8 @@ export default {
     "media-volume-peer": Volume
   },
   props: {
-    peer: {
-      type: Object
-      //default: null
+    peerid: {
+      type: String
     }
   },
   data() {
@@ -56,7 +58,7 @@ export default {
       audioStream: null,
       audio: false,
       video: false,
-      volume: 0,
+      //volume: 0,
       hoverDisabled: false,
       styleCard: {
         background: 'transparent',
@@ -71,24 +73,45 @@ export default {
     this.cleanVideoTag();
   },
   mounted() {
-    setTimeout(() => {
-      this.$nextTick(() => {
-        this.videoStream = this.peer.videoStream;
-        this.audioStream = this.peer.audioStream;
-        this.playPeer();
-      });
-    }, 200);
+    this.$nextTick(() => {
+      this.videoStream = this.peer.videoStream;
+      this.audioStream = this.peer.audioStream;
+      this.playPeer();
+    });
   },
   watch: {
-    /*'peer.volume': {
+    'peer.volume': {
       handler(value) {
         this.volume = value;
       },
-      deep: true
-    },*/
-    peer: {
+      immediate: true
+    },
+    'peer.videoPaused': {
+      handler(value) {
+        this.video = value;
+      },
+      immediate: true
+    },
+    'peer.audioPaused': {
+      handler(value) {
+        this.audio = value;
+      },
+      immediate: true
+    },
+    'peer.videoStream': {
       deep: true,
       handler(value) {
+        this.video = false;
+        this.videoStream = value;
+        if (this.videoStream && this.videoStream.stream) {
+          this.playPeer();
+        }
+      }
+    }
+    /*peer: {
+      deep: true,
+      handler(value) {
+        console.log("passs")
         this.video = false;
         this.videoStream = value.videoStream;
         if (this.videoStream && this.videoStream.stream) {
@@ -97,9 +120,45 @@ export default {
           //});
         }
         this.audioStream = value.audioStream;
-        this.volume = value.volume;
+        //this.volume = value.volume;
       }
+    }*/
+  },
+  computed: {
+    ...mapGetters(['peers']),
+    ...mapGetters({
+      me: 'getPeer'
+    }),
+    peer() {
+      return this.getPeerById(this.peerid)
+    },
+    volume: {
+      get() {
+        return this.peer.volume;
+      },
+      set(value) {
+        return value;
+      }
+    },
+    name() {
+      if (this.peer) {
+        if (this.peer.user) {
+          return this.peer.user.name
+        }
+        return this.peer.displayNane || this.peer.id
+      }
+      return ''
+    },
+    surname() {
+      if (this.peer) {
+        if (this.peer.user) {
+          return this.peer.user.surname
+        }
+        return this.peer.id
+      }
+      return ''
     }
+
   },
   methods: {
     cleanVideoTag() {
@@ -135,7 +194,6 @@ export default {
               this.log(e, "ERROR");
             });
         });
-
         /*setTimeout(() => {
 
         }, 100);*/
@@ -144,7 +202,17 @@ export default {
       } else {
         //this.log(new Error('No video Stream found'), "WARNING");
       }
-    }
+    },
+    getPeerById(peerid) {
+      if (this.me.id === peerid) {
+        return this.me
+      }
+      return this.peers.find((peer) => {
+        if (peer.id === peerid) {
+          return peer;
+        }
+      });
+    },
   }
 }
 </script>

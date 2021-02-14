@@ -21,7 +21,7 @@
       <!-- Peer focus layout -->
       <v-expand-transition>
         <!--video ref="peer" v-show="selectedPeer" class="vid-video" muted playsinline :controls="false" /-->
-        <peer-preview v-if="selectedPeer" :peer="selectedPeer" />
+        <peer-preview v-if="selectedPeer" :peerid="selectedPeer.id" />
       </v-expand-transition>
 
       <!-- Media layout -->
