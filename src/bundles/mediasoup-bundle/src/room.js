@@ -468,12 +468,14 @@ class Room extends nodefony.Service {
     });
     consumer.on('producerpause', () => {
       consumerPeer.notify(this, 'consumerPaused', {
-        consumerId: consumer.id
+        consumerId: consumer.id,
+        peerId: producerPeer.id
       });
     });
     consumer.on('producerresume', () => {
       consumerPeer.notify(this, 'consumerResumed', {
-        consumerId: consumer.id
+        consumerId: consumer.id,
+        peerId: producerPeer.id
       });
     });
     consumer.on('score', (score) => {

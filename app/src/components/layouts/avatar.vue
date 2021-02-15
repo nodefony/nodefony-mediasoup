@@ -4,7 +4,7 @@
     <template v-slot:activator="{ on, attrs }">
       <v-list-item-avatar v-bind="attrs" v-on="on" :color="color">
         <!--img src="" alt=""-->
-        <span class="white--text">{{getTrigramme}}</span>
+        <span class="white--text">{{getInitials}}</span>
       </v-list-item-avatar>
     </template>
     <v-card>
@@ -12,7 +12,7 @@
         <v-list-item>
           <v-list-item-avatar :color="color">
             <!--img src="" alt=""-->
-            <span class="white--text">{{getTrigramme}}</span>
+            <span class="white--text">{{getInitials}}</span>
           </v-list-item-avatar>
 
           <v-list-item-content>
@@ -67,6 +67,7 @@ export default {
       'getUser',
       'getProfile',
       'getTrigramme',
+      'getInitials',
       'getProfileName',
       'getProfileSurname'
     ]),

@@ -302,27 +302,47 @@ class Room extends nodefony.Service {
       case 'consumerPaused':
         {
           const {
-            consumerId
+            consumerId,
+            peerId
           } = message.data.data;
           const consumer = this.consumers.get(consumerId);
           if (!consumer) {
             break;
           }
           consumer.pause();
-          this.fire("consumerPaused", consumerId, "remote");
+          let peer = this.peers.get(peerId);
+          if(peer){
+            if(consumer.kind === "audio" ){
+              peer.audioPaused = consumer.paused;
+            }
+            if(consumer.kind === "video" ){
+              peer.videoPaused = consumer.paused;
+            }
+          }
+          this.fire("consumerPaused", consumerId, peer);
           break;
         }
       case 'consumerResumed':
         {
           const {
-            consumerId
+            consumerId,
+            peerId
           } = message.data.data;
           const consumer = this.consumers.get(consumerId);
           if (!consumer) {
             break;
           }
           consumer.resume();
-          this.fire("consumerResumed", consumerId, "remote");
+          let peer = this.peers.get(peerId);
+          if(peer){
+            if(consumer.kind === "audio" ){
+              peer.audioPaused = consumer.paused;
+            }
+            if(consumer.kind === "video" ){
+              peer.videoPaused = consumer.paused;
+            }
+          }
+          this.fire("consumerResumed", consumerId, peer);
           break;
         }
       case 'consumerLayersChanged':
@@ -664,6 +684,12 @@ class Room extends nodefony.Service {
       }
       let peer = this.peers.get(consumer._appData.peerId);
       peer.addConsumer(consumer);
+      if( consumer.kind === "audio" && !appData.share ){
+        peer.audioPaused = consumer.paused;
+      }
+      if( consumer.kind === "video" && !appData.share){
+        peer.videoPaused = consumer.paused;
+      }
       this.fire("consume", consumer, peer, spatialLayers, temporalLayers);
       return consumer;
     } catch (error) {

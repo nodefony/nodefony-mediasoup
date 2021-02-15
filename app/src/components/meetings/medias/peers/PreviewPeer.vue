@@ -99,10 +99,20 @@ export default {
     },
     'peer.audioPaused': {
       handler(value) {
-        this.audio = value;
+        if (value === null) {
+          this.audio = true;
+        } else {
+          this.audio = value;
+        }
       },
       immediate: true
     },
+    /*'peer.audioStream': {
+      handler(value) {
+        console.log(value)
+      },
+      deep: true
+    },*/
     'peer.videoStream': {
       deep: true,
       handler(value) {

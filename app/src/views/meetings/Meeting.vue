@@ -383,40 +383,26 @@ export default {
           this.log(e, "WARNING");
         }
       });
-      this.room.on("consumerPaused", (consumerId) => {
-        this.log(`consumerPaused  condumeid =${consumerId} `, "DEBUG");
-        let consumer = null;
-        let res = this.peers.find((peer) => {
-          let consu = peer.hasConsumer(consumerId);
-          if (consu) {
-            consumer = consu;
-            return peer;
-          }
-        });
-        if (res) {
-          let component = this.getPeerComponent(res.id);
+      this.room.on("consumerPaused", (consumerId, peer) => {
+        if (peer) {
+          this.log(`${peer.id} consumerPaused => condumeid =${consumerId} `, "DEBUG");
+          let consumer = peer.hasConsumer(consumerId);
+          let component = this.getPeerComponent(peer.id);
           if (consumer.track.kind === "audio") {
-            this.log(`muteTag  peer = ${res.id} `, "WARNING");
+            this.log(`muteTag  peer = ${peer.id} `, "WARNING");
             return component.muteTag();
           }
           if (consumer.track.kind === "video") {
-            this.log(`pauseVideoTag  peer = ${res.id} `, "WARNING");
+            this.log(`pauseVideoTag  peer = ${peer.id} `, "WARNING");
             return component.pauseVideoTag();
           }
         }
       });
-      this.room.on("consumerResumed", (consumerId) => {
-        this.log(`consumerResumed  condumeid =${consumerId} `, "DEBUG");
-        let consumer = null;
-        let res = this.peers.find((peer) => {
-          let consu = peer.hasConsumer(consumerId);
-          if (consu) {
-            consumer = consu;
-            return peer;
-          }
-        });
-        if (res) {
-          let component = this.getPeerComponent(res.id);
+      this.room.on("consumerResumed", (consumerId, peer) => {
+        if (peer) {
+          this.log(`${peer.id} consumerResumed => condumeid =${consumerId} `, "DEBUG");
+          let consumer = peer.hasConsumer(consumerId);
+          let component = this.getPeerComponent(peer.id);
           if (consumer.track.kind === "audio") {
             return component.demuteTag();
           }
