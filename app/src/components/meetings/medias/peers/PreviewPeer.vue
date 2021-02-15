@@ -1,5 +1,5 @@
 <template>
-<v-card dark v-bind="{...$props, ...$attrs}" tile flat outlined :style="styleCard">
+<v-card dark v-bind="{...$props, ...$attrs}" tile flat outlined :style="styleCard" :class="classFocus">
 
   <v-hover v-slot="{ hover }" :disabled="hoverDisabled">
 
@@ -12,11 +12,13 @@
         mdi-volume-off
       </v-icon-->
 
-      <media-volume-peer fab absolute rounded top left color="blue-grey" :volume="volume" :muted="audio" class="mt-5" />
-
       <v-avatar v-if="!video" style="position:absolute;" color="primary" class="white--text" :size="50">
         {{peer.getInitial()}}
       </v-avatar>
+
+      <video :ref="`vid-preview-${peer.id}`" style="width:100%;height:100%;border-radius:8px;">
+      </video>
+      <media-volume-peer fab absolute rounded top left color="blue-grey" :volume="volume" :muted="audio" class="mt-5" />
 
       <div v-show="hover" style="position:absolute;top:0px;right:0px">
         <v-chip class="ma-2" color="blue-grey" pill>
@@ -26,8 +28,6 @@
           {{name}} {{surname}}
         </v-chip>
       </div>
-
-      <video :ref="`vid-preview-${peer.id}`" style="width:100%;height:100%;border-radius:8px;" />
     </v-row>
 
   </v-hover>
@@ -50,10 +50,15 @@ export default {
   props: {
     peerid: {
       type: String
+    },
+    currentfocus: {
+      type: String
     }
   },
   data() {
     return {
+      focus: null,
+      classFocus: '',
       videoStream: null,
       audioStream: null,
       audio: false,
@@ -104,9 +109,31 @@ export default {
         this.video = false;
         this.videoStream = value;
         if (this.videoStream && this.videoStream.stream) {
-          this.playPeer();
+          this.$nextTick(() => {
+            this.playPeer();
+          });
         }
       }
+    },
+    currentfocus(value) {
+      //console.log(`I am ${this.peerid} focus change to: `, value, this.focus);
+      if (value === this.peerid) {
+        this.classFocus = 'focus'
+        if (this.focus !== null) {
+          clearTimeout(this.focus);
+        }
+        this.focus = setTimeout(() => {
+          this.classFocus = '';
+          this.focus = null;
+        }, 3000);
+      } else {
+        this.classFocus = ''
+        if (this.focus !== null) {
+          clearTimeout(this.focus);
+          this.focus = null;
+        }
+      }
+      return value;
     }
     /*peer: {
       deep: true,
@@ -197,11 +224,6 @@ export default {
               this.log(e, "ERROR");
             });
         });
-        /*setTimeout(() => {
-
-        }, 100);*/
-        //}
-        //console.log(videoTag.paused, this.videoStream.stream.active, this.videoStream.stream.ended)
       } else {
         //this.log(new Error('No video Stream found'), "WARNING");
       }
@@ -222,6 +244,6 @@ export default {
 
 <style scoped lang="scss">
 .focus {
-    border: 1px solid cyan;
+    border: 1px solid cyan !important;
 }
 </style>

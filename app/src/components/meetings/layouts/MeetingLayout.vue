@@ -31,7 +31,7 @@
 
       <!-- Main layout -->
       <v-expand-transition>
-        <grid-layout ref="main" v-show="room && layout && !selectedPeer" :focusPeers="focusTab" class="" />
+        <grid-layout ref="main" v-show="room && layout && !selectedPeer" :focusPeers="focusTab" class="" :currentfocus="currentfocus" />
       </v-expand-transition>
     </v-container>
   </v-sheet>
@@ -68,6 +68,7 @@ export default {
       audioThreshold: -50,
       selectedPeer: null,
       focusTab: [],
+      currentfocus: null,
       currentToogle: null
     }
   },
@@ -135,6 +136,7 @@ export default {
     focusPeer(peer, volume, component) {
       if (volume && volume >= this.audioThreshold) {
         //let component = this.getPeerComponent(peerid);
+        this.currentfocus = peer.id;
         if (component) {
           if (!component.focus) {
             this.log(`Focus Audio peer : ${peer.id}`, "DEBUG");
@@ -144,7 +146,7 @@ export default {
             }, 2000);
           }
         }
-        this.addFocusTab(peer);
+        //this.addFocusTab(peer);
       }
     },
     addFocusTab(peer) {
@@ -160,7 +162,7 @@ export default {
         this.sortFocusPeer();
         return this.focusTab;
       } else {
-        if (this.focusTab.length < 7) {
+        if (this.focusTab.length < 4) {
           //console.log(`PUSH peer in array ${peer.id}`)
           this.focusTab.push(peer)
         } else {
@@ -255,7 +257,7 @@ export default {
     onOpenMedia(data) {
       // CLOSE diaolog
       console.log("openMedia", data);
-      // check ok 
+      // check ok
       if (true) {
         this.showMediaLayout();
       }
