@@ -93,8 +93,8 @@ export default {
       this.mediaTitle = value;
     },
     save(formdata) {
-      // TODO
-      this.log(formdata);
+      // valid form 
+      this.$mediasoup.send("openMedia", formdata);
     },
     loading(value) {
       this.isSharing = value;

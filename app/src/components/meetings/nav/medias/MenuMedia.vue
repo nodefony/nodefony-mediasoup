@@ -44,7 +44,6 @@
     </v-list-item-group>
   </v-list>
 
-
 </v-card>
 </template>
 
@@ -64,7 +63,7 @@ export default {
     'dialog-web-media': DialogWebMedia
   },
   props: {},
-  data(vm) {
+  data() {
     return {
       selectedMedia: [],
       pdf: false,
@@ -80,7 +79,6 @@ export default {
   },
   watch: {
     selectedMedia(value) {
-      //console.log(`selectedMedia ${value}`)
       switch (value) {
         case 0:
           this.pdf = true

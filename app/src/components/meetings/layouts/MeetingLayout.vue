@@ -64,14 +64,24 @@ export default {
   data( /*vm*/ ) {
     return {
       screen: false,
+      eventready: false,
       audioThreshold: -50,
       selectedPeer: null,
       focusTab: [],
       currentToogle: null
     }
   },
+  destroyed() {
+    this.room.removeListener("openMedia", this.onOpenMedia);
+  },
+
   mounted() {
-    //this.toogleMediaLayout();
+
+    if (this.room) {
+      this.room.on("openMedia", this.onOpenMedia);
+      this.eventready = true;
+    }
+
   },
   computed: {
     ...mapGetters({
@@ -80,7 +90,6 @@ export default {
     }),
     ...mapGetters([
       'peers',
-      //'getRemotePeer',
       'slider',
       'mediaLayout',
       'layout'
@@ -97,13 +106,19 @@ export default {
         this.hideMediaLayout();
         this.selectedPeer = null;
       }
+    },
+    room() {
+      if (!this.eventready) {
+        this.room.on("openMedia", this.onOpenMedia);
+      }
     }
   },
   methods: {
     ...mapMutations([
       //peer: 'getPeer',
       'toogleMediaLayout',
-      'hideMediaLayout'
+      'hideMediaLayout',
+      'showMediaLayout'
     ]),
     getPeerComponent(peerId) {
       return this.$refs.slider.getPeerComponent(peerId);
@@ -113,20 +128,6 @@ export default {
     },
 
     playPeer(peer) {
-      /*let stream = peer.videoStream.stream;
-      if (!stream) {
-        return Promise.resolve();
-      }
-      this.$refs.peer.srcObject = stream;
-      return this.$refs.peer.play()
-        .then(() => {
-          this.selectedPeer = peer;
-          return Promise.resolve(this.selectedPeer);
-        })
-        .catch(e => {
-          this.selectedPeer = null
-          this.log(e, "DEBUG")
-        });*/
       this.selectedPeer = peer;
       return Promise.resolve(this.selectedPeer);
     },
@@ -250,6 +251,15 @@ export default {
         return this.unFocus(this.currentToogle, "share");
       }
       this.screen = true;
+    },
+    onOpenMedia(data) {
+      // CLOSE diaolog
+      console.log("openMedia", data);
+      // check ok 
+      if (true) {
+        this.showMediaLayout();
+      }
+
     }
   }
 }

@@ -162,19 +162,22 @@ export default {
   },
   methods: {
     cleanVideoTag() {
-      let indexTag = `vid-preview-${this.peer.id}`;
-      let videoTag = this.$refs[indexTag];
-      if (!videoTag) {
-        return null;
+      if (this.peer) {
+        let indexTag = `vid-preview-${this.peer.id}`;
+        let videoTag = this.$refs[indexTag];
+        if (!videoTag) {
+          return null;
+        }
+        if (videoTag[0]) {
+          videoTag = videoTag[0];
+        }
+        if (!videoTag) {
+          return null;
+        }
+        videoTag.srcObject = null;
+        return videoTag;
       }
-      if (videoTag[0]) {
-        videoTag = videoTag[0];
-      }
-      if (!videoTag) {
-        return null;
-      }
-      videoTag.srcObject = null;
-      return videoTag;
+      return null;
     },
     async playPeer() {
       if (this.peer && this.videoStream && this.videoStream.stream) {

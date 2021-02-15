@@ -22,8 +22,8 @@ const state = {
   dialogJoin: true,
   dialogQuit: false,
   medias: getStorage("medias") || ["audio", "video"],
-  media:false,
-  layout:true,
+  media: false,
+  layout: true,
   peers: [],
   slider: true
 };
@@ -78,10 +78,10 @@ const getters = {
     return state.slider;
   },
   // media application
-  mediaLayout(state){
+  mediaLayout(state) {
     return state.media;
   },
-  layout(state){
+  layout(state) {
     return state.layout;
   }
 }
@@ -112,10 +112,9 @@ const mutations = {
     let index = state.medias.indexOf(type);
     if (index < 0) {
       state.medias.push(type);
-      if (type === 'screen' || type === 'noise'){
+      if (type === 'screen' || type === 'noise') {
         return;
       }
-      //this.commit("storeMedias", state.medias);
     }
   },
   storeMedias(state, value) {
@@ -146,42 +145,43 @@ const mutations = {
       state.peers.pop();
     }
   },
-  //layout
   toogleSlider(state) {
     state.slider = !state.slider;
   },
-  showSlider(state){
+  showSlider(state) {
     state.slider = true;
   },
-  hideSlider(state){
+  hideSlider(state) {
     state.slider = false;
   },
-  toogleMediaLayout(state){
-     state.media = !state.media;
+
+  toogleMediaLayout(state) {
+    state.media = !state.media;
   },
-  showMediaLayout(state){
+  showMediaLayout(state) {
     state.media = false;
-    setTimeout(()=>{
+    setTimeout(() => {
       state.media = true;
-    },100)
+    }, 100)
   },
-  hideMediaLayout(state){
+  hideMediaLayout(state) {
     //state.media = true;
-    setTimeout(()=>{
+    setTimeout(() => {
       state.media = false;
-    },100)
+    }, 100)
   },
-  showLayout(state){
+  //layout
+  showLayout(state) {
     state.layout = false;
-    setTimeout(()=>{
+    setTimeout(() => {
       state.layout = true;
-    },100)
+    }, 100)
   },
-  hideLayout(state){
+  hideLayout(state) {
     state.layout = true;
-    setTimeout(()=>{
+    setTimeout(() => {
       state.layout = false;
-    },100)
+    }, 100)
   }
 }
 

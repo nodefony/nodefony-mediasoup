@@ -365,17 +365,28 @@ class Meetings extends nodefony.Service {
         });
         break;
       }
+      case "openMedia":
+        {
+          room.notifyAllPeers("openMedia", {
+            peerId: peer.id,
+            media:message.data
+          }, {
+            //excludePeer: peer
+          });
+          break;
+        }
       //stats
     case "getTransportStats":
     case "getProducerStats":
     case "getConsumerStats":
     case "getDataProducerStats":
     case "getDataConsumerStats":
-      console.log(`Event ${message.method}`);
+      this.log(`Method ${message.method} not implemented `, "WARNING");
+      this.log(message, "DEBUG")
       break;
     default:
-      this.log(message)
-      throw new Error("bad message");
+      this.log(`Unknow Method : ${message.method} `,"WARNING");
+      this.log(message, "DEBUG")
     }
   }
 

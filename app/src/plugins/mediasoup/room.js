@@ -381,6 +381,9 @@ class Room extends nodefony.Service {
       case "producerpause":
         this.fire("pauseMyProducer", message.data.data, this);
         break;
+      case "openMedia":
+        this.fire("openMedia", message.data.data, this);
+        break;
       default:
         this.log(message.data.event, "NOTICE");
         this.log(message.data.data, "DEBUG");
