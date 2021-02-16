@@ -2,7 +2,7 @@
 <v-card :width="cardWidth" :height="height" class="rounded-lg" :elevation="elevation" :outlined="hover" :min-width="minWidth" :max-width="maxWidth" :max-height="maxHeight" :min-height="minHeight" :loading="loading" rounded @click="toggle" :class="{ focus: focus}"
   style="background:transparent;" :dark="dark">
 
-  <media-volume-peer v-if="volume" fab rounded absolute top left color="blue-grey" class=" white--text mt-5" :volume="this.volume || 0" :muted="local ? !hasAudio : !audio" />
+  <media-volume-peer v-if="volume && !screenShare" fab rounded absolute top left color="blue-grey" class=" white--text mt-5" :volume="this.volume || 0" :muted="local ? !hasAudio : !audio" />
 
   <slot name="peer"></slot>
 
@@ -129,8 +129,11 @@ export default {
     dark: {
       type: Boolean,
       default: false
+    },
+    screenShare: {
+      type: Boolean,
+      default: false
     }
-
   },
   data(vm) {
     return {

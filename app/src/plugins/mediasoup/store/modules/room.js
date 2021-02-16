@@ -47,7 +47,9 @@ const mutations = {
     state.peers = value;
   },
   setChatMessage(state, message){
-    this.commit('setUnreadMessage');
+    if( ! message.from.local ){
+      this.commit('setUnreadMessage');
+    }
     state.chatMessages.push( message);
   },
   setNbWaiting(state, value){

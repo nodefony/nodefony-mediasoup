@@ -16,10 +16,11 @@
 
     <v-col cols="12" style="width:100%;height:100%;" class="d-flex align-content-start justify-space-start flex-wrap px-1">
 
-      <preview-peer max-width="600px" min-width="200px" rounded flat style="background:transparent" class="ma-1 mb-3 align-self-stretch" v-for="(mypeer, index) in peers" :key="`preview-${index}`" :peerid="mypeer.id" :currentfocus="currentfocus" />
+      <preview-peer max-width="500px" min-width="200px" max-height="300px" min-height="150px" rounded flat style="background:transparent" class="ma-1 mb-3 flex-wrap align-self-center flex-wrap flex-grow-0" v-for="(mypeer, index) in peers" :key="`preview-${index}`"
+        :peerid="mypeer.id" :currentfocus="currentfocus" />
 
-      <!--v-card max-width="600px" min-width="200px" rounded outlined v-for="nb in 15" :key="`vid-${nb}`" style="border:solid 1px white;background:transparent" class="ma-1 mb-3 align-self-stretch">
-        <video :ref="`video-${nb}`" style="max-width:300px;border-radius:8px;" />
+      <!--v-card max-width="500px" min-width="200px" max-height="300px" min-height="150px" rounded outlined v-for="nb in 20" :key="`vid-${nb}`" style="border:solid 1px white;background:transparent" class="ma-1 mb-3 align-self-center flex-wrap flex-grow-0">
+        <video constrols :ref="`video-${nb}`" style="width:100%;height:100%;border-radius:8px;" />
       </v-card-->
     </v-col>
 

@@ -125,6 +125,8 @@ class Nodefony extends nodefony.Kernel {
     this.notifyTab.set(uuid, this.notifyTab.size)
     component.$on("close", () => {
       this.notifyTab.delete(uuid);
+      container.removeChild(component.$el);
+      component.$destroy();
     });
     component.$mount();
     container.appendChild(component.$el);

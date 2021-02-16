@@ -23,7 +23,7 @@
       <div v-show="hover" style="position:absolute;top:0px;right:0px">
         <v-chip class="ma-2" color="blue-grey" pill>
           <v-icon left>
-            mdi-volume-high
+            mdi-account
           </v-icon>
           {{name}} {{surname}}
         </v-chip>
