@@ -4,21 +4,21 @@
     <v-subheader>Share Medias</v-subheader>
     <v-list-item-group v-model="selectedMedia" color="primary">
 
-      <v-dialog v-model="pdf" transition="expend-transition" persistent max-width="55%">
+      <v-dialog v-model="video" transition="expend-transition" persistent max-width="55%">
         <template v-slot:activator="{ on, attrs }">
           <v-list-item v-bind="attrs" v-on="on">
             <v-list-item-icon>
-              <v-icon>mdi-pdf-box</v-icon>
+              <v-icon>mdi-movie</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title>
-                Share PDF Document
+                Share Video
               </v-list-item-title>
             </v-list-item-content>
           </v-list-item>
         </template>
         <template v-slot:default="dialog">
-          <dialog-pdf-media v-if="pdf" :dialog="dialog" />
+          <dialog-video-media v-if="video" v-on:close="closeDialog"/>
         </template>
       </v-dialog>
 
@@ -37,7 +37,7 @@
           </v-list-item>
         </template>
         <template v-slot:default="dialog">
-          <dialog-web-media v-if="web" :dialog="dialog" />
+          <dialog-web-media v-if="web" :dialog="dialog" v-on:close="closeDialog"/>
         </template>
       </v-dialog>
 
@@ -53,20 +53,20 @@ import {
   //mapMutations,
   //mapActions
 } from 'vuex';
-import DialogPdfMedia from '@/components/meetings/nav/medias/pdf/DialogPdfMedia.vue';
+import DialogVideoMedia from '@/components/meetings/nav/medias/video/DialogVideoMedia.vue';
 import DialogWebMedia from '@/components/meetings/nav/medias/website/DialogWebMedia.vue';
 
 export default {
   name: 'MenuMedia',
   components: {
-    'dialog-pdf-media': DialogPdfMedia,
+    'dialog-video-media': DialogVideoMedia,
     'dialog-web-media': DialogWebMedia
   },
   props: {},
   data() {
     return {
       selectedMedia: [],
-      pdf: false,
+      video: false,
       web: false
     }
   },
@@ -79,14 +79,26 @@ export default {
   },
   watch: {
     selectedMedia(value) {
+      if (value === null) {
+        this.video = false;
+        this.web = false;
+        return;
+      }
+
       switch (value) {
         case 0:
-          this.pdf = true
+          this.video = true
           break;
         case 1:
           this.web = true
           break;
       }
+    }
+  },
+  methods: {
+    closeDialog() {
+      this.selectedMedia = null;
+      this.$emit('close');
     }
   }
 }

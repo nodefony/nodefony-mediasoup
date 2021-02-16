@@ -7,14 +7,16 @@ class ViewerSettings {
       eventsPerSecond: 30,
       controlPolicy: 'automatic'
     };
+    this.oldMediaUrl = null;
     this.loader_function = loader_function;
 
     this.events = new Map([["onSettings", async (settings, method) => {
       if (settings) {
-        const old_url = this.data.mediaUrl;
+        const url_changed = this.oldMediaUrl != settings.mediaUrl;
         Object.assign(this.data, settings);
-        if (method == "set" && old_url != settings.mediaUrl) {
-          await this.loader_function(settings.mediaUrl);
+        this.oldMediaUrl = this.data.mediaUrl;
+        if (method == "set" && url_changed) {
+          await this.loader_function("https://" + settings.mediaUrl);
         }
       }
     }], ["onDisconnected", (event) => {
@@ -44,9 +46,7 @@ class ViewerSettings {
       data: this.data
     });
 
-    if (old_settings.mediaUrl != new_settings.mediaUrl) {
-      this.loader_function(new_settings.mediaUrl);
-    }
+    this.oldMediaUrl = old_settings.mediaUrl;
   }
 }
 

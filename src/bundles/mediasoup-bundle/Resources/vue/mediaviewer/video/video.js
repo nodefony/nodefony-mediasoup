@@ -1,20 +1,18 @@
 import nodefonyclient from 'nodefony-client';
-import IframeQuery from './iframeQuery.js';
 
 import ViewerLoader from '../loader.js';
 import ViewerController from '../controller.js'
 import ViewerSettings from '../settings.js'
 
-class IframeViewer extends nodefonyclient.Service {
+class VideoViewer extends nodefonyclient.Service {
 
-  constructor(iframeId, container, socketBinding, EventManager) {
-    super("viewer_iframe", container, null, process.env);
+  constructor(videoId, container, socketBinding, EventManager) {
+    super("viewer_video", container, null, process.env);
     this.socketBinding = socketBinding;
-    this.iframeId = iframeId;
-    this.iframeElement = document.getElementById(iframeId);
+    this.videoId = videoId;
+    this.videoElement = document.getElementById(videoId);
+    this.videoSourceElement = this.videoElement.getElementsByTagName('source')[0];
     this.loaded = false;
-
-    this.queryResolver = new IframeQuery(container, this);
 
     this.controller = new ViewerController(this.socketBinding);
     this.settings = new ViewerSettings(this.socketBinding, async (url) => {
@@ -26,26 +24,7 @@ class IframeViewer extends nodefonyclient.Service {
 
     this.INIT_SYNC_TIMEOUT = this.eventManager.INIT_SYNC_TIMEOUT;
   }
-
-  async waitIframeElementLoad(url) {
-    return await new Promise((resolve, reject) => {
-      const postInit = () => {
-        this.loaded = true;
-        return resolve();
-      };
-
-      this.iframeElement = document.getElementById(this.iframeId);
-      this.iframeElement.setAttribute('src', url);
-      this.iframeElement.setAttribute('iframe-src', url);
-
-      if (!this.loaded) {
-        this.iframeElement.onload = postInit;
-      } else {
-        return postInit();
-      }
-    });
-  }
-
+  
   reset() {
     this.loaded = false;
     if (this.eventManager.reset) {
@@ -62,16 +41,19 @@ class IframeViewer extends nodefonyclient.Service {
   }
 
   async waitReady(url) {
-    // Wait the native iframe "onload" event triggered when an iframe url is loaded
-    await this.waitIframeElementLoad(url);
+    this.videoSourceElement.setAttribute('src', url);
+    this.videoElement.load();
 
     // Wait the contained media to be loaded
     await this.eventManager.waitReady(url);
   }
 
   postMessage(message, targetOrigin = "*") {
-    return this.iframeElement.contentWindow.postMessage(message, targetOrigin);
+    //TODO
   }
+
+  /*
+  //TODO ???
 
   async postWaitId(message, queryTimeout = 10000) {
     return await this.queryResolver.queryWaitId(message, queryTimeout);
@@ -80,6 +62,7 @@ class IframeViewer extends nodefonyclient.Service {
   async postWaitAny(message, queryTimeout = 10000) {
     return await this.queryResolver.queryWaitAny(message, queryTimeout);
   }
+  */
 }
 
-export default IframeViewer;
+export default VideoViewer;

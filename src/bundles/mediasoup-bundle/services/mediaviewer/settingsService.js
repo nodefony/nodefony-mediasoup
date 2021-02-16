@@ -30,7 +30,7 @@ module.exports = class MediaViewerSettings extends nodefony.Service {
       throw new Error(`Current peer (${client_app_data.client_id}) is not a room admin, therefore cannot edit media settings`);
     }
     
-    return { broadcast: true, value: data };
+    return { broadcast: null, value: data };
   }
 
   getSettings(client_app_data) {

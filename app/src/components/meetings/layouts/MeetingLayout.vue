@@ -26,7 +26,7 @@
 
       <!-- Media layout -->
       <v-expand-transition>
-        <pdf-viewer v-if="mediaLayout" :roomid="room.id" />
+        <media-viewer type="video" v-if="mediaLayout" :data="currentMediaLayoutData" :roomid="room.id" />
       </v-expand-transition>
 
       <!-- Main layout -->
@@ -43,7 +43,7 @@
 <script>
 import SliderLayout from '@/components/meetings/layouts/SliderLayout';
 import GridLayout from '@/components/meetings/layouts/GridLayout';
-import PdfViewer from '@/../../src/bundles/mediasoup-bundle/Resources/vue/components/PdfViewer';
+import MediaViewer from '@/../../src/bundles/mediasoup-bundle/Resources/vue/components/MediaViewer';
 import PreviewPeer from '@/components/meetings/medias/peers/PreviewPeer'
 
 import {
@@ -57,7 +57,7 @@ export default {
   components: {
     "grid-layout": GridLayout,
     "slider-layout": SliderLayout,
-    "pdf-viewer": PdfViewer,
+    "media-viewer": MediaViewer,
     "peer-preview": PreviewPeer
   },
   props: {},
@@ -69,7 +69,8 @@ export default {
       selectedPeer: null,
       focusTab: [],
       currentfocus: null,
-      currentToogle: null
+      currentToogle: null,
+      currentMediaLayoutData: null
     }
   },
   destroyed() {
@@ -255,13 +256,8 @@ export default {
       this.screen = true;
     },
     onOpenMedia(data) {
-      // CLOSE diaolog
-      console.log("openMedia", data);
-      // check ok
-      if (true) {
-        this.showMediaLayout();
-      }
-
+      this.currentMediaLayoutData = data;
+      this.showMediaLayout();
     }
   }
 }

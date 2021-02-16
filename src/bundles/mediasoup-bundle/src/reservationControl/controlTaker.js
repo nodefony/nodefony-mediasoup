@@ -53,8 +53,11 @@ module.exports = class ControlTaker {
       clearTimeout(this.timer);
       this.timer = null;
 
-      this.log(`Control timed out for ${this.client_id} (${this.peer_data.username})`, "DEBUG");
-      const old_peer_data = Object.assign({}, this.peer_data);
+      if (this.peer_data) {
+        this.log(`Control timed out for ${this.client_id} (${this.peer_data.username})`, "DEBUG");
+      }
+
+      const old_peer_data = this.peer_data ? Object.assign({}, this.peer_data) : {};
       const old_client_id = this.client_id;
       this.client_id = this.policy.lost(old_client_id);
       if (this.client_id != old_client_id) {

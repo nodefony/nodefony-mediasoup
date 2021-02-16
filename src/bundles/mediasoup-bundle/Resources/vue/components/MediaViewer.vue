@@ -1,142 +1,60 @@
 <template>
-<v-card width=100% height="100%" tile elevation="4" outlined :loading="loading" class="" style="">
-
-  <v-card-title color="blue-grey" dark class="title font-weight-regular justify-space-between">
-    <v-icon x-large class="mr-5">mdi-blur</v-icon>
-    <v-list dense>
-      <v-list-item>
-        <v-list-item-content>
-          <v-list-item-title class="text-h6">Media</v-list-item-title>
-          <v-list-item-subtitle class="text-capitalize">{{type}}</v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-    </v-list>
-    <v-spacer></v-spacer>
-
-    <v-list dense>
-      <v-list-item>
-        <v-list-item-content style="text-align: center;">
-          <!--v-list-item-title class="text-h6">Name</v-list-item-title-->
-          <v-list-item-subtitle class="text-capitalize">{{currentController.name}}</v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-    </v-list>
-
-    <v-spacer></v-spacer>
-
-    <v-btn icon v-if="!lockedAdminPanel" :disabled="lockedAdminPanel === null" :color="toggleAdminPanel ? 'blue-grey' : ''" @click="toggleAdminPanel = !toggleAdminPanel">
-      <v-icon>mdi-cog</v-icon>
-    </v-btn>
-
-    <v-btn icon @click="forceRerenderMedia">
-      <v-icon>mdi-refresh</v-icon>
-    </v-btn>
-
-    <v-badge :value="controlOther" :color="controlColor" :content="currentController.name" left transition="scale-transition" class="text-capitalize">
-      <v-btn x-small :color="socketStatusColor" class="white--text" fab @click="toggleSocket" :disabled="lockedAdminPanel">
-        <v-icon v-if="controlOwn" small :color="socketActivityColor" dark>mdi-hand-right</v-icon>
-        <v-icon v-if="controlOther" small :color="socketActivityColor" dark>mdi-lock</v-icon>
-        <v-icon v-if="controlNone" small :color="socketActivityColor" dark>mdi-cloud-download</v-icon>
-      </v-btn>
-    </v-badge>
-  </v-card-title>
-  <v-container fluid style="height:100%;width:100%">
-
-    <v-row style="height:100%;width:100%">
-      <v-col style="height:100%;width:100%">
-        <slot v-if="renderMedia" name="media" :type="type"></slot>
-      </v-col>
-      <v-slide-x-reverse-transition>
-        <v-col md="2" height="100%" v-show="toggleAdminPanel">
-          <v-card height="100%" flat tile elevation="0" class="d-flex flex-column">
-            <v-card-title>{{$t("configuration")}}</v-card-title>
-            <slot name="AdminPanel"> </slot>
-          </v-card>
-        </v-col>
-      </v-slide-x-reverse-transition>
-    </v-row>
+  <v-container v-if="socketSynchronized">
+    <video-viewer :socketBinding="socketBinding" v-if="isVideo" v-on:loaded="load" v-on:settings-save="saveAdminPanel"/>
   </v-container>
-</v-card>
 </template>
 
 <script>
-import Controls from '../mediaviewer/control.js'
+import {
+  mapGetters,
+  mapMutations
+} from 'vuex';
+
+// @ is an alias to /src
+import VideoViewer from './VideoViewer.vue';
 
 export default {
   name: 'MediaViewer',
-  components: {},
+  components: {
+    "video-viewer": VideoViewer
+  },
   props: {
-    peerid: {
-      type: String
-    },
     roomid: {
       type: String
     },
     type: {
       type: String
+    },
+    data: {
+      type: Object
     }
   },
-  data() {
+  data(vm) {
     return {
-      loading: true,
-      renderMedia: true,
       message: null,
-      toggleAdminPanel: false,
-      lockedAdminPanel: false,
-      currentController: {
-        name: '',
-        id: null,
-        type: Controls.NONE
-      },
-      activityMeter: null,
+      settings: null,
+      socketBinding: null,
       socket: null,
-      socketBinding: null
+      socketSynchronized: false,
+      currentMediaLayoutData: null
     };
   },
-  async mounted() {
-    this.socketBinding = this.$media_viewer.socketBinding;
-    this.initEvents(this.socketBinding);
-    await this.toggleSocket();
-  },
-  beforeDestroy() {
-    this.socket.close();
-    this.socket = null;
-  },
-  watch: {
-    message(pdu) {
-      this.notify(pdu);
-    }
-  },
   computed: {
-    socketStatusColor() {
-      return (!this.socket) ? 'red darken-3' : 'blue-grey';
-    },
-    socketActivityColor() {
-      if (!this.activityMeter) {
-        return 'white';
-      }
-      return this.controlColor;
-    },
-    controlColor() {
-      if (!this.currentController) {
-        return 'blue';
-      }
-      return this.currentController.type == Controls.OTHER ? 'red lighten-2' : 'blue';
-    },
+    ...mapGetters({
+      peer: 'getPeer'
+    }),
     socketUrl() {
-      return `wss://${window.location.host}/mediasoup/ws/mediaviewer?roomid=${this.roomid}&peerid=${this.peerid}`;
+      return `wss://${window.location.host}/mediasoup/ws/mediaviewer?roomid=${this.roomid}&peerid=${this.peer.id}`;
     },
-    controlOwn() {
-      return this.currentController.type == Controls.OWN;
-    },
-    controlOther() {
-      return this.currentController.type == Controls.OTHER;
-    },
-    controlNone() {
-      return this.currentController.type == Controls.NONE;
+    isVideo() {
+      return this.type == 'video';
     }
   },
   methods: {
+    saveAdminPanel(new_settings, old_settings) {
+      this.toggleAdminPanel = false;
+      this.settings.refreshBroadcastSettings(new_settings, old_settings);
+    },
     async toggleSocket() {
       if (!this.socket) {
         this.socketBinding.detach();
@@ -147,41 +65,79 @@ export default {
         this.socket = null;
       }
     },
-    triggerActivityMeter() {
-      if (this.activityMeter) {
-        clearTimeout(this.activityMeter);
-        this.activityMeter = null;
+    async connect() {
+      this.socketSynchronized = false;
+
+      this.log("Starting media", "INFO");
+
+      let init_settings = null;
+      this.socketBinding.once("onSettings", (settings) => {
+        init_settings = settings;
+      });
+
+      await this.socketBinding.sendWait({
+        action: "settings",
+        method: "get"
+      });
+
+      if (!this.currentMediaLayoutData || !this.currentMediaLayoutData.mediaUrl) {
+        if (!init_settings || !init_settings.mediaUrl) {
+          this.message = this.log("No media URL provided", "ERROR");
+          return;
+        }
+
+        this.currentMediaLayoutData = init_settings;
       }
-      this.activityMeter = setTimeout(() => {
-        clearTimeout(this.activityMeter);
-        this.activityMeter = null;
-      }, 100);
+
+      // Update server-side configuration if required
+      if (!init_settings || init_settings.mediaUrl != this.currentMediaLayoutData.mediaUrl) {
+        await this.socketBinding.sendWait({
+          action: "settings",
+          method: "set",
+          data: this.currentMediaLayoutData
+        });
+      }
+      this.socketSynchronized = true;
     },
-    initEvents(socketBinding) {
-      socketBinding.on("onSendMessage", this.triggerActivityMeter.bind(this));
-      socketBinding.on("onMessage", this.triggerActivityMeter.bind(this));
-      socketBinding.on("onControlChange", (controller_id, control, peer_data) => {
-        this.currentController.type = control;
-        this.currentController.id = controller_id;
-        this.currentController.name = peer_data ? (peer_data.surname + " " + peer_data.name) : '';
+    async load(viewer, settings) {
+      if (this.viewer) {
+        this.viewer.unlisten();
+      }
+      let url = 'https://' + this.currentMediaLayoutData.mediaUrl;
+
+      this.viewer = viewer;
+      this.settings = settings;
+      this.viewer.on("onViewerError", (message) => {
+        this.message = this.log(message, "ERROR");
       });
-      socketBinding.on("onConnected", () => {
-        // Handshake done
-        this.loading = false;
-        this.$emit("loaded", socketBinding);
-      });
-    },
-    forceRerenderMedia() {
-      this.renderMedia = false;
-      this.$nextTick().then(() => {
-        this.renderMedia = true;
-        this.$emit("loaded", this.socketBinding);
-      });
+
+      await this.viewer.load(url);
+    }
+  },
+  async mounted() { 
+    this.currentMediaLayoutData = this.data ? this.data.media : null;
+    this.socketBinding = this.$media_viewer.socketBinding;
+    this.socketBinding.once("onConnected", this.connect.bind(this));
+    await this.toggleSocket();
+  },
+  created() {},
+  watch: {
+    message(message) {
+      this.notify(message);
+    }
+  },
+  beforeUpdate() {},
+  beforeDestroy() {
+    if (this.viewer) {
+      this.viewer.unlisten();
+    }
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
-
 </style>

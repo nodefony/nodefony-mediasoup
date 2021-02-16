@@ -20,8 +20,12 @@ class ViewerLoader {
         action: "settings",
         method: "get"
       });
-      url = this.settings.data.mediaUrl || url;
-      this.settings.data.mediaUrl = url;
+
+      if (this.settings.data.mediaUrl) {
+        url = "https://" + this.settings.data.mediaUrl;
+      } else {
+        this.settings.data.mediaUrl = url.replace("https://", "");
+      }
 
       // Ignoring sync events from socket during this part of initialization, because media is not loaded
       await this.socketBinding.doIgnoreSync(async () => {
@@ -49,14 +53,10 @@ class ViewerLoader {
   }
 
   async load(url) {
-    if (this.media.beforeLoad) {
-      await this.media.beforeLoad();
-    }
+    this.media.fire("onViewerLoading");
     await this.initialize_(url);
     await this.loadCurrentRoomMediaStateFromServer_();
-    if (this.media.afterLoad) {
-      await this.media.afterLoad();
-    }
+    this.media.fire("onViewerLoaded");
   }
 
 }

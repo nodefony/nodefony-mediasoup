@@ -23,6 +23,7 @@ const state = {
   dialogQuit: false,
   medias: getStorage("medias") || ["audio", "video"],
   media: false,
+  currentMediaData: null,
   layout: true,
   peers: [],
   slider: true
@@ -156,7 +157,7 @@ const mutations = {
   },
 
   toogleMediaLayout(state) {
-    state.media = !state.media;
+     state.media = !state.media;
   },
   showMediaLayout(state) {
     state.media = false;
@@ -170,7 +171,6 @@ const mutations = {
       state.media = false;
     }, 100)
   },
-  //layout
   showLayout(state) {
     state.layout = false;
     setTimeout(() => {

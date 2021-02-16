@@ -128,7 +128,7 @@
       </v-btn>
     </template>
 
-    <menu-media />
+    <menu-media v-on:close="menuMedia = false" />
 
   </v-menu>
 
