@@ -45,7 +45,10 @@ class Mediasoup extends nodefony.Service {
     this.portHttps = this.options.VUE_APP_HTTPS_PORT;
     this.VIDEO_CONSTRAINS = VIDEO_CONSTRAINS;
     this.api = new nodefony.Api(this.name, {
-      baseUrl: "/mediasoup/api"
+      baseUrl: "/mediasoup/api",
+      storage: {
+        type: "local"
+      }
     });
     this.host = window.location.host;
   }

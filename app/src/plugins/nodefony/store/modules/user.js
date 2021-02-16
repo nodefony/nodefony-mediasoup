@@ -14,7 +14,10 @@ import {
   Api as baseApi
 } from 'nodefony-client';
 const Api = new baseApi("users", {
-  baseUrl: "/api/users"
+  baseUrl: "/api/users",
+  storage: {
+    type: "local"
+  }
 });
 
 const state = {

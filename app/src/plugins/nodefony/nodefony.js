@@ -29,7 +29,10 @@ class Nodefony extends nodefony.Kernel {
     this.vuetifyVersion = this.options.VUE_APP_VUETIFY_VERSION;
     this.domain = this.options.VUE_APP_DOMAIN;
     this.api = new nodefony.Api(this.name, {
-      baseUrl: "/api"
+      baseUrl: "/api",
+      storage: {
+        type: "local"
+      }
     });
     this.notifyTab = new Map();
   }

@@ -21,7 +21,7 @@ const state = {
   sideBar: getStorage("roomsidebar") || false,
   dialogJoin: true,
   dialogQuit: false,
-  medias: getStorage("medias") || ["audio", "video"],
+  medias: ["audio", "video"],
   media: false,
   currentMediaData: null,
   layout: true,

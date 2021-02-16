@@ -1,11 +1,4 @@
 import nodefony from 'nodefony-client';
-const setStorage = (item, value) => {
-  return window.sessionStorage.setItem(item, JSON.stringify(value));
-};
-
-const getStorage = (item) => {
-  return JSON.parse(window.sessionStorage.getItem(item));
-};
 
 const state = {
   connected: false,

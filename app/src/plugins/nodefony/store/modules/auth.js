@@ -15,12 +15,15 @@ import {
   Api as baseApi
 } from 'nodefony-client';
 const Api = new baseApi("auth", {
-  baseUrl:"/api/jwt"
+  baseUrl:"/api/jwt",
+  storage: {
+    type: "local"
+  }
 });
-console.log(`Storage : `, window.sessionStorage.getItem('username'))
+//console.log(`Storage : `, window.localStorage.getItem('username'))
 const state = {
   token: Api.token,
-  username: window.sessionStorage.getItem('username'),
+  username: window.localStorage.getItem('username'),
   status: '',
   loading: false,
   decodedToken: null
@@ -80,14 +83,14 @@ const mutations = {
   [AUTH_REQUEST]: (state) => {
     state.status = 'loading'
     state.loading = true
-    window.sessionStorage.removeItem('username')
+    window.localStorage.removeItem('username')
     state.username = null;
   },
   [AUTH_SUCCESS]: (state, resp) => {
     state.status = 'success'
     state.loading = false
     state.token = resp.token
-    sessionStorage.setItem('username', resp.decodedToken.data.user.username)
+    window.localStorage.setItem('username', resp.decodedToken.data.user.username)
     state.username = resp.decodedToken.data.user.username
     state.decodedToken = resp.decodedToken
   },
@@ -99,7 +102,7 @@ const mutations = {
     state.token = ''
     state.status = 'logout'
     state.loading = false
-    window.sessionStorage.removeItem('username')
+    window.localStorage.removeItem('username')
     state.username =null
     state.decodedToken = null
   },
@@ -107,7 +110,7 @@ const mutations = {
     state.token = null;
     state.decodedToken = null
     state.loading = false;
-    window.sessionStorage.removeItem('username')
+    window.localStorage.removeItem('username')
     state.username =null
     Api.clearToken(true);
   }
