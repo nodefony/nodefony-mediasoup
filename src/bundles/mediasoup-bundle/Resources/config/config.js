@@ -58,8 +58,9 @@ module.exports = {
 
   // mediasoup settings.
   mediasoup: {
+    gcIntervalTime: 1000*60*60,  // ms => garbage collector 0 or null for disabled
     // Number of mediasoup workers to launch.
-    numWorkers: Object.keys(os.cpus()).length,
+    numWorkers: 1, //Object.keys(os.cpus()).length,
     // mediasoup WorkerSettings.
     // See https://mediasoup.org/documentation/v3/mediasoup/api/#WorkerSettings
     workerSettings: {

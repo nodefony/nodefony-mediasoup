@@ -14,6 +14,7 @@ module.exports = class Mediasoup extends nodefony.Service {
     this.TIMEOUT = 400;
     this.orm = this.kernel.getORM();
     this.takenPortSet = new Set();
+    this.gcInterval = null;
     if (!kernel.ready) {
       this.kernel.once("onReady", () => {
         this.meetingsService = this.get("Meetings");
@@ -21,9 +22,15 @@ module.exports = class Mediasoup extends nodefony.Service {
         this.peersService = this.get("Peers");
         this.entity = this.orm.getEntity("room");
         this.runMediasoupWorkers();
+        if (this.config.gcIntervalTime) {
+          this.roomGC();
+        }
       });
       this.kernel.once("onTerminate", () => {
         this.closeWorkers();
+        if (this.gcInterval) {
+          clearInterval(this.gcInterval);
+        }
       });
     } else {
       this.meetingsService = this.get("Meetings");
@@ -335,4 +342,18 @@ module.exports = class Mediasoup extends nodefony.Service {
     });
   }
 
+  // ROOM GARBAGE
+  roomGC() {
+    this.log(`Initiliaze Interval ${this.config.gcIntervalTime } ms`, "INFO", "MEDIASOUP GARBAGE COLLECTOR");
+    this.gcInterval = setInterval(() => {
+      this.meetingsService.rooms.forEach(async (room, key, map) => {
+        this.log(`GARBAGE COLLECTOR Check room isActive  :${key}`, "DEBUG", "MEDIASOUP GARBAGE COLLECTOR");
+        if (room.peers.size) {
+          return;
+        }
+        await this.meetingsService.closeRoom(room.id)
+        this.log(`Close room :${room.id}`, "INFO", "MEDIASOUP GARBAGE COLLECTOR");
+      });
+    }, this.config.gcIntervalTime);
+  }
 };
