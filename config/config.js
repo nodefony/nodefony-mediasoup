@@ -26,22 +26,35 @@ let certificats = {
     rejectUnauthorized: true
   }
 };
+let domain = "127.0.0.1";
+let domainAlias = [
+  "^localhost$",
+  "^mediasoup.nodefony.com$"
+];
+let domainCheck = false;
 let CDN = null;
 let statics = true;
 let monitoring = true;
 let documentation = false;
+let mail = true;
 let unitTest = false;
-let domainCheck = false;
+
 if (process.env && process.env.NODE_ENV === "production") {
+  domain = "127.0.0.1";
+  domainAlias = [
+    "^localhost$",
+    "^mediasoup.nodefony.com$"
+  ];
+  domainCheck = true;
   certificats.key = path.resolve("config", "certificates", "server", "privkey.pem");
   certificats.cert = path.resolve("config", "certificates", "server", "fullchain.pem");
   certificats.ca = path.resolve("config", "certificates", "ca", "nodefony-mediasoup-root-ca.crt.pem");
   CDN = null;
+  mail = true;
   statics = true;
   documentation = false;
   monitoring = true;
   unitTest = false;
-  domainCheck = true;
 } else {
   certificats.key = path.resolve("config", "certificates", "server", "privkey.pem");
   certificats.cert = path.resolve("config", "certificates", "server", "fullchain.pem");
@@ -50,11 +63,8 @@ if (process.env && process.env.NODE_ENV === "production") {
 
 module.exports = {
   system: {
-    domain: "127.0.0.1",
-    domainAlias: [
-      "^localhost$",
-      "^mediasoup.nodefony.com$"
-    ],
+    domain: domain,
+    domainAlias: domainAlias,
     httpPort: 5151,
     httpsPort: 5152,
     domainCheck: domainCheck,
@@ -66,7 +76,7 @@ module.exports = {
     security: true,
     realtime: true,
     monitoring: monitoring,
-    mail: true,
+    mail: mail,
     documentation: documentation,
     unitTest: unitTest,
     redis: false,

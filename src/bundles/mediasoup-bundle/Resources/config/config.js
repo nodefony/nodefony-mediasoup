@@ -12,9 +12,35 @@
  *        GENERATE BY nodefony-mediasoup BUILDER
  */
 
-const os = require('os');
-const ip = kernel.settings.system.domain;
-const anounceIp = kernel.settings.system.domain;
+
+const calculNbWorker= () =>{
+  const os = require('os');
+  let cpus = parseInt(Object.keys(os.cpus()).length ,10);
+  // keep one process for nodefony framwork
+  if( cpus > 1){
+    return cpus - 1;
+  }
+  return cpus;
+}
+
+
+// default
+let ip = kernel.settings.system.domain;
+let anounceIp = kernel.settings.system.domain;
+let nbWorkers = calculNbWorker();
+let gcIntervalTime = null;
+let rtcMinPort = 40000;
+let rtcMaxPort = 49999;
+
+// you can change default for production usage
+if(kernel.environement === "prod"){
+  ip = kernel.settings.system.domain;
+  anounceIp = kernel.settings.system.domain;
+  gcIntervalTime = 1000*60*60;  // ms => garbage collector 0 or null for disabled
+  rtcMinPort = 40000;
+  rtcMaxPort = 49999;
+}
+
 module.exports = {
   type: "sandbox",
   locale: "en_en",
@@ -58,9 +84,9 @@ module.exports = {
 
   // mediasoup settings.
   mediasoup: {
-    gcIntervalTime: 1000*60*60,  // ms => garbage collector 0 or null for disabled
+    gcIntervalTime: gcIntervalTime,  // ms => garbage collector 0 or null for disabled
     // Number of mediasoup workers to launch.
-    numWorkers: 1, //Object.keys(os.cpus()).length,
+    numWorkers: nbWorkers,
     // mediasoup WorkerSettings.
     // See https://mediasoup.org/documentation/v3/mediasoup/api/#WorkerSettings
     workerSettings: {
@@ -79,8 +105,8 @@ module.exports = {
         'svc',
         'sctp'
       ],
-      rtcMinPort: process.env.MEDIASOUP_MIN_PORT || 40000,
-      rtcMaxPort: process.env.MEDIASOUP_MAX_PORT || 49999
+      rtcMinPort: rtcMinPort,
+      rtcMaxPort: rtcMaxPort
     },
     // mediasoup Router options.
     // See https://mediasoup.org/documentation/v3/mediasoup/api/#RouterOptions
