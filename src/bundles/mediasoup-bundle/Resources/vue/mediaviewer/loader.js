@@ -5,6 +5,10 @@ class ViewerLoader {
     this.settings = settings;
     this.media = media;
     this.controller = controller;
+
+    this.settings.onUrlChanged = async (url) => {
+      await this.load(url);
+    };
   }
 
   async initialize_(url) {
@@ -15,12 +19,8 @@ class ViewerLoader {
     // Ensure that we do not transmit any sync message during initialization
     // By forcing control disabled
     await this.controller.doAvoidControl(async () => {
-      // Get current room settings from server and deduce the current media URL
-      await this.socketBinding.sendWait({
-        action: "settings",
-        method: "get"
-      });
-
+      // Use current settings and deduce the current media URL
+      // (Be careful, settings have to be up-to-date from server before calling loader.load(url))
       if (this.settings.data.mediaUrl) {
         url = "https://" + this.settings.data.mediaUrl;
       } else {

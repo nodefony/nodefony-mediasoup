@@ -45,12 +45,15 @@ class MediaPlugin extends nodefonyclient.Service {
       };
 
       socket.onclose = (event) => {
-        this.socketBinding.detach();
         this.socket = null;
         this.fire("onSocketClose", event, this);
       };
       return socket;
     });
+  }
+
+  isSocketClosed() {
+    return !this.socket;
   }
 
   close() {

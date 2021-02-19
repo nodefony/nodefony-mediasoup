@@ -38,6 +38,22 @@ class ViewerController {
     return !this.disable_control && (this.has_control == Controls.NONE || this.has_control == Controls.OWN);
   }
 
+  syncIfControl(media_id, action, data, persist = true) {
+    if (!this.canTakeControl()) {
+      return;
+    }
+    this.socketBinding.send({
+      action: "sync",
+      method: "set",
+      data: {
+        action: action,
+        persist: persist,
+        media_id: media_id,
+        data: data
+      }
+    });
+  }
+
   async doAvoidControl(func, timeout) {
     this.disable_control++;
     let except = null;

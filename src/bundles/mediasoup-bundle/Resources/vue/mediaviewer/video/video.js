@@ -2,11 +2,10 @@ import nodefonyclient from 'nodefony-client';
 
 import ViewerLoader from '../loader.js';
 import ViewerController from '../controller.js'
-import ViewerSettings from '../settings.js'
 
 class VideoViewer extends nodefonyclient.Service {
 
-  constructor(videoId, container, socketBinding, EventManager) {
+  constructor(videoId, settings, container, socketBinding, EventManager) {
     super("viewer_video", container, null, process.env);
     this.socketBinding = socketBinding;
     this.videoId = videoId;
@@ -15,9 +14,7 @@ class VideoViewer extends nodefonyclient.Service {
     this.loaded = false;
 
     this.controller = new ViewerController(this.socketBinding);
-    this.settings = new ViewerSettings(this.socketBinding, async (url) => {
-      await this.load(url);
-    });
+    this.settings = settings;
 
     this.loader = new ViewerLoader(this.settings, this.controller, this.socketBinding, this);
     this.eventManager = new EventManager(this, this.controller, this.settings, this.socketBinding, this.queryResolver);

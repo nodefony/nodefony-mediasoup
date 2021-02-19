@@ -13,6 +13,8 @@ class SocketBinding extends nodefonyclient.Service {
     });
 
     media_viewer.on("onSocketClose", (socket) => {
+      this.removeAllListeners();
+      this.client_id = null;
       this.detach();
     });
   }
@@ -48,6 +50,10 @@ class SocketBinding extends nodefonyclient.Service {
     return !this.socket;
   }
 
+  isConnected() {
+    return !!this.client_id;
+  }
+
   handleConnection(client_id, type) {
     if (typeof type === "string") {
       switch (type) {
@@ -56,7 +62,7 @@ class SocketBinding extends nodefonyclient.Service {
         this.fire("onPeerConnected", [client_id], 1);
         break;
       case "self_join":
-        this.log(`Client : ${client_id} : connected`,"DEBUG");
+        this.log(`Client : ${client_id} : connected`,"INFO");
         this.client_id = client_id;
         this.fire("onConnected", this.client_id);
         break;
@@ -173,6 +179,37 @@ class SocketBinding extends nodefonyclient.Service {
       message.id = message.id || this.incrementMessageId();
       this.queries[message.id] = resolve;
       this.send(message);
+    });
+  }
+
+  async waitAny(event_name, timeout) {
+    return new Promise((resolve, reject) => {
+      let failure = false;
+      let timer = null;
+
+      const callback = async (...arg) => {
+        this.removeListener(event_name, callback);
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+
+        if (!failure) {
+          return resolve(...arg);
+        }
+      };
+
+      if (timeout) {
+        timer = setTimeout(() => {
+          failure = true;
+          this.removeListener(event_name, callback);
+          clearTimeout(timer);
+          timer = null;
+          return reject(`Socket wait for event ${event_name} timed out after ${timeout/1000} seconds`);
+        }, timeout);
+      }
+
+      this.on(event_name, callback);
     });
   }
 }

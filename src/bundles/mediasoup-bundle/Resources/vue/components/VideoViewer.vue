@@ -1,5 +1,5 @@
 <template>
-<media-viewer-template type="video" :socketBinding="socketBinding" v-on:connected="connected">
+<media-viewer-template type="video" :roomAdmin="roomAdmin" :socketBinding="socketBinding" v-on:connected="connected">
   <template v-slot:media="{ type }">
     <video controls :id='videoId' class="video">
       <source/>
@@ -34,6 +34,14 @@ export default {
     socketBinding: {
       type: Object,
       required: true
+    },
+    settings: {
+      type: Object,
+      required: true
+    },
+    roomAdmin: {
+      type: Boolean,
+      default: false
     }
   },
   data(vm) {
@@ -45,11 +53,11 @@ export default {
   computed: { },
   methods: {
     saveAdminPanel(new_settings, old_settings) {
-      this.$emit("settings-save", new_settings, old_settings)
+      this.$emit("settings-save", new_settings, old_settings);
     },
     async connected() {
       this.log("Starting Video media", "INFO");
-      this.viewer = new VideoViewer(this.videoId, this.$media_viewer.container, this.socketBinding, VideoManager);
+      this.viewer = new VideoViewer(this.videoId, this.settings, this.$media_viewer.container, this.socketBinding, VideoManager);
       this.$emit("loaded", this.viewer, this.viewer.settings);
     }
   },

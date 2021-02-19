@@ -30,12 +30,14 @@ module.exports = class MediaViewerSynchronizer extends nodefony.Service {
       responses.push({ action: "control", ...control.response });
     }
 
-    // Update room media state storage
-    const room_id = client_app_data.room_id;
-    this.data_rooms[room_id] = this.data_rooms[room_id] || {};
-    this.data_rooms[room_id][data.media_id] = this.data_rooms[room_id][data.media_id]|| {};
-    this.data_rooms[room_id][data.media_id][data.action] = this.data_rooms[room_id][data.media_id][data.action] || {};
-    Object.assign(this.data_rooms[room_id][data.media_id][data.action], data);
+    if (data.persist) {
+      // Update room media state storage
+      const room_id = client_app_data.room_id;
+      this.data_rooms[room_id] = this.data_rooms[room_id] || {};
+      this.data_rooms[room_id][data.media_id] = this.data_rooms[room_id][data.media_id]|| {};
+      this.data_rooms[room_id][data.media_id][data.action] = this.data_rooms[room_id][data.media_id][data.action] || {};
+      Object.assign(this.data_rooms[room_id][data.media_id][data.action], data);
+    }
 
     // Take control and duplicate media data to other peers
     responses.push({ action: "sync", broadcast: true, value: data });        

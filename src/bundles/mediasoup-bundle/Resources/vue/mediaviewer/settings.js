@@ -1,6 +1,6 @@
 class ViewerSettings {
 
-  constructor(socketBinding, loader_function) {
+  constructor(socketBinding) {
     this.socketBinding = socketBinding;
     this.data = {
       mediaUrl: null,
@@ -8,15 +8,17 @@ class ViewerSettings {
       controlPolicy: 'automatic'
     };
     this.oldMediaUrl = null;
-    this.loader_function = loader_function;
+
+    // Used by loader only (to reload current media to another URL)
+    this.onUrlChanged = async () => {};
 
     this.events = new Map([["onSettings", async (settings, method) => {
       if (settings) {
         const url_changed = this.oldMediaUrl != settings.mediaUrl;
-        Object.assign(this.data, settings);
+        this.update(settings);
         this.oldMediaUrl = this.data.mediaUrl;
         if (method == "set" && url_changed) {
-          await this.loader_function("https://" + settings.mediaUrl);
+          await this.onUrlChanged("https://" + settings.mediaUrl);
         }
       }
     }], ["onDisconnected", (event) => {
@@ -39,15 +41,29 @@ class ViewerSettings {
     }
   }
 
-  refreshBroadcastSettings(new_settings, old_settings) {
-    this.socketBinding.send({
+  async updateServerSettings(new_settings) {
+    await this.socketBinding.sendWait({
       action: "settings",
       method: "set",
-      data: this.data
+      data: new_settings
     });
 
-    this.oldMediaUrl = old_settings.mediaUrl;
+    this.oldMediaUrl = this.data.mediaUrl;
   }
+
+  update(settings) {
+    Object.assign(this.data, settings);
+  }
+
+  async queryServerSettings() {
+    await this.socketBinding.sendWait({
+      action: "settings",
+      method: "get"
+    });
+
+    return this.data;
+  }
+
 }
 
 export default ViewerSettings;

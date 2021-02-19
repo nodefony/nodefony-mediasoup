@@ -26,12 +26,12 @@
 
       <!-- Media layout -->
       <v-expand-transition>
-        <media-viewer type="video" v-if="mediaLayout" :data="currentMediaLayoutData" :roomid="room.id" />
+        <media-viewer type="video" v-show="mediaLayout  && !selectedPeer" v-if="mediaLoaded" :formData="currentMediaLayoutData" :roomid="room.id" />
       </v-expand-transition>
 
       <!-- Main layout -->
       <v-expand-transition>
-        <grid-layout ref="main" v-show="room && layout && !selectedPeer" :focusPeers="focusTab" class="" :currentfocus="currentfocus" />
+        <grid-layout ref="main" v-show="room && layout && !selectedPeer && !mediaLayout" :focusPeers="focusTab" class="" :currentfocus="currentfocus" />
       </v-expand-transition>
     </v-container>
   </v-sheet>
@@ -70,10 +70,14 @@ export default {
       focusTab: [],
       currentfocus: null,
       currentToogle: null,
-      currentMediaLayoutData: null
+      currentMediaLayoutData: null,
+      mediaLoaded: false
     }
   },
   destroyed() {
+    if (this.openMediaCallback) {
+      this.$media_viewer.removeListener("onSocketClose", this.openMediaCallback);
+    }
     this.room.removeListener("openMedia", this.onOpenMedia);
   },
 
@@ -101,6 +105,10 @@ export default {
     mediaLayout(value) {
       if (value) {
         this.unFocus(this.currentToogle);
+        // Force media rendering
+        if (!this.mediaLoaded) {
+          this.mediaLoaded = true;
+        }
       }
     },
     layout(value) {
@@ -118,7 +126,6 @@ export default {
   methods: {
     ...mapMutations([
       //peer: 'getPeer',
-      'toogleMediaLayout',
       'hideMediaLayout',
       'showMediaLayout'
     ]),
@@ -256,8 +263,23 @@ export default {
       this.screen = true;
     },
     onOpenMedia(data) {
-      this.currentMediaLayoutData = data;
-      this.showMediaLayout();
+      this.mediaLoaded = false;
+
+      this.openMediaCallback = () => {
+        this.$media_viewer.removeListener("onSocketClose", this.openMediaCallback);
+        if (data.media) {
+          this.currentMediaLayoutData = Object.assign({}, data);
+          this.mediaLoaded = true;
+          this.showMediaLayout();
+        }
+      };
+
+      if (this.$media_viewer.isSocketClosed()) {
+        this.openMediaCallback();
+      } else {
+        // We wait for full socket closing before restarting media
+        this.$media_viewer.on("onSocketClose", this.openMediaCallback);
+      }
     }
   }
 }
@@ -272,7 +294,6 @@ export default {
   bottom: 0;
   position: fixed;
   z-index: 1000;
-  width: 100%;
 }
 
 .layout-sheet {

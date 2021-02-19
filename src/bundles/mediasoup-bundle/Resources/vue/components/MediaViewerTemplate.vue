@@ -6,8 +6,8 @@
     <v-list dense>
       <v-list-item>
         <v-list-item-content>
-          <v-list-item-title class="text-h6">Media</v-list-item-title>
-          <v-list-item-subtitle class="text-capitalize">{{type}}</v-list-item-subtitle>
+          <v-list-item-title class="text-h6">{{settings.name}}</v-list-item-title>
+          <v-list-item-subtitle class="text-capitalize">{{type}} {{settings.title}}</v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
     </v-list>
@@ -24,7 +24,7 @@
 
     <v-spacer></v-spacer>
 
-    <v-btn icon v-if="!lockedAdminPanel" :disabled="lockedAdminPanel === null" :color="toggleAdminPanel ? 'blue-grey' : ''" @click="toggleAdminPanel = !toggleAdminPanel">
+    <v-btn icon v-if="roomAdmin" :disabled="loading" :color="toggleAdminPanel ? 'blue-grey' : ''" @click="toggleAdminPanel = !toggleAdminPanel">
       <v-icon>mdi-cog</v-icon>
     </v-btn>
 
@@ -32,12 +32,12 @@
       <v-icon>mdi-refresh</v-icon>
     </v-btn>
     
-    <v-btn icon @click="closeMedia">
+    <v-btn v-if="roomAdmin" icon @click="closeMedia(true)">
       <v-icon>mdi-close</v-icon>
     </v-btn>
 
     <v-badge :value="controlOther" :color="controlColor" :content="currentController.name" left transition="scale-transition" class="text-capitalize">
-      <v-btn x-small color="blue-grey" class="white--text" fab :disabled="true">
+      <v-btn x-small color="blue-grey" class="white--text" fab>
         <v-icon v-if="controlOwn" small :color="socketActivityColor" dark>mdi-hand-right</v-icon>
         <v-icon v-if="controlOther" small :color="socketActivityColor" dark>mdi-lock</v-icon>
         <v-icon v-if="controlNone" small :color="socketActivityColor" dark>mdi-cloud-download</v-icon>
@@ -51,7 +51,7 @@
         <slot name="media" :type="type"></slot>
       </v-col>
       <v-slide-x-reverse-transition>
-        <v-col md="4" height="100%" v-show="toggleAdminPanel">
+        <v-col md="4" style="height:100%" v-if="roomAdmin" v-show="toggleAdminPanel">
           <slot name="AdminPanel"> </slot>
         </v-col>
       </v-slide-x-reverse-transition>
@@ -78,18 +78,27 @@ export default {
     socketBinding: {
       type: Object,
       required: true
+    },
+    roomAdmin: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
       loading: true,
       message: null,
+      renderMedia: true,
       toggleAdminPanel: false,
       lockedAdminPanel: false,
       currentController: {
         name: '',
         id: null,
         type: Controls.NONE
+      },
+      settings: {
+        name: '',
+        title: ''
       },
       activityMeter: null,
       events: null
@@ -153,6 +162,11 @@ export default {
           this.currentController.type = control;
           this.currentController.id = controller_id;
           this.currentController.name = peer_data ? (peer_data.surname + " " + peer_data.name) : '';
+        }],
+        ["onSettings", (settings) => {
+          if (settings) {
+            Object.assign(this.settings, settings);
+          }
         }]
       ]);
 
@@ -162,16 +176,23 @@ export default {
     },
     forceRerenderMedia() {
       this.loading = true;
+      this.renderMedia = false;
       this.$nextTick().then(() => {
+        this.renderMedia = true;
         this.loading = false;
         this.$emit("connected");
       });
     },
-    closeMedia() {
+    closeMedia(broadcast = false) {
       for (const [name, listener] of this.events) {
         this.socketBinding.removeListener(name, listener);
       }
       this.hideMediaLayout();
+
+      if (broadcast) {
+        // Broadcast a close media
+        this.$mediasoup.send("openMedia", null);
+      }
     }
   }
 }

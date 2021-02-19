@@ -13,7 +13,7 @@ class VideoEventListener {
         this.syncIfControl("play");
       }],
       [ "pause", () => {
-        this.syncIfControl("pause");
+        this.syncIfControl("pause", false);
       }],
       [ "seeking", () => {
         this.syncIfControl("seek", this.video.videoElement.currentTime);
@@ -39,19 +39,8 @@ class VideoEventListener {
     }
   }
 
-  syncIfControl(action, data) {
-    if (!this.controller.canTakeControl()) {
-      return;
-    }
-    this.socketBinding.send({
-      action: "sync",
-      method: "set",
-      data: {
-        action: action,
-        media_id: this.settings.data.mediaUrl,
-        data: data
-      }
-    });
+  syncIfControl(action, data, persist = true) {
+    return this.controller.syncIfControl(this.settings.data.mediaUrl, action, data, persist);
   }
 
 }

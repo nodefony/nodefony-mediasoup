@@ -3,11 +3,10 @@ import IframeQuery from './iframeQuery.js';
 
 import ViewerLoader from '../loader.js';
 import ViewerController from '../controller.js'
-import ViewerSettings from '../settings.js'
 
 class IframeViewer extends nodefonyclient.Service {
 
-  constructor(iframeId, container, socketBinding, EventManager) {
+  constructor(iframeId, settings, container, socketBinding, EventManager) {
     super("viewer_iframe", container, null, process.env);
     this.socketBinding = socketBinding;
     this.iframeId = iframeId;
@@ -17,9 +16,7 @@ class IframeViewer extends nodefonyclient.Service {
     this.queryResolver = new IframeQuery(container, this);
 
     this.controller = new ViewerController(this.socketBinding);
-    this.settings = new ViewerSettings(this.socketBinding, async (url) => {
-      await this.load(url);
-    });
+    this.settings = settings;
 
     this.loader = new ViewerLoader(this.settings, this.controller, this.socketBinding, this);
     this.eventManager = new EventManager(this, this.controller, this.settings, this.socketBinding, this.queryResolver);
@@ -34,7 +31,6 @@ class IframeViewer extends nodefonyclient.Service {
         return resolve();
       };
 
-      this.iframeElement = document.getElementById(this.iframeId);
       this.iframeElement.setAttribute('src', url);
       this.iframeElement.setAttribute('iframe-src', url);
 

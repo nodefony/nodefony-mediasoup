@@ -1,8 +1,8 @@
 <template>
-<v-card v-bind="{...$props, ...$attrs}" height="100%" flat tile>
+<v-card v-bind="{...$props, ...$attrs}" height="100%" style="overflow-y:auto" flat tile>
   <v-card-text>
-    <v-form>
-      <v-card-title>Medias Informations</v-card-title>
+    <v-form v-model="formValid">
+      <v-card-title>Media Informations</v-card-title>
       <v-row>
         <v-col cols="12" md="6">
           <v-text-field outlined dense v-model="mediaName" :disabled="loading" label="Name"></v-text-field>
@@ -13,12 +13,12 @@
       </v-row>
       <v-divider></v-divider>
 
-      <v-card-title>Choice Media to add </v-card-title>
+      <v-card-title>Media URL</v-card-title>
       <v-row class="" align="center" justify="center">
         <v-col class="text-center">
           <v-text-field outlined dense :rules="urlRules" v-model="formData.mediaUrl" prefix="https://">
           </v-text-field>
-          <iframe ref="iframe" v-if="!invalidUrl && formData.mediaUrl" importance="low" :src="`https://${formData.mediaUrl}`" style="width:75%;height:200px;border:none">
+          <iframe ref="iframe" v-if="!liteMode && !invalidUrl && formData.mediaUrl" importance="low" :src="`https://${formData.mediaUrl}`" style="width:75%;height:200px;border:none">
           </iframe>
         </v-col>
       </v-row>
@@ -38,7 +38,7 @@
       </v-row>
 
 
-      <v-card-title>Medias Share Configuration</v-card-title>
+      <v-card-title>Media Share Configuration</v-card-title>
       <!-- slot prepend AdminPanel-->
       <slot name="AdminPanel" v-bind:formData="formData"> </slot>
 
@@ -65,7 +65,7 @@
 
 <script>
 import {
-  //mapGetters,
+  mapGetters,
   //mapMutations,
   //mapActions
 } from 'vuex';
@@ -75,7 +75,18 @@ export default {
   name: 'AdminPanel',
   components: {},
   props: {
-    availableMediaUrls: Array
+    availableMediaUrls: Array,
+    socketBinding: Object,
+    liteMode: {
+      type: Boolean,
+      default: false
+    },
+    settings: {
+      type: Object
+    },
+    allowedUrlRulesChecker: {
+      type: Function
+    }
   },
   data() {
     return {
@@ -88,9 +99,9 @@ export default {
         name: '',
         title: '',
         mediaUrl: '',
-        controlPolicy: ''
+        controlPolicy: 'automatic'
       },
-      formValid: true,
+      formValid: false,
       availableMedia: {
         name: '',
         title: '',
@@ -107,16 +118,16 @@ export default {
       ],
       urlRules: [
         value => {
-          if (value) {
-            const patternUrl = new RegExp('(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?');
-            let res = patternUrl.test(value);
-            if (!res) {
-              this.invalidUrl = true
-              return 'Invalid url.';
+          let res = !!value;
+          if (res) {
+            const patternUrl = new RegExp('([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?');
+            res = patternUrl.test(value);
+            if (res && this.allowedUrlRulesChecker) {
+              res = this.allowedUrlRulesChecker(value);
             }
           }
-          this.invalidUrl = false
-          return true;
+          this.invalidUrl = !res;
+          return this.invalidUrl ? `Invalid url` : true;
         }
       ]
     }
@@ -125,10 +136,19 @@ export default {
     if (this.$refs.iframe) {
       this.$refs.iframe.src = null;
     }
+    if (this.socketBinding) {
+      this.socketBinding.removeListener("onSettings", this.onSettings);
+    }
   },
-  mounted() {},
+  mounted() {
+    if (this.settings) {
+      this.selectChange(this.settings);
+    }
+    if (this.socketBinding) {
+      this.initEvents();
+    }
+  },
   computed: {
-
     items() {
       let myItems = []
       if (this.availableMediaUrls && this.availableMediaUrls.length) {
@@ -157,14 +177,23 @@ export default {
   },
 
   methods: {
-    save() {
+    async save() {
       this.$emit("save", this.formData);
     },
     selectChange(obj) {
       this.mediaName = obj.name;
       this.mediaTitle = obj.title;
-      Object.assign(this.formData, obj);
+      this.formData.mediaUrl = obj.mediaUrl;
+      this.formData.controlPolicy = obj.controlPolicy;
       this.$emit("selectChange", this.formData);
+    },
+    initEvents() {
+      this.onSettings = (settings) => {
+        if (settings) {
+          this.selectChange(settings);
+        }
+      };
+      this.socketBinding.on("onSettings", this.onSettings);
     }
   }
 

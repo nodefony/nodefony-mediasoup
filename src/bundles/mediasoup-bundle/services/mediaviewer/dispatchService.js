@@ -25,7 +25,7 @@ module.exports = class MediaViewerDispatcher extends nodefony.Service {
       },
       settings: { 
         get: { do: (client_app_data) => this.settings.getSettings(client_app_data) }, 
-        set: { do: (client_app_data, data) => this.settings.setSettings(client_app_data, data) }
+        set: { do: async (client_app_data, data) => await this.settings.setSettings(client_app_data, data) }
       }
     };
   }
@@ -67,7 +67,7 @@ module.exports = class MediaViewerDispatcher extends nodefony.Service {
   }
 
   // Upper level protocol
-  handle(message, client_app_data) {
+  async handle(message, client_app_data) {
     let current_action = this.actions_dispatcher[message.action];
     if (!current_action) {
       throw new Error(`Unknown action request '${message.action}'`);
@@ -81,7 +81,7 @@ module.exports = class MediaViewerDispatcher extends nodefony.Service {
       throw new Error(`Unknown method request '${message.method}'`);
     }
 
-    const service_output = current_action.do(client_app_data, message.data);
+    const service_output = await current_action.do(client_app_data, message.data);
     if (!service_output) {
       this.log(`Empty '${message.action}' service output`, "DEBUG");
       return;

@@ -14,6 +14,7 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
 
   init() {
     this.users = this.get("users");
+    this.mediasoupRooms = this.get("Rooms");
   }
   
   async findPeerData(peerid) {
@@ -85,6 +86,22 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
 
   }
 
+  async isRoomAdmin(room_id, client_id) {
+    const peer_data = this.getPeerData(room_id, client_id)
+    const mediasoupRoom = await this.mediasoupRooms.getUserRoom(room_id);
+    if (mediasoupRoom.users) {
+      let tab = mediasoupRoom.users.filter((admin) => {
+        if (admin.username === peer_data.username) {
+          return admin;
+        }
+      });
+      if (tab.length) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   getPeerData(room_id, client_id) {
     if (!client_id) {
       return null;
@@ -112,7 +129,7 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
     });
     this.log(`Disconnect client ${id} from room ${room_id}`, "INFO");
     delete this.rooms[room_id][id];
-    this.fire('onDisconnect', room_id, id);
+    this.fire('onDisconnect', client_app_data);
     if (Object.keys(this.rooms[room_id]).length == 0) {
       this.log(`Room ${room_id} closed because there is not any client anymore`, "INFO");
       delete this.rooms[room_id];

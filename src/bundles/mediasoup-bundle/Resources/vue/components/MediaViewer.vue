@@ -1,17 +1,19 @@
 <template>
-  <v-container v-if="socketSynchronized">
-    <video-viewer :socketBinding="socketBinding" v-if="isVideo" v-on:loaded="load" v-on:settings-save="saveAdminPanel"/>
+  <v-container v-if="socketSynchronized" fluid style="height:100%;width:100%;padding:0;">
+    <video-viewer style="padding-bottom:140px;" :settings="settings" :socketBinding="socketBinding" v-if="isVideo" :roomAdmin="isRoomAdmin" v-on:loaded="load" v-on:settings-save="saveAdminPanel"/>
   </v-container>
 </template>
 
 <script>
 import {
   mapGetters,
-  mapMutations
+  //mapMutations
 } from 'vuex';
 
 // @ is an alias to /src
-import VideoViewer from './VideoViewer.vue';
+import VideoViewer from './VideoViewer';
+
+import ViewerSettings from '../mediaviewer/settings.js'
 
 export default {
   name: 'MediaViewer',
@@ -25,8 +27,9 @@ export default {
     type: {
       type: String
     },
-    data: {
-      type: Object
+    formData: {
+      type: Object,
+      default: null
     }
   },
   data(vm) {
@@ -35,25 +38,35 @@ export default {
       settings: null,
       socketBinding: null,
       socket: null,
-      socketSynchronized: false,
-      currentMediaLayoutData: null
+      socketSynchronized: false
     };
   },
   computed: {
     ...mapGetters({
-      peer: 'getPeer'
+      peer: 'getPeer',
+      room: 'getRoomEntity'
     }),
+    ...mapGetters([
+      'getProfileUsername',
+    ]),
     socketUrl() {
       return `wss://${window.location.host}/mediasoup/ws/mediaviewer?roomid=${this.roomid}&peerid=${this.peer.id}`;
     },
     isVideo() {
       return this.type == 'video';
+    },
+    isRoomAdmin() {
+      let tab = this.room.users.filter((admin) => {
+        if (admin.username === this.getProfileUsername) {
+          return admin;
+        }
+      });
+      return tab.length > 0;
     }
   },
   methods: {
     saveAdminPanel(new_settings, old_settings) {
-      this.toggleAdminPanel = false;
-      this.settings.refreshBroadcastSettings(new_settings, old_settings);
+      this.settings.updateServerSettings(new_settings);
     },
     async toggleSocket() {
       if (!this.socket) {
@@ -65,59 +78,67 @@ export default {
         this.socket = null;
       }
     },
-    async connect() {
-      this.socketSynchronized = false;
+    validateSettings(settings) {
+      if ((!settings || !settings.mediaUrl)) {
+        this.message = this.log("No media URL provided", "ERROR");
+        throw new Error(this.message);
+      }
+    },
+    async connectFromForm() {
+      const settings = this.openMediaInfo.media;
+      this.validateSettings(settings);
+      if (this.openMediaInfo.peerId == this.peer.id) {
+        // If you are the controller (the peer who shared the media), you first update settings to the server
+        await this.settings.updateServerSettings(settings);
+      } else {
+        // Otherwise you only update your settings locally
+        this.settings.update(settings);
+      }
 
+      // Now ensure we empty the openMediaInfo to avoid reloading data from an old form
+      this.openMediaInfo = null;
+    },
+    async connect() {
       this.log("Starting media", "INFO");
 
-      let init_settings = null;
-      this.socketBinding.once("onSettings", (settings) => {
-        init_settings = settings;
-      });
-
-      await this.socketBinding.sendWait({
-        action: "settings",
-        method: "get"
-      });
-
-      if (!this.currentMediaLayoutData || !this.currentMediaLayoutData.mediaUrl) {
-        if (!init_settings || !init_settings.mediaUrl) {
-          this.message = this.log("No media URL provided", "ERROR");
-          return;
-        }
-
-        this.currentMediaLayoutData = init_settings;
+      if (this.openMediaInfo) {
+        // We can reconnect a media from an external form
+        await this.connectFromForm();
+      } else {
+        // Or from a simple internal reload
+        let settings = await this.settings.queryServerSettings();
+        this.validateSettings(settings);
       }
 
-      // Update server-side configuration if required
-      if (!init_settings || init_settings.mediaUrl != this.currentMediaLayoutData.mediaUrl) {
-        await this.socketBinding.sendWait({
-          action: "settings",
-          method: "set",
-          data: this.currentMediaLayoutData
-        });
-      }
       this.socketSynchronized = true;
     },
-    async load(viewer, settings) {
-      if (this.viewer) {
-        this.viewer.unlisten();
-      }
-      let url = 'https://' + this.currentMediaLayoutData.mediaUrl;
-
+    async load(viewer) {
       this.viewer = viewer;
-      this.settings = settings;
       this.viewer.on("onViewerError", (message) => {
         this.message = this.log(message, "ERROR");
       });
 
-      await this.viewer.load(url);
+      await this.viewer.load('https://' + this.settings.mediaUrl);
     }
   },
   async mounted() { 
-    this.currentMediaLayoutData = this.data ? this.data.media : null;
     this.socketBinding = this.$media_viewer.socketBinding;
-    this.socketBinding.once("onConnected", this.connect.bind(this));
+    if (!this.formData) {
+      this.openMediaInfo = null;
+    } else {
+      this.openMediaInfo = Object.assign({}, this.formData);
+    }
+    this.settings = new ViewerSettings(this.socketBinding);
+
+    this.onConnected = this.connect.bind(this);
+    this.onSocketOpen = () => {
+      if (this.socketBinding.isConnected()) {
+        this.onConnected();
+      } else {
+        this.socketBinding.on("onConnected", this.onConnected);
+      }
+    };
+    this.$media_viewer.on("onSocketOpen", this.onSocketOpen);
     await this.toggleSocket();
   },
   created() {},
@@ -131,6 +152,8 @@ export default {
     if (this.viewer) {
       this.viewer.unlisten();
     }
+    this.$media_viewer.removeListener("onSocketOpen", this.onSocketOpen);
+    this.socketBinding.removeListener("onConnected", this.onConnected);
     if (this.socket) {
       this.socket.close();
       this.socket = null;

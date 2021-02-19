@@ -1,5 +1,5 @@
 <template>
-  <admin-panel ref="panel" v-on:name="setName" v-on:title="setTitle" :socketBinding="socketBinding" :availableMediaUrls="availableMediaUrls" :liteMode="liteMode" v-on:save="save" v-on:loading="loading"/>
+  <admin-panel ref="panel" :settings="settings" v-on:name="setName" v-on:title="setTitle" :socketBinding="socketBinding" :availableMediaUrls="availableMediaUrls" :liteMode="liteMode" v-on:save="save" v-on:loading="loading"/>
 </template>
 
 <script>
@@ -44,8 +44,6 @@ export default {
   mounted() {
     if (this.settings) {
       Object.assign(this.formData, this.settings.data);
-    } else if (this.currentMediaLayoutData) {
-      Object.assign(this.formData, this.currentMediaLayoutData);
     }
 
     this.$refs.panel.selectChange(this.formData);
@@ -55,9 +53,6 @@ export default {
     }
   },
   methods: {
-    ...mapGetters([
-      'currentMediaLayoutData'
-    ]),
     setName(name) {
       this.$emit('name', name);
     },

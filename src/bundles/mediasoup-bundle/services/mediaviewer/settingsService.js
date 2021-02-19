@@ -10,27 +10,90 @@ module.exports = class MediaViewerSettings extends nodefony.Service {
   }
 
   init() {
-    const rooms = this.get("media_viewer_rooms");
+    this.rooms = this.get("media_viewer_rooms");
     this.settings_rooms = {};
-    rooms.on('onRoomClosed', (room_id) => {
+    this.sharing_clients_rooms = {};
+    this.media_validators = [];
+
+    this.rooms.on('onRoomClosed', (room_id) => {
       delete this.settings_rooms[room_id];
+      delete this.sharing_clients_rooms[room_id];
+    });
+
+    this.rooms.on('onDisconnect', (client_app_data) => {
+      if (this.sharing_clients_rooms[client_app_data.room_id] == client_app_data.client_id) {
+        this.stopSharingMedia(client_app_data);
+      }
     });
   }
 
-  setSettings(client_app_data, data) {
+  async canShareMedia(client_app_data, media) {
+    const room_id = client_app_data.room_id;
+    let can_share = this.sharing_clients_rooms[room_id] ? 
+      (this.sharing_clients_rooms[room_id] == client_app_data.client_id) : true;
+
+    // If a media is currently shared, only admin can edit settings / change media, or the current peer sharing
+    if (!can_share) {
+      const room_admin = await this.rooms.isRoomAdmin(room_id, client_app_data.client_id);
+      if (!room_admin) {
+        this.log(`Current peer (${client_app_data.client_id}) is not a room admin, therefore cannot edit media settings`, "ERROR");
+        return false;
+      }
+    }
+
+    for (const validator of this.media_validators) {
+      if (!validator.isMediaValid(media)) {
+        this.log(`Unable to share media '${media.mediaUrl}' because it is not considered as valid from a validator`, "ERROR");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  async setSettings(client_app_data, data) {
     if (!client_app_data || !client_app_data.client_id) { throw new Error("Bad client id"); }
     const room_id = client_app_data.room_id;
-    this.settings_rooms[room_id] = this.settings_rooms[room_id] || {};
 
+    if (!await this.canShareMedia(client_app_data, data)) {
+      return;
+    }
+
+    this.settings_rooms[room_id] = this.settings_rooms[room_id] || {};
     Object.assign(this.settings_rooms[room_id], data);
 
-    // TODO check if it is a room admin
-    const room_admin = true;
-    if (!room_admin) {
-      throw new Error(`Current peer (${client_app_data.client_id}) is not a room admin, therefore cannot edit media settings`);
-    }
-    
+    this.shareMedia(client_app_data, !!data.mediaUrl);
+
     return { broadcast: null, value: data };
+  }
+
+  shareMedia(client_app_data, validMedia) {
+    const room_id = client_app_data.room_id;
+    const client_id = client_app_data.client_id;
+    const sharing_change = !this.sharing_clients_rooms[room_id] || this.sharing_clients_rooms[room_id] != client_id;
+    if (validMedia && sharing_change) {
+      this.startSharingMedia(client_app_data)
+    } else if (this.sharing_clients_rooms[room_id] && !validMedia) {
+      this.stopSharingMedia(client_app_data);
+    }
+  }
+
+  startSharingMedia(client_app_data) {
+    const room_id = client_app_data.room_id;
+    this.sharing_clients_rooms[room_id] = client_app_data.client_id;
+    this.log(`Sharing client in room ${room_id} is now ${client_app_data.client_id}`, "INFO");
+    this.fire("onOpenMedia", room_id, client_app_data.peer.peer_id);
+  }
+
+  stopSharingMedia(client_app_data) {
+    const room_id = client_app_data.room_id;
+    this.sharing_clients_rooms[room_id] = null;
+    this.log(`No more sharing client in room ${room_id}`, "INFO");
+    this.fire("onCloseMedia", room_id, client_app_data.peer.peer_id);
+  }
+
+  addMediaValidator(validator) {
+    this.media_validators.push(validator);
   }
 
   getSettings(client_app_data) {
