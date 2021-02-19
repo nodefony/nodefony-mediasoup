@@ -37,7 +37,7 @@
         </v-list-item-content>
 
         <v-list-item-action>
-          <div v-if="isRoomAdmin">
+          <div v-if="isRoomAdmin && isWaitingRoom">
             <v-btn v-if="peer.status !== 'joined'" icon class="ml-1">
               <v-icon dense @click="authorise(peer)" color="blue">mdi-account-plus</v-icon>
             </v-btn>
@@ -104,7 +104,7 @@
             </div>
           </td>
           <td>
-            <div v-if="isRoomAdmin && mypeer.id !== getProfileUsername">
+            <div v-if="isRoomAdmin && (mypeer.id !== getProfileUsername) && isWaitingRoom">
               <v-btn v-if="mypeer.status !== 'joined'" icon class="ml-1">
                 <v-icon dense @click="authorise(mypeer)" color="blue">mdi-account-plus</v-icon>
               </v-btn>
@@ -163,7 +163,8 @@ export default {
       'getTrigramme',
       'getProfileUsername',
       'getPeers',
-      'hasRole'
+      'hasRole',
+      'isWaitingRoom'
     ]),
     peers: {
       get() {

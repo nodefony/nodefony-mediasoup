@@ -32,6 +32,24 @@ const getters = {
   },
   nbUnreadMessage(state){
     return state.unreadMessages
+  },
+  isPublicRoom(state){
+    if (state.roomEntity){
+      return state.roomEntity.access === "public";
+    }
+    return false;
+  },
+  isSecureRoom(state){
+    if (state.roomEntity){
+      return state.roomEntity.secure ;
+    }
+    return false;
+  },
+  isWaitingRoom(){
+    if (state.roomEntity){
+      return state.roomEntity.waitingconnect ;
+    }
+    return false;
   }
 };
 
