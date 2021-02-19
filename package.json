@@ -34,13 +34,13 @@
     "node": ">=10"
   },
   "dependencies": {
-    "mongoose": "^5.11.16",
-    "nodefony": "^6.2.0",
-    "nodefony-client": "^6.0.0-beta.15",
+    "mongoose": "^5.11.17",
+    "nodefony": "^6.4.0",
+    "nodefony-client": "^6.0.0-beta.16",
     "pm2": "^4.5.4",
     "pm2-logrotate": "^2.7.0",
-    "sequelize": "^6.3.5",
-    "webpack": "^5.22.0",
+    "sequelize": "^6.5.0",
+    "webpack": "^5.23.0",
     "webpack-dev-server": "^3.11.2"
   },
   "devDependencies": {
