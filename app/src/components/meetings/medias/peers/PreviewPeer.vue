@@ -3,7 +3,7 @@
 
   <v-hover v-slot="{ hover }" :disabled="hoverDisabled">
 
-    <v-row class="pa-0 ma-0" style="width:100%;height:100%" justify="center" align="center">
+    <v-row v-if="peer" class="pa-0 ma-0" style="width:100%;height:100%" justify="center" align="center">
 
       <!--v-icon v-if="!peer.audioPaused" class="ma-2" color="blue-grey" left style="position:absolute;top:0px;left:0px">
         mdi-volume-high
@@ -16,7 +16,7 @@
         {{peer.getInitial()}}
       </v-avatar>
 
-      <video :ref="`vid-preview-${peer.id}`" style="width:100%;height:100%;border-radius:8px;">
+      <video muted :ref="`vid-preview-${peer.id}`" :style="styleVideo">
       </video>
       <media-volume-peer fab absolute rounded top left color="blue-grey" :volume="volume" :muted="audio" class="mt-5" />
 
@@ -166,6 +166,50 @@ export default {
     ...mapGetters({
       me: 'getPeer'
     }),
+    maxHeight() {
+      if (this.$attrs["max-height"]) {
+        return this.$attrs["max-height"];
+      }
+      return null;
+    },
+    minHeight() {
+      if (this.$attrs["min-height"]) {
+        return this.$attrs["min-height"];
+      }
+      return null;
+    },
+    maxWidth() {
+      if (this.$attrs["max-width"]) {
+        return this.$attrs["max-width"];
+      }
+      return null;
+    },
+    minWidth() {
+      if (this.$attrs["min-width"]) {
+        return this.$attrs["min-width"];
+      }
+      return null;
+    },
+    styleVideo() {
+      let style = {
+        width: "100%",
+        height: "100%",
+        borderRadius: "8px"
+      };
+      if (this.maxHeight) {
+        style.maxHeight = this.maxHeight;
+      }
+      if (this.maxHeight) {
+        style.minHeight = this.minHeight;
+      }
+      if (this.maxWidth) {
+        style.maxWidth = this.maxWidth;
+      }
+      if (this.minWidth) {
+        style.minWidth = this.minWidth;
+      }
+      return style
+    },
     peer() {
       return this.getPeerById(this.peerid)
     },
