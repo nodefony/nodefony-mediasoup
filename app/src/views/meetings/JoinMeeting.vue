@@ -121,7 +121,7 @@ export default {
   },
   destroyed() {
     this.log(`destroy join component `, "DEBUG");
-    this.$mediasoup.removeListener("waiting", this.onWaiting);
+    //this.$mediasoup.removeListener("waiting", this.onWaiting);
     this.$mediasoup.removeListener("closeSock", this.sockClose);
   },
   beforeMount() {
@@ -140,7 +140,7 @@ export default {
         this.loading = false;
       });
     this.peerComponent = this.$refs["peer"];
-    this.$mediasoup.on("waiting", this.onWaiting);
+    //this.$mediasoup.on("waiting", this.onWaiting);
     this.$mediasoup.once("closeSock", this.sockClose);
   },
   computed: {
@@ -159,14 +159,14 @@ export default {
       'getProfileName',
       'getProfileSurname'
     ]),
-    peers: {
+    /*peers: {
       get() {
         return this.getPeers;
       },
       set(value) {
         this.setPeers(value);
       }
-    },
+    },*/
     isAdmin() {
       return this.hasRole("ROLE_ADMIN");
     },
@@ -181,7 +181,7 @@ export default {
       }
       return false;
     },
-    peersFilter() {
+    /*peersFilter() {
       if (this.peers) {
         return this.peers.filter((peer) => {
           if (peer.id !== this.getProfileUsername) {
@@ -190,7 +190,7 @@ export default {
         });
       }
       return [];
-    }
+    }*/
   },
   watch: {
     message(value) {
@@ -217,7 +217,7 @@ export default {
     ...mapActions([
       'getDevices'
     ]),
-    onWaiting(message) {
+    /*onWaiting(message) {
       if (message.message) {
         let pdu = this.log(message.message, "DEBUG");
         this.message = pdu;
@@ -225,7 +225,7 @@ export default {
       if (message.peers) {
         this.peers = message.peers;
       }
-    },
+    },*/
     redirect(routeName) {
       return this.$router.push({
           name: routeName,
