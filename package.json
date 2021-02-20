@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "mongoose": "^5.11.17",
-    "nodefony": "^6.4.0",
+    "nodefony": "^6.4.1",
     "nodefony-client": "^6.0.0-beta.16",
     "pm2": "^4.5.4",
     "pm2-logrotate": "^2.7.0",
