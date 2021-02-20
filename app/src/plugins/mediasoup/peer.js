@@ -7,6 +7,7 @@ class Peer {
     this.local = false;
     this.displayName = "";
     this.user = null;
+    this.media = null;
     //this.mediasoup = mediasoup;
     this.consumers = [];
     this.producers = [];
@@ -31,6 +32,9 @@ class Peer {
     }
     if( mdpeer.device ){
       this.device = mdpeer.device;
+    }
+    if(mdpeer.media){
+      this.media = mdpeer.media;
     }
     if (mdpeer.producers){
       for( let id in mdpeer.producers){

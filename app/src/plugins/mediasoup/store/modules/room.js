@@ -45,7 +45,7 @@ const getters = {
     }
     return false;
   },
-  isWaitingRoom(){
+  isWaitingRoom(state){
     if (state.roomEntity){
       return state.roomEntity.waitingconnect ;
     }

@@ -82,12 +82,13 @@ export default {
   },
 
   mounted() {
-
     if (this.room) {
       this.room.on("openMedia", this.onOpenMedia);
+      if (this.hasMedia) {
+        this.showMediaLayout();
+      }
       this.eventready = true;
     }
-
   },
   computed: {
     ...mapGetters({
@@ -100,6 +101,14 @@ export default {
       'mediaLayout',
       'layout'
     ]),
+    hasMedia() {
+      const res = this.peers.filter((peer) => {
+        if (peer.media) {
+          return peer
+        }
+      })
+      return res.length
+    }
   },
   watch: {
     mediaLayout(value) {
@@ -120,6 +129,14 @@ export default {
     room() {
       if (!this.eventready) {
         this.room.on("openMedia", this.onOpenMedia);
+        if (this.hasMedia) {
+          this.showMediaLayout();
+        }
+      }
+    },
+    hasMedia(value) {
+      if (value) {
+        this.showMediaLayout();
       }
     }
   },
