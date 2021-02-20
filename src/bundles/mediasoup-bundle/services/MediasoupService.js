@@ -163,6 +163,16 @@ module.exports = class Mediasoup extends nodefony.Service {
         };
         mdroom.on("producercreate", producerCreate);
 
+        const openMedia = (producer) => {
+          return sendWaitingMessage("openMedia");
+        };
+        mdroom.on("openMedia", openMedia);
+
+        const closeMedia = (producer) => {
+          return sendWaitingMessage("closeMedia");
+        };
+        mdroom.on("closeMedia", closeMedia);
+
         // socket
         context.once('onClose', () => {
           //clean mediasoup events
@@ -176,6 +186,8 @@ module.exports = class Mediasoup extends nodefony.Service {
           mdroom.removeListener("producerresume", producerResume);
           mdroom.removeListener("producerclose", producerClose);
           mdroom.removeListener("producerCreate", producerCreate);
+          mdroom.removeListener("closeMedia", closeMedia);
+          mdroom.removeListener("openMedia", openMedia);
         });
 
         let message = null;

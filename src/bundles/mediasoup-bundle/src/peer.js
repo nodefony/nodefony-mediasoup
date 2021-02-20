@@ -14,8 +14,8 @@ const parserMediasoupApi = function (struct, type) {
       type: struct.type,
       appData: struct.appData,
       closed: struct.closed,
-      label:struct.label,
-      protocol:struct.protocol
+      label: struct.label,
+      protocol: struct.protocol
     }
   case "consumer":
     return {
@@ -32,8 +32,8 @@ const parserMediasoupApi = function (struct, type) {
       type: struct.type,
       appData: struct.appData,
       closed: struct.closed,
-      label:struct.label,
-      protocol:struct.protocol
+      label: struct.label,
+      protocol: struct.protocol
     }
   default:
     return {}
@@ -45,6 +45,7 @@ class Peer extends nodefony.Service {
     super(`Peer`, container);
     this.id = peerid;
     this.user = null;
+    this.media = null;
     this.transport = transport;
     if (this.transport) {
       this.transport.once("onClose", () => {
@@ -85,7 +86,7 @@ class Peer extends nodefony.Service {
     this.dataConsumers.forEach((consumer, index) => {
       dataConsumers[index] = parserMediasoupApi(consumer, "dataConsumer");
     });
-    const res=  {
+    const res = {
       id: this.id,
       displayName: this.displayName,
       status: this.status,
@@ -94,7 +95,8 @@ class Peer extends nodefony.Service {
       producers: producers,
       consumers: consumers,
       dataProducers: dataProducers,
-      dataConsumers: dataConsumers
+      dataConsumers: dataConsumers,
+      media: this.media
     }
     return res;
   }

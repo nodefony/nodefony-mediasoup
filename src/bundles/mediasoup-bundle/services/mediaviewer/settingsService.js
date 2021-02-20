@@ -29,7 +29,7 @@ module.exports = class MediaViewerSettings extends nodefony.Service {
 
   async canShareMedia(client_app_data, media) {
     const room_id = client_app_data.room_id;
-    let can_share = this.sharing_clients_rooms[room_id] ? 
+    let can_share = this.sharing_clients_rooms[room_id] ?
       (this.sharing_clients_rooms[room_id] == client_app_data.client_id) : true;
 
     // If a media is currently shared, only admin can edit settings / change media, or the current peer sharing
@@ -82,7 +82,8 @@ module.exports = class MediaViewerSettings extends nodefony.Service {
     const room_id = client_app_data.room_id;
     this.sharing_clients_rooms[room_id] = client_app_data.client_id;
     this.log(`Sharing client in room ${room_id} is now ${client_app_data.client_id}`, "INFO");
-    this.fire("onOpenMedia", room_id, client_app_data.peer.peer_id);
+    //TODO add type media in  this.settings_rooms
+    this.fire("onOpenMedia", room_id, client_app_data.peer.peer_id, this.settings_rooms[room_id]);
   }
 
   stopSharingMedia(client_app_data) {

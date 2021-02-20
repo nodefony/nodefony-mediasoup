@@ -29,6 +29,9 @@
             <span v-if="peer.share">
               <v-icon dense color="">mdi-monitor-share</v-icon>
             </span>
+            <span v-if="peer.media">
+              <v-icon dense color="">mdi-movie-open</v-icon>
+            </span>
           </v-list-item-subtitle>
           <v-list-item-subtitle v-else-if="peer.status === 'waiting' || peer.status === 'authorised'">
             {{peer.status}}
@@ -96,6 +99,9 @@
               </span>
               <span v-if="mypeer.share">
                 <v-icon dense color="">mdi-monitor-share</v-icon>
+              </span>
+              <span v-if="mypeer.media">
+                <v-icon dense color="">mdi-movie-open</v-icon>
               </span>
             </div>
             <div v-else-if="mypeer.status === 'waiting' || mypeer.status === 'authorised'">
@@ -184,7 +190,8 @@ export default {
           audio: status.audio,
           video: status.video,
           share: status.share,
-          user: peer.user
+          user: peer.user,
+          media: peer.media
         });
       }
       return peers;

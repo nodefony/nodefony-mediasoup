@@ -56,7 +56,7 @@
         mdi-application-export
       </v-icon>
     </v-btn-->
-    <v-btn icon class="ml-3" @click="toogleMediaLayout">
+    <v-btn v-if='hasMedia' icon class="ml-3" @click="toogleMediaLayout">
       <v-icon dark color="indigo">
         mdi-movie-open
       </v-icon>
@@ -117,7 +117,7 @@
     </v-card>
   </v-menu-->
 
-  <v-menu v-if="peer && room" v-model="menuMedia" :close-on-content-click="true" :close-on-click="true" :nudge-width="200" offset-x bottom origin="center center">
+  <v-menu v-if="peer && room && isRoomAdmin && ! hasMedia" v-model="menuMedia" :close-on-content-click="true" :close-on-click="true" :nudge-width="200" offset-x bottom origin="center center">
     <template v-slot:activator="{ on, attrs }">
 
       <v-btn small rounded class="mr-5" v-bind="attrs" v-on="on">
@@ -198,11 +198,13 @@ export default {
     ...mapGetters({
       room: 'getRoom',
       peer: 'getPeer',
-      peers: 'getPeers'
+      peers: 'getPeers',
+      roomEntity: 'getRoomEntity'
     }),
     ...mapGetters([
       'getRoomEntity',
       'isAuthenticated',
+      'getProfileUsername',
       'hasAudio',
       'hasVideo',
       'hasScreen',
@@ -229,6 +231,25 @@ export default {
         }
       })
       return res.length
+    },
+    hasMedia() {
+      const res = this.peers.filter((peer) => {
+        if (peer.media) {
+          return peer
+        }
+      })
+      return res.length
+    },
+    isRoomAdmin() {
+      let tab = this.roomEntity.users.filter((admin) => {
+        if (admin.username === this.getProfileUsername) {
+          return admin;
+        }
+      });
+      if (tab.length) {
+        return this.getProfileUsername;
+      }
+      return false;
     }
   },
   methods: {

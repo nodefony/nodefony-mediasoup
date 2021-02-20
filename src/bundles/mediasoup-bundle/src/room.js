@@ -1,11 +1,33 @@
 const Broadcaster = require(path.resolve(__dirname, "broadcaster.js"));
 
+
+const openMedia = function (roomid, peerid, type) {
+  if (roomid === this.id) {
+    let peer = this.getPeer(peerid);
+    if (peer) {
+      peer.media = type;
+      this.fire("openMedia", peer, type);
+    }
+  }
+}
+
+const closeMedia = function (roomid, peerid) {
+  if (roomid === this.id) {
+    let peer = this.getPeer(peerid);
+    if (peer) {
+      peer.media = null;
+      this.fire("closeMedia", peer);
+    }
+  }
+}
+
 class Room extends nodefony.Service {
   constructor(roomid, worker, router, bot, container) {
     super(`Room ${roomid}`, container, null);
     this.id = roomid;
     this.peersService = this.get("Peers");
     this.mediasoupService = this.get("Mediasoup");
+    this.mediasService = this.get("media_viewer_settings");
     this.closed = false;
     this.worker = worker;
     this.router = router;
@@ -22,6 +44,14 @@ class Room extends nodefony.Service {
       interval: 800
     };
     this.handleAudioLevelObserver();
+    this.listenMedia();
+  }
+
+  listenMedia() {
+    this.openMedia = openMedia.bind(this);
+    this.closeMedia = closeMedia.bind(this);
+    this.mediasService.on("onOpenMedia", this.openMedia);
+    this.mediasService.on("onCloseMedia", this.closeMedia);
   }
 
   async logStatus() {
@@ -187,6 +217,10 @@ class Room extends nodefony.Service {
         return peer.close();
       });
     }
+    if (this.mediasService) {
+      this.mediasService.removeListener("onOpenMedia", this.openMedia);
+      this.mediasService.removeListener("onCloseMedia", this.closeMedia);
+    }
     this.closed = true;
     return this.fire("close", this);
   }
@@ -233,7 +267,7 @@ class Room extends nodefony.Service {
     this.fire("join", peer);
     const peerInfos = joinedPeers
       .filter((joinedPeer) => joinedPeer.id !== peer.id)
-      .map((joinedPeer) => (joinedPeer.peerInfos() ) );
+      .map((joinedPeer) => (joinedPeer.peerInfos()));
     return peerInfos;
   }
 
@@ -376,26 +410,26 @@ class Room extends nodefony.Service {
       this.log(trace, "DEBUG");
     });
 
-    producer.observer.on("close", ()=>{
-      //this.fire('producerclose', producer);
-    }),
+    producer.observer.on("close", () => {
+        //this.fire('producerclose', producer);
+      }),
 
-    producer.observer.on('resume', () => {
-      this.fire('producerresume', producer);
-      peer.notify(this, 'producerresume', {
-        producerId: producer.id,
-        kind:data.kind,
-        transportid:data.transportId,
-        appData:data.appData
+      producer.observer.on('resume', () => {
+        this.fire('producerresume', producer);
+        peer.notify(this, 'producerresume', {
+          producerId: producer.id,
+          kind: data.kind,
+          transportid: data.transportId,
+          appData: data.appData
+        });
       });
-    });
     producer.observer.on('pause', () => {
       this.fire('producerpause', producer);
       peer.notify(this, 'producerpause', {
         producerId: producer.id,
-        kind:data.kind,
-        transportid:data.transportId,
-        appData:data.appData
+        kind: data.kind,
+        transportid: data.transportId,
+        appData: data.appData
       });
     });
     this.fire('producercreate', producer);
