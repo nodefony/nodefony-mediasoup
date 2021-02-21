@@ -16,6 +16,8 @@ import MeetingDetails from '../views/meetings/MeetingDetails.vue';
 import Users from '../views/users/Users.vue';
 import EditUser from '../views/users/EditUser.vue';
 
+import GridTest from '../../../src/bundles/mediasoup-bundle/Resources/vue/test/gridTest.vue'
+
 import PageNotFound from '../views/404';
 
 const ifAuthenticated = (to, from, next) => {
@@ -109,10 +111,12 @@ const routes = [{
   beforeEnter: ifAuthenticated,
   component: EditUser
  }, {
+   path: '/test/grid',
+   component: GridTest
+ }, {
   // and finally the default route, when none of the above matches:
   path: "*",
   component: PageNotFound
-
 }];
 
 const router = new VueRouter({
