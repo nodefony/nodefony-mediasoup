@@ -227,7 +227,7 @@ export default {
       }
     },*/
     redirect(routeName) {
-      return this.$router.push({
+      return this.$router.replace({
           name: routeName,
           params: {
             roomid: this.roomid

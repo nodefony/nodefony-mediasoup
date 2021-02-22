@@ -88,7 +88,7 @@ export default {
     if (this.$route.name === "Logout") {
       this.logout()
     }
-    this.closeDrawer();
+    //this.closeDrawer();
   },
   beforeUpdate() {
 

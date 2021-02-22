@@ -1,14 +1,18 @@
 <template>
 <!--v-app-bar /*:clipped-left="$vuetify.breakpoint.lgAndUp"*/ app-->
 <v-app-bar v-if="navbar" app>
-  <v-app-bar-nav-icon v-if="!hiddeDrawder" @click.stop="toogleDrawer"></v-app-bar-nav-icon>
+  <v-app-bar-nav-icon @click.stop="toogleDrawer"></v-app-bar-nav-icon>
   <v-toolbar-title style="width: 300px" class="ml-0 pl-4">
-    <router-link :to="{ name: 'Home'}" tag="div">
-      <v-btn text>
-        <img src="../../assets/mediasoup.png" />
-        <span class="hidden-sm-and-down ml-2">Nodefony Mediasoup FSU</span>
-      </v-btn>
+
+    <router-link :to="{ name: 'Home'}" custom v-slot="{ navigate }">
+      <div>
+        <v-btn text @click="navigate">
+          <img src="../../assets/mediasoup.png" />
+          <span class="hidden-sm-and-down ml-2">Nodefony Mediasoup FSU</span>
+        </v-btn>
+      </div>
     </router-link>
+
   </v-toolbar-title>
 
   <v-spacer></v-spacer>
@@ -35,12 +39,14 @@
     </v-list>
   </v-menu>
 
-
-  <router-link :to="{ name: 'About'}" tag="div">
-    <v-btn icon v-if="isAuthenticated">
-      <v-icon>mdi-apps</v-icon>
-    </v-btn>
+  <router-link :to="{ name: 'About'}" custom v-slot="{ navigate }">
+    <div>
+      <v-btn icon v-if="isAuthenticated" @click="navigate">
+        <v-icon>mdi-apps</v-icon>
+      </v-btn>
+    </div>
   </router-link>
+
   <v-btn icon v-if="isAuthenticated">
     <v-icon>mdi-bell</v-icon>
   </v-btn>
