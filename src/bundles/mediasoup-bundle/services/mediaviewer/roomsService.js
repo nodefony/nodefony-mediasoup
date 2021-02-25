@@ -16,7 +16,7 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
     this.users = this.get("users");
     this.mediasoupRooms = this.get("Rooms");
   }
-  
+
   async findPeerData(peerid) {
     return this.users.findOne(peerid)
       .then((response) => {
@@ -54,11 +54,14 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
     context.client_app_data = {
       room_id: room_id,
       client_id: id,
+      admin: false,
       peer: {
         ...peer_data,
         peer_id: peer_id
       }
     };
+
+    await this.refreshRoomAdmin(context.client_app_data);
 
     this.log(`CONNECTED : ${message}`, 'INFO');
 
@@ -86,20 +89,33 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
 
   }
 
-  async isRoomAdmin(room_id, client_id) {
-    const peer_data = this.getPeerData(room_id, client_id)
+  async refreshRoomAdmin(client_data) {
+    const room_id = client_data.room_id;
+    const peer_data = client_data.peer;
     const mediasoupRoom = await this.mediasoupRooms.getUserRoom(room_id);
+    let result = false;
     if (mediasoupRoom.users) {
+      this.log(`room admins : ${mediasoupRoom.users.length}`, "INFO");
       let tab = mediasoupRoom.users.filter((admin) => {
-        if (admin.username === peer_data.username) {
+        this.log(`room username = ${admin.username}, peer username = ${peer_data.username}`, "INFO");
+        if (admin.username == peer_data.username) {
+          this.log("Match", "INFO");
           return admin;
         }
       });
-      if (tab.length) {
-        return true;
-      }
+      this.log(`Final admin : ${tab.length}`, "INFO");
+      result = tab.length > 0;
+    } else {
+      this.log("No room admins", "WARN");
     }
-    return false;
+    client_data.admin = result;
+    return result;
+  }
+
+  doEachClient(room_id, action) {
+    for (const client_id in this.rooms[room_id]) {
+      action(this.rooms[room_id][client_id].client_app_data);
+    }
   }
 
   getPeerData(room_id, client_id) {
@@ -137,8 +153,14 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
     }
   }
 
-  sendMessage(client_app_data, message) {
-    this.send_(this.rooms[client_app_data.room_id][client_app_data.client_id], JSON.stringify(message));
+  sendMessage(client_app_data, message, preMessage = null) {
+    const context = this.rooms[client_app_data.room_id][client_app_data.client_id];
+    if (preMessage) {
+      const final_message = preMessage(message, context.client_app_data);
+      this.send_(context, JSON.stringify(final_message));
+    } else {
+      this.send_(context, JSON.stringify(message));
+    }
   }
 
   send_(context, message) {
@@ -158,18 +180,18 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
     return context.send(JSON.stringify(message));
   }
 
-  sendAll(client_app_data, message, room_id = null) {
-    return this.broadcastMessagePredicate(client_app_data, message, () => { return true; }, room_id);
+  sendAll(client_app_data, message, preMessage = null, room_id = null) {
+    return this.broadcastMessagePredicate(client_app_data, message, () => { return true; }, preMessage, room_id);
   }
 
-  broadcastMessage(client_app_data, message) {
+  broadcastMessage(client_app_data, message, preMessage = null) {
     // Do not broadcast to self
-    return this.broadcastMessagePredicate(client_app_data, message, (client_id, from) => { 
+    return this.broadcastMessagePredicate(client_app_data, message, (client_id, from) => {
       return client_id != client_app_data.client_id;
-    });
+    }, preMessage);
   }
 
-  broadcastMessagePredicate(client_app_data, message, predicate, provided_room_id = null) {
+  broadcastMessagePredicate(client_app_data, message, predicate, preMessage = null, provided_room_id = null) {
     if (!message) {
       throw new Error("Cannot broadcast null message");
     }
@@ -183,7 +205,13 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
       try {
         if (predicate(client_id, client_app_data.client_id)) {
           this.log(`Brodcast to : ${client_id} from : ${client_app_data.client_id}`, "DEBUG");
-          this.send_(this.rooms[room_id][client_id], JSON.stringify(message));
+          const context = this.rooms[room_id][client_id];
+          if (preMessage) {
+            const final_message = preMessage(message, context.client_app_data);
+            this.send_(context, JSON.stringify(final_message));
+          } else {
+            this.send_(context, JSON.stringify(message));
+          }
         } else {
           this.log(`Brodcast dropped : ${client_app_data.client_id}`, "DEBUG");
         }

@@ -5,11 +5,16 @@ class ViewerController {
   constructor(socketBinding) {
     this.socketBinding = socketBinding;
     this.has_control = Controls.NONE;
-    this.disable_control = 0;
+    this.DefaultDisableControl = 0;
+    this.global_disable_control = false;
+    this.disable_control = this.DefaultDisableControl;
 
     this.events = new Map([
-      ["onControlChange", (controller_id, control) => {
-          this.has_control = control;
+      ["onControlChange", (controller_id, control, peer_data, allowed) => {
+        this.has_control = control;
+        if (allowed !== undefined) {
+          this.global_disable_control = !allowed;
+        }
       }], ["onDisconnected", (event) => {
         this.unlisten();
       }]
@@ -31,11 +36,11 @@ class ViewerController {
   }
 
   reset() {
-    this.disable_control = 0;
+    this.disable_control = this.DefaultDisableControl;
   }
 
   canTakeControl() {
-    return !this.disable_control && (this.has_control == Controls.NONE || this.has_control == Controls.OWN);
+    return !this.global_disable_control && !this.disable_control && (this.has_control == Controls.NONE || this.has_control == Controls.OWN);
   }
 
   syncIfControl(media_id, action, data, persist = true) {

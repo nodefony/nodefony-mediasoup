@@ -11,9 +11,9 @@ import {
 } from 'vuex';
 
 // @ is an alias to /src
-import VideoViewer from './VideoViewer';
+import VideoViewer from './video/VideoViewer';
 
-import ViewerSettings from '../mediaviewer/settings.js'
+import ViewerSettings from '@/plugins/mediasoup/mediaviewer/settings.js'
 
 export default {
   name: 'MediaViewer',
@@ -115,7 +115,10 @@ export default {
     async load(viewer) {
       this.viewer = viewer;
       this.viewer.on("onViewerError", (message) => {
-        this.message = this.log(message, "ERROR");
+        const pdu = this.log(message, "ERROR");
+        if (this.$nodefony.environment == "development") {
+          this.message = pdu;
+        }
       });
 
       await this.viewer.load('https://' + this.settings.mediaUrl);

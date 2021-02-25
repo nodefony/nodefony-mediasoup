@@ -6,8 +6,8 @@
     <v-list dense>
       <v-list-item>
         <v-list-item-content>
-          <v-list-item-title class="text-h6">{{settings.name}}</v-list-item-title>
-          <v-list-item-subtitle class="text-capitalize">{{type}} {{settings.title}}</v-list-item-subtitle>
+          <v-list-item-title class="text-h6">{{settings.data.name}}</v-list-item-title>
+          <v-list-item-subtitle class="text-capitalize">{{type}} {{settings.data.title}}</v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
     </v-list>
@@ -16,8 +16,7 @@
     <v-list dense>
       <v-list-item>
         <v-list-item-content style="text-align: center;">
-          <!--v-list-item-title class="text-h6">Name</v-list-item-title-->
-          <v-list-item-subtitle class="text-capitalize">{{currentController.name}}</v-list-item-subtitle>
+          <v-list-item-title class="text-capitalize">{{currentController.name}}</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
     </v-list>
@@ -66,7 +65,7 @@ import {
   mapMutations,
   //mapActions
 } from 'vuex';
-import Controls from '../mediaviewer/control.js'
+import Controls from '@/plugins/mediasoup/mediaviewer/control.js'
 
 export default {
   name: 'MediaViewerTemplate',
@@ -82,6 +81,10 @@ export default {
     roomAdmin: {
       type: Boolean,
       default: false
+    },
+    settings: {
+      type: Object,
+      required: true
     }
   },
   data() {
@@ -95,10 +98,6 @@ export default {
         name: '',
         id: null,
         type: Controls.NONE
-      },
-      settings: {
-        name: '',
-        title: ''
       },
       activityMeter: null,
       events: null
@@ -162,11 +161,6 @@ export default {
           this.currentController.type = control;
           this.currentController.id = controller_id;
           this.currentController.name = peer_data ? (peer_data.surname + " " + peer_data.name) : '';
-        }],
-        ["onSettings", (settings) => {
-          if (settings) {
-            Object.assign(this.settings, settings);
-          }
         }]
       ]);
 

@@ -41,7 +41,7 @@ import {
   //mapMutations,
   //mapActions
 } from 'vuex';
-import AdminPanel from '@/components/meetings/nav/medias/AdminPanel'
+import AdminPanel from '../AdminPanel'
 
 export default {
   name: 'DialogWeb',

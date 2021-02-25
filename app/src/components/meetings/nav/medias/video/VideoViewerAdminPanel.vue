@@ -4,11 +4,11 @@
 
 <script>
 import {
-  mapGetters,
+  //mapGetters,
   //mapMutations,
   //mapActions
 } from 'vuex';
-import AdminPanel from '@/components/meetings/nav/medias/AdminPanel'
+import AdminPanel from '../AdminPanel'
 
 export default {
   name: 'VideoViewerAdminPanel',
@@ -24,6 +24,9 @@ export default {
     },
     liteMode: {
       type: Boolean
+    },
+    currentMediaLayoutData: {
+      type: Object
     }
   },
   data() {

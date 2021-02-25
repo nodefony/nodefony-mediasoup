@@ -49,6 +49,12 @@ class ViewerLoader {
           media_id: this.settings.data.mediaUrl
         }
       });
+
+      // Control policy & current controller
+      await this.socketBinding.sendWait({
+        action: "control",
+        method: "get"
+      });
     }, this.media.INIT_SYNC_TIMEOUT);
   }
 

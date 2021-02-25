@@ -1,12 +1,12 @@
 <template>
-<media-viewer-template type="video" :roomAdmin="roomAdmin" :socketBinding="socketBinding" v-on:connected="connected">
+<media-viewer-template type="video" :settings="settings" :roomAdmin="roomAdmin" :socketBinding="socketBinding" v-on:connected="connected">
   <template v-slot:media="{ type }">
     <video controls :id='videoId' class="video">
       <source/>
     </video>
   </template>
   <template v-slot:AdminPanel>
-    <video-admin-panel style="border-left: 1px solid rgba(0,0,0,.12);" v-if="viewer" :settings="viewer.settings" :socketBinding="socketBinding" :liteMode="true" v-on:save="saveAdminPanel"></video-admin-panel>
+    <video-admin-panel style="border-left: 1px solid rgba(0,0,0,.12);" :currentMediaLayoutData="currentMediaLayoutData" :settings="settings" :socketBinding="socketBinding" :liteMode="true" v-on:save="saveAdminPanel"></video-admin-panel>
   </template>
 </media-viewer-template>
 </template>
@@ -19,10 +19,10 @@ import {
 } from 'vuex';
 
 // @ is an alias to /src
-import MediaViewerTemplate from '@/../../src/bundles/mediasoup-bundle/Resources/vue/components/MediaViewerTemplate';
+import MediaViewerTemplate from '../MediaViewerTemplate';
 import VideoViewerAdminPanel from './VideoViewerAdminPanel';
-import VideoManager from '../video/manager.js';
-import VideoViewer from '../mediaviewer/video/video.js';
+import VideoManager from '@/plugins/mediasoup/mediaviewer/video/manager.js';
+import VideoViewer from '@/plugins/mediasoup/mediaviewer/video/video.js';
 
 export default {
   name: 'VideoViewer',

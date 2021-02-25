@@ -43,7 +43,7 @@
 <script>
 import SliderLayout from '@/components/meetings/layouts/SliderLayout';
 import GridLayout from '@/components/meetings/layouts/GridLayout';
-import MediaViewer from '@/../../src/bundles/mediasoup-bundle/Resources/vue/components/MediaViewer';
+import MediaViewer from '@/components/meetings/nav/medias/MediaViewer';
 import PreviewPeer from '@/components/meetings/medias/peers/PreviewPeer'
 
 import {

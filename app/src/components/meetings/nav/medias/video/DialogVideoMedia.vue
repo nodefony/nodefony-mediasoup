@@ -37,10 +37,10 @@ import {
   //mapMutations,
   //mapActions
 } from 'vuex';
-import VideoAdminPanel from '@/../../src/bundles/mediasoup-bundle/Resources/vue/components/VideoViewerAdminPanel.vue';
+import VideoAdminPanel from './VideoViewerAdminPanel.vue';
 
 export default {
-  name: 'DialogPdf',
+  name: 'DialogVideo',
   components: {
     "video-admin-panel": VideoAdminPanel
   },

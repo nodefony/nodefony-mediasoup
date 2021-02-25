@@ -48,7 +48,7 @@
           <v-subheader>{{$t('medias.control_policy')}}</v-subheader>
         </v-col>
         <v-col cols="7">
-          <v-select required dense disabled :items="controlPolicies" item-text="label" item-value="key" :label="$t('medias.control_policy')" outlined v-model="formData.controlPolicy"></v-select>
+          <v-select required dense :items="controlPolicies" item-text="label" item-value="key" :label="$t('medias.control_policy')" outlined v-model="formData.controlPolicy"></v-select>
         </v-col>
       </v-row>
     </v-form>
@@ -65,7 +65,7 @@
 
 <script>
 import {
-  mapGetters,
+  //mapGetters,
   //mapMutations,
   //mapActions
 } from 'vuex';
@@ -112,8 +112,8 @@ export default {
           label: 'Automatic'
         },
         {
-          key: 'first',
-          label: "First"
+          key: 'admin_only_automatic',
+          label: "Admin only (automatic)"
         }
       ],
       urlRules: [
@@ -151,7 +151,7 @@ export default {
   computed: {
     items() {
       let myItems = []
-      if (this.availableMediaUrls && this.availableMediaUrls.length) {
+      if (this.$nodefony.environment == "development" && this.availableMediaUrls && this.availableMediaUrls.length) {
         this.availableMediaUrls.map((obj) => {
           let item = {};
           item.text = obj.mediaUrl;
@@ -184,7 +184,7 @@ export default {
       this.mediaName = obj.name;
       this.mediaTitle = obj.title;
       this.formData.mediaUrl = obj.mediaUrl;
-      this.formData.controlPolicy = obj.controlPolicy;
+      this.formData.controlPolicy = obj.controlPolicy ? obj.controlPolicy : 'automatic';
       this.$emit("selectChange", this.formData);
     },
     initEvents() {

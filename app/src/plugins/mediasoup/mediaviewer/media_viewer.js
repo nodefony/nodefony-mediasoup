@@ -1,5 +1,5 @@
 import nodefonyclient from 'nodefony-client';
-import SocketBinding from './mediaviewer/socketBinding.js';
+import SocketBinding from './socketBinding.js';
 
 class MediaPlugin extends nodefonyclient.Service {
   constructor(options = {}) {

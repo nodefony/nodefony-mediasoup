@@ -34,7 +34,7 @@ module.exports = class MediaViewerSettings extends nodefony.Service {
 
     // If a media is currently shared, only admin can edit settings / change media, or the current peer sharing
     if (!can_share) {
-      const room_admin = await this.rooms.isRoomAdmin(room_id, client_app_data.client_id);
+      const room_admin = await this.rooms.refreshRoomAdmin(client_app_data);
       if (!room_admin) {
         this.log(`Current peer (${client_app_data.client_id}) is not a room admin, therefore cannot edit media settings`, "ERROR");
         return false;
@@ -60,7 +60,13 @@ module.exports = class MediaViewerSettings extends nodefony.Service {
     }
 
     this.settings_rooms[room_id] = this.settings_rooms[room_id] || {};
+
+    const old_control_policy = this.settings_rooms[room_id].controlPolicy;
     Object.assign(this.settings_rooms[room_id], data);
+    const new_control_policy = this.settings_rooms[room_id].controlPolicy;
+    if (old_control_policy != new_control_policy) {
+      this.fire("onPolicyChange", room_id, new_control_policy);
+    }
 
     this.shareMedia(client_app_data, !!data.mediaUrl);
 

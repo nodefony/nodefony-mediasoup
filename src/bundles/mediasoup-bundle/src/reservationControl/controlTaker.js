@@ -6,11 +6,8 @@ module.exports = class ControlTaker {
       NOT_TESTED:   3
   });
 
-  constructor(room_id, rooms, policy, log, onLost) {
-    this.rooms = rooms;
-    this.client_id = null;
-    this.room_id = room_id;
-    this.peer_data = {};
+  constructor(policy, log, onLost) {
+    this.client_data = null;
     this.timer = null;
     this.Timeout = 3000;
     this.policy = policy;
@@ -18,57 +15,57 @@ module.exports = class ControlTaker {
     this.onLost = onLost;
   }
 
-  askControl(client_id) {
-    this.log(`Control asked by : ${client_id} in room ${this.room_id}`, "DEBUG");
+  askControl(client_data) {
+    this.log(`Control asked by : ${client_data.client_id} in room ${client_data.room_id}`, "DEBUG");
 
-    let control_changed = this.constructor.ControlValue.NOT_TESTED;
-    let peer_data = null;
-
-    if (client_id !== this.client_id) {
-      const old_client_control_id = this.client_id;
-      this.client_id = this.policy.control(old_client_control_id, client_id);  
-      control_changed = old_client_control_id != this.client_id ? 
-        (!old_client_control_id ? this.constructor.ControlValue.NEW : this.constructor.ControlValue.CONTINUE) : this.constructor.ControlValue.CHANGED;
-      if (control_changed == this.constructor.ControlValue.NEW || control_changed == this.constructor.ControlValue.CHANGED) {
-        this.log(`Control granted to : ${this.client_id} in room ${this.room_id}`, "DEBUG");
-        this.peer_data = this.rooms.getPeerData(this.room_id, this.client_id);
-        peer_data = this.peer_data;
+    let changed_peer_data = null;
+    if (!this.hasControl(client_data)) {
+      const next_controller = this.policy.control(this.client_data, client_data);
+      const control_changed = !this.hasControl(next_controller);
+      this.client_data = next_controller;
+      if (control_changed) {
+        this.log(`Control granted to : ${this.client_data.client_id} in room ${this.client_data.room_id}`, "DEBUG");
+        changed_peer_data = this.client_data;
       }
     }
 
     this.resetTimer();
-    return {client_id: this.client_id, peer_data: peer_data};
+    return { client_data: changed_peer_data };
   }
 
-  hasControl(client_id) {
-    return this.client_id == client_id;
+  hasControl(client_data) {
+    return (!client_data && !this.client_data) || this.client_data && client_data && this.client_data.client_id == client_data.client_id;
   }
 
-  resetTimer() {
+  currentController() {
+    return this.client_data;
+  }
+
+  allowedControl(client_data) {
+    return this.policy.allowed(client_data);
+  }
+
+  clearTimer() {
     if (this.timer) {
       clearTimeout(this.timer);
     }
+  }
+
+  resetTimer() {
+    this.clearTimer();
 
     this.timer = setTimeout(() => {
       clearTimeout(this.timer);
       this.timer = null;
 
-      if (this.peer_data) {
-        this.log(`Control timed out for ${this.client_id} (${this.peer_data.username})`, "DEBUG");
+      if (this.client_data && this.client_data.peer) {
+        this.log(`Control timed out for ${this.client_data.client_id} (${this.client_data.peer.username})`, "DEBUG");
       }
 
-      const old_peer_data = this.peer_data ? Object.assign({}, this.peer_data) : {};
-      const old_client_id = this.client_id;
-      this.client_id = this.policy.lost(old_client_id);
-      if (this.client_id != old_client_id) {
-        this.peer_data = this.rooms.getPeerData(this.room_id, this.client_id);
-      }
-      this.log(`Control is now owned by ${this.client_id}`, "DEBUG");
-      this.onLost({
-        room_id: this.room_id,
-        client_id: old_client_id,
-        peer: old_peer_data
-      });
+      const old_client_data = this.client_data;
+      this.client_data = this.policy.lost(old_client_data);
+      this.log(`Control is now owned by ${this.client_data ? this.client_data.client_id : null}`, "DEBUG");
+      this.onLost(old_client_data);
     }, this.Timeout);
   }
 

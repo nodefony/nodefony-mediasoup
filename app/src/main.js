@@ -9,7 +9,7 @@ import store from './store'
 
 import nodefony from '@/plugins/nodefony/nodefony'
 import mediasoup from '@/plugins/mediasoup/mediasoup'
-import media_viewer from '../../src/bundles/mediasoup-bundle/Resources/vue/media_viewer'
+import media_viewer from '@/plugins/mediasoup/mediaviewer/media_viewer'
 //import apolloProvider from '@/apollo/apollo'
 
 import './pwa/registerServiceWorker'

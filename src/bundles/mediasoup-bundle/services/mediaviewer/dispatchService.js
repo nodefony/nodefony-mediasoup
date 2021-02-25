@@ -18,7 +18,10 @@ module.exports = class MediaViewerDispatcher extends nodefony.Service {
     this.listenEvents();
 
     this.actions_dispatcher = {
-      control: { do: (client_app_data) => this.control.ask(client_app_data).response  },
+      control: { 
+        get:{ do: (client_app_data) => this.control.getCurrent(client_app_data) },
+        set:{ do: (client_app_data) => this.control.ask(client_app_data).response }
+      },
       sync: { 
         get: { do: (client_app_data, data) => this.sync.getMedia(client_app_data, data) },
         set: { do: (client_app_data, data) => this.sync.setMedia(client_app_data, data) }
@@ -33,10 +36,16 @@ module.exports = class MediaViewerDispatcher extends nodefony.Service {
   listenEvents() {
     this.control.on("onLost", (old_client_app_data) => {
       try {
-        this.rooms.sendAll(old_client_app_data, {
-          action: "control",
-          data: null
-        });
+        if (old_client_app_data) {
+          this.rooms.doEachClient(old_client_app_data.room_id, (client_app_data) => {
+            this.rooms.sendMessage(client_app_data, {
+              action: "control",
+              data: {
+                allowed: this.control.allowed(client_app_data) 
+              }
+            });
+          });
+        }
       } catch(e) {
         // Client does not exist anymore => not important
         this.log(e, "WARNING");
@@ -58,11 +67,11 @@ module.exports = class MediaViewerDispatcher extends nodefony.Service {
     const should_broadcast = service_output.broadcast;
     const response = this.buildResponseMessage(message.id, message.client_id, service_output.value, message.action, message.method);
     if (should_broadcast === true) {
-      this.rooms.broadcastMessage(client_app_data, response);
+      this.rooms.broadcastMessage(client_app_data, response, service_output.preMessage);
     } else if (should_broadcast === false) {
-      this.rooms.sendMessage(client_app_data, response);
+      this.rooms.sendMessage(client_app_data, response, service_output.preMessage);
     } else {
-      this.rooms.sendAll(client_app_data, response);
+      this.rooms.sendAll(client_app_data, response, service_output.preMessage);
     }
   }
 

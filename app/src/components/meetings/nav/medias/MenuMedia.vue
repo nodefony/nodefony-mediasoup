@@ -53,8 +53,8 @@ import {
   //mapMutations,
   //mapActions
 } from 'vuex';
-import DialogVideoMedia from '@/components/meetings/nav/medias/video/DialogVideoMedia.vue';
-import DialogWebMedia from '@/components/meetings/nav/medias/website/DialogWebMedia.vue';
+import DialogVideoMedia from './video/DialogVideoMedia.vue';
+import DialogWebMedia from './website/DialogWebMedia.vue';
 
 export default {
   name: 'MenuMedia',

@@ -86,12 +86,13 @@ class SocketBinding extends nodefonyclient.Service {
 
   handleControl(control_value) {
     const controller_id = control_value ? control_value.client_id : null;
-    const peer_data = control_value ? control_value.peer_data : undefined;
+    const peer_data = control_value ? control_value.peer : undefined;
+    const allowed = control_value ? control_value.allowed : undefined;
     let control = Controls.NONE;
     if (controller_id) {
       control = this.client_id == controller_id ? Controls.OWN : Controls.OTHER;
     }
-    this.fire("onControlChange", controller_id, control, peer_data);
+    this.fire("onControlChange", controller_id, control, peer_data, allowed);
     if (!controller_id || controller_id == this.client_id) {
       this.log(`You got the media control`,"DEBUG");
     } else {
