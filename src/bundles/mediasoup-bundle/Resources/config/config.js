@@ -12,7 +12,6 @@
  *        GENERATE BY nodefony-mediasoup BUILDER
  */
 
-
 const calculNbWorker= () =>{
   const os = require('os');
   let cpus = parseInt(Object.keys(os.cpus()).length ,10);
@@ -23,7 +22,6 @@ const calculNbWorker= () =>{
   return cpus;
 }
 
-
 // default
 let ip = kernel.settings.system.domain;
 let anounceIp = kernel.settings.system.domain;
@@ -31,14 +29,52 @@ let nbWorkers = calculNbWorker();
 let gcIntervalTime = null;
 let rtcMinPort = 40000;
 let rtcMaxPort = 49999;
+let workerSettings = {
+  logLevel: 'debug',
+  logTags: [
+    'info',
+    'ice',
+    'dtls',
+    'rtp',
+    'srtp',
+    'rtcp',
+    'rtx',
+    'bwe',
+    'score',
+    'simulcast',
+    'svc',
+    'sctp'
+  ],
+  rtcMinPort: 40000,
+  rtcMaxPort: 49999
+} ;
 
 // you can change default for production usage
 if(kernel.environement === "prod"){
   ip = kernel.settings.system.domain;
   anounceIp = kernel.settings.system.domain;
   gcIntervalTime = 1000*60*60;  // ms => garbage collector 0 or null for disabled
-  rtcMinPort = 40000;
-  rtcMaxPort = 49999;
+  //rtcMinPort = 40000;
+  //rtcMaxPort = 49999;
+  workerSettings ={
+    logLevel: 'none',
+    logTags: [
+      'info',
+      'ice',
+      'dtls',
+      'rtp',
+      'srtp',
+      'rtcp',
+      'rtx',
+      'bwe',
+      'score',
+      'simulcast',
+      'svc',
+      'sctp'
+    ],
+    rtcMinPort: 40000,
+    rtcMaxPort: 49999
+  }
 }
 
 module.exports = {
@@ -89,25 +125,7 @@ module.exports = {
     numWorkers: nbWorkers,
     // mediasoup WorkerSettings.
     // See https://mediasoup.org/documentation/v3/mediasoup/api/#WorkerSettings
-    workerSettings: {
-      logLevel: 'warn',
-      logTags: [
-        'info',
-        'ice',
-        'dtls',
-        'rtp',
-        'srtp',
-        'rtcp',
-        'rtx',
-        'bwe',
-        'score',
-        'simulcast',
-        'svc',
-        'sctp'
-      ],
-      rtcMinPort: rtcMinPort,
-      rtcMaxPort: rtcMaxPort
-    },
+    workerSettings: workerSettings,
     // mediasoup Router options.
     // See https://mediasoup.org/documentation/v3/mediasoup/api/#RouterOptions
     routerOptions: {
