@@ -18,23 +18,27 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
   }
 
   async findPeerData(peerid) {
-    return this.users.findOne(peerid)
-      .then((response) => {
-        const {
-          username,
-          name,
-          surname
-        } = response;
-        return {
-          username,
-          name,
-          surname
-        };
-      })
-      .catch((e) => {
-        this.log(e, "WARNING");
-        return null;
-      });
+    try {
+      const response = await this.users.findOne(peerid);
+      const {
+        username,
+        name,
+        surname
+      } = response;
+      return {
+        username,
+        name,
+        surname
+      };
+    } catch (e) {
+      // If no user correspond to this peer, then the peerid is the username
+      // (Used when the room is public and user has no account)
+      return {
+        username: peerid,
+        name: peerid,
+        surname: ''
+      };
+    }
   }
 
   async handshake(peer_id, room_id, context) {
@@ -106,7 +110,7 @@ module.exports = class MediaViewerRooms extends nodefony.Service {
       this.log(`Final admin : ${tab.length}`, "INFO");
       result = tab.length > 0;
     } else {
-      this.log("No room admins", "WARN");
+      this.log("No room admins", "WARNING");
     }
     client_data.admin = result;
     return result;
