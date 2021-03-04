@@ -16,6 +16,8 @@ import MeetingDetails from '../views/meetings/MeetingDetails.vue';
 import Users from '../views/users/Users.vue';
 import EditUser from '../views/users/EditUser.vue';
 
+import Calendar from '../views/calendar/Calendar.vue';
+
 import PageNotFound from '../views/404';
 
 const ifAuthenticated = (to, from, next) => {
@@ -117,21 +119,13 @@ let mainRoute = [{
   props: true,
   beforeEnter: ifAuthenticated,
   component: EditUser
-}];
-
-let routes = null;
-// calendar
-import calendarRoutes from '@/../../src/bundles/calendar-bundle/Resources/vue/routes/routes.js';
-routes = mainRoute.concat(calendarRoutes);
-
-// dev routes
-import devRoute from './dev.index.js';
-if( process.env.VUE_APP_NODE_ENV){
-  routes = routes.concat(devRoute);
-}
-
-// tool routes
-routes.push({
+}, {
+  path: '/calendar',
+  name: 'Calendar',
+  props: true,
+  beforeEnter: ifAuthenticated,
+  component: Calendar
+},{
   // and finally the default route, when none of the above matches:
   path: "*",
   component: PageNotFound
