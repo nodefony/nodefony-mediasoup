@@ -16,6 +16,8 @@ import MeetingDetails from '../views/meetings/MeetingDetails.vue';
 import Users from '../views/users/Users.vue';
 import EditUser from '../views/users/EditUser.vue';
 
+import Calendar from '../views/calendar/Calendar.vue';
+
 import PageNotFound from '../views/404';
 
 const ifAuthenticated = (to, from, next) => {
@@ -117,7 +119,13 @@ const routes = [{
   props: true,
   beforeEnter: ifAuthenticated,
   component: EditUser
- }, {
+}, {
+  path: '/calendar',
+  name: 'Calendar',
+  props: true,
+  beforeEnter: ifAuthenticated,
+  component: Calendar
+},{
   // and finally the default route, when none of the above matches:
   path: "*",
   component: PageNotFound
