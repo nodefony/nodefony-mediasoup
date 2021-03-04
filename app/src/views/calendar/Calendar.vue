@@ -1,6 +1,5 @@
 <template>
 <v-container fluid>
-
   <v-row class="fill-height" style="">
     <v-col>
       <v-sheet height="64">
@@ -50,7 +49,7 @@
       </v-sheet>
       <v-sheet height="100%">
 
-        <v-calendar ref="calendar" v-model="focus" color="teal" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
+        <v-calendar ref="calendar" v-model="focus" color="primary" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
           @click:event="showEvent" @mousedown:time="startTime" @mousemove:time="mouseMove" @mouseup:time="endDrag" @mouseleave.native="cancelDrag">
           <template v-slot:event="{ event, timed, eventSummary }">
             <div class="v-event-draggable" v-html="eventSummary()"></div>
@@ -169,6 +168,7 @@ export default {
     },
     mouseMove(tms) {
       const mouse = this.toTime(tms)
+
       if (this.dragEvent && this.dragTime !== null) {
         const start = this.dragEvent.start
         const end = this.dragEvent.end
@@ -176,12 +176,14 @@ export default {
         const newStartTime = mouse - this.dragTime
         const newStart = this.roundTime(newStartTime)
         const newEnd = newStart + duration
+
         this.dragEvent.start = newStart
         this.dragEvent.end = newEnd
       } else if (this.createEvent && this.createStart !== null) {
         const mouseRounded = this.roundTime(mouse, false)
         const min = Math.min(mouseRounded, this.createStart)
         const max = Math.max(mouseRounded, this.createStart)
+
         this.createEvent.start = min
         this.createEvent.end = max
       }
