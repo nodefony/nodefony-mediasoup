@@ -24,6 +24,24 @@
       </v-list-item-icon>
       <v-list-item-title @click="$router.resolve({ name: 'About'})">Home</v-list-item-title>
     </v-list-item>
+
+    <v-list-group class="" v-if="isAuthenticated" :value="false" prepend-icon="mdi-calendar-month">
+
+      <template v-slot:activator>
+        <v-list-item-title>{{$t('calendar.calendar')}}</v-list-item-title>
+      </template>
+
+      <v-list-item sub-group @click="redirect('Calendar')">
+        <v-list-item-title class="ml-6">
+          {{$t('calendar.calendar')}}
+        </v-list-item-title>
+        <v-list-item-icon>
+          <v-icon>mdi-calendar-account-outline</v-icon>
+        </v-list-item-icon>
+      </v-list-item>
+
+    </v-list-group>
+
     <v-list-group v-if="isAuthenticated" :value="false" prepend-icon="mdi-google-classroom">
       <template v-slot:activator>
         <v-list-item-title>{{$t('meetings.meetings')}}</v-list-item-title>
@@ -74,6 +92,8 @@
 
 
     </v-list-group>
+
+
 
   </v-list>
   <!--v-list nav dense>
