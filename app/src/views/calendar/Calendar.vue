@@ -1,6 +1,5 @@
 <template>
 <v-container fluid>
-
   <v-row class="fill-height" style="">
     <v-col>
       <v-sheet height="64">
@@ -169,6 +168,7 @@ export default {
     },
     mouseMove(tms) {
       const mouse = this.toTime(tms)
+
       if (this.dragEvent && this.dragTime !== null) {
         const start = this.dragEvent.start
         const end = this.dragEvent.end
@@ -176,12 +176,14 @@ export default {
         const newStartTime = mouse - this.dragTime
         const newStart = this.roundTime(newStartTime)
         const newEnd = newStart + duration
+
         this.dragEvent.start = newStart
         this.dragEvent.end = newEnd
       } else if (this.createEvent && this.createStart !== null) {
         const mouseRounded = this.roundTime(mouse, false)
         const min = Math.min(mouseRounded, this.createStart)
         const max = Math.max(mouseRounded, this.createStart)
+
         this.createEvent.start = min
         this.createEvent.end = max
       }
