@@ -13,7 +13,7 @@
   ],
   "repository": {},
   "dependencies": {
-    "mediasoup": "^3.6.33"
+    "mediasoup": "^3.6.34"
   },
   "devDependencies": {
     "node-gyp": "^7.1.1",
