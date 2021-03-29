@@ -8,7 +8,8 @@ const defaultOptions = {
   forceTcp: false,
   forceH264: false,
   forceVP9: false,
-  useSimulcast: false,
+  useSimulcast: true,
+  useSharingSimulcast: true,
   externalVideo: false
 };
 
@@ -67,6 +68,7 @@ class Room extends nodefony.Service {
     this.useDataChannel = this.options.useDataChannel;
     this.forceTcp = this.options.forceTcp;
     this.useSimulcast = this.options.useSimulcast;
+    this.useSharingSimulcast = this.options.useSharingSimulcast;
     this.forceH264 = this.options.forceH264;
     this.forceVP9 = this.options.forceVP9;
     // Set custom SVC scalability mode.
@@ -176,7 +178,7 @@ class Room extends nodefony.Service {
         user
       } = message.data;
       // hydrate mdpeer with user back
-      if(user){
+      if (user) {
         this.peer.user = user;
       }
       for (const peer of peers) {
@@ -311,11 +313,11 @@ class Room extends nodefony.Service {
           }
           consumer.pause();
           let peer = this.peers.get(peerId);
-          if(peer){
-            if(consumer.kind === "audio" ){
+          if (peer) {
+            if (consumer.kind === "audio") {
               peer.audioPaused = consumer.paused;
             }
-            if(consumer.kind === "video" ){
+            if (consumer.kind === "video") {
               peer.videoPaused = consumer.paused;
             }
           }
@@ -334,11 +336,11 @@ class Room extends nodefony.Service {
           }
           consumer.resume();
           let peer = this.peers.get(peerId);
-          if(peer){
-            if(consumer.kind === "audio" ){
+          if (peer) {
+            if (consumer.kind === "audio") {
               peer.audioPaused = consumer.paused;
             }
-            if(consumer.kind === "video" ){
+            if (consumer.kind === "video") {
               peer.videoPaused = consumer.paused;
             }
           }
@@ -684,10 +686,10 @@ class Room extends nodefony.Service {
       }
       let peer = this.peers.get(consumer._appData.peerId);
       peer.addConsumer(consumer);
-      if( consumer.kind === "audio" && !appData.share ){
+      if (consumer.kind === "audio" && !appData.share) {
         peer.audioPaused = consumer.paused;
       }
-      if( consumer.kind === "video" && !appData.share){
+      if (consumer.kind === "video" && !appData.share) {
         peer.videoPaused = consumer.paused;
       }
       this.fire("consume", consumer, peer, spatialLayers, temporalLayers);
