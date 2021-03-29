@@ -27,8 +27,6 @@ let ip = kernel.settings.system.domain;
 let anounceIp = kernel.settings.system.domain;
 let nbWorkers = calculNbWorker();
 let gcIntervalTime = null;
-let rtcMinPort = 40000;
-let rtcMaxPort = 49999;
 let workerSettings = {
   logLevel: 'debug',
   logTags: [
@@ -99,7 +97,7 @@ module.exports = {
    *      }
    *
    */
-  watch: true,
+  watch: false,
 
   /**
    * DEV SERVER
