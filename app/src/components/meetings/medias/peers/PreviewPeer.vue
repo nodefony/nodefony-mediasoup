@@ -79,6 +79,7 @@ export default {
   },
   mounted() {
     this.$nextTick(() => {
+      this.audio = this.peer.audioPaused;
       this.videoStream = this.peer.videoStream;
       this.audioStream = this.peer.audioStream;
       this.playPeer();
@@ -115,13 +116,11 @@ export default {
     },*/
     'peer.videoStream': {
       deep: true,
-      handler(value) {
-        this.video = false;
+      async handler(value) {
         this.videoStream = value;
-        if (this.videoStream && this.videoStream.stream) {
-          this.$nextTick(() => {
-            this.playPeer();
-          });
+        this.video = false;
+        if (this.peer.hasVideoConsumer()) {
+          return this.playPeer();
         }
       }
     },
@@ -263,11 +262,11 @@ export default {
     async playPeer() {
       if (this.peer && this.videoStream && this.videoStream.stream) {
         let videoTag = this.cleanVideoTag(); //this.$refs[indexTag];
+        videoTag.srcObject = this.videoStream.stream;
         if (!videoTag) {
           return Promise.reject(new Error('No video tag found'));
         }
-        videoTag.srcObject = this.videoStream.stream;
-        this.$nextTick(() => {
+        if (this.videoStream.stream.active) {
           return videoTag.play()
             .then(() => {
               this.video = true;
@@ -277,7 +276,19 @@ export default {
               this.video = false;
               this.log(e, "ERROR");
             });
-        });
+        } else {
+          this.videoStream.once("playing", () => {
+            return videoTag.play()
+              .then(() => {
+                this.video = true;
+                return Promise.resolve(this.videoStream.stream)
+              })
+              .catch(e => {
+                this.video = false;
+                this.log(e, "ERROR");
+              });
+          });
+        }
       } else {
         //this.log(new Error('No video Stream found'), "WARNING");
       }

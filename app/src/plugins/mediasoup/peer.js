@@ -86,6 +86,18 @@ class Peer {
     return null ;
   }
 
+  hasVideoConsumer(){
+    let cons = this.consumers.find((consumer) => {
+      if (consumer.kind === "video") {
+        return consumer
+      }
+    });
+    if (cons) {
+      return cons;
+    }
+    return null ;
+  }
+
   addConsumer(consumer) {
     this.consumers.push(consumer);
   }
