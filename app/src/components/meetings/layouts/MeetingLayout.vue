@@ -4,7 +4,7 @@
 
   <!-- slider layout-->
   <v-fade-transition>
-    <v-row v-show="slider" class="mb-4 slider-layout">
+    <v-row v-show="slider" class="mb-4 slider-layout" style="width:100%">
       <slider-layout ref="slider" v-on:focus='focus' v-on:unfocus='unFocus' />
     </v-row>
   </v-fade-transition>

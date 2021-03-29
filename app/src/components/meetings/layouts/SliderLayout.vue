@@ -1,7 +1,7 @@
 <template>
-<v-sheet tile max-width="100%" max-height="110" style="background-color:transparent">
+<v-sheet tile class="mx-5" max-width="100%" max-height="115" style="background-color:transparent">
 
-  <v-slide-group v-model="slide" class="px-3" show-arrows style="background-color:transparent;height:110px">
+  <v-slide-group v-model="slide" class="px-3 my-slider" show-arrows dark style="background-color:transparent;height:110px">
 
     <v-slide-item key="share" v-show="shared" :elevation="focus" v-slot="{ active, toggle }">
       <media-card-peer width="200" height="110" class="my-0 mx-1 pa-0" ref="share" name="Screen" :remote="sharePeer" screenShare @click.native="tooglePeer(null , active, toggle, 'share' )" />
