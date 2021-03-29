@@ -423,7 +423,7 @@ export default {
     tab: null,
     panel: [1, 0, 0],
     show1: false,
-    show2: true,
+    show2: false,
     rules: {
       required: value => !!value || 'Required.',
       min: v => v.length >= 8 || 'Min 8 characters',
