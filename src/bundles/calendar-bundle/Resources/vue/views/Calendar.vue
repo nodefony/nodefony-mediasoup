@@ -49,7 +49,7 @@
       </v-sheet>
       <v-sheet height="100%">
 
-        <v-calendar ref="calendar" v-model="focus" color="primary" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
+        <v-calendar ref="calendar" v-model="focus" color="teal" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
           @click:event="showEvent" @mousedown:time="startTime" @mousemove:time="mouseMove" @mouseup:time="endDrag" @mouseleave.native="cancelDrag">
           <template v-slot:event="{ event, timed, eventSummary }">
             <div class="v-event-draggable" v-html="eventSummary()"></div>
