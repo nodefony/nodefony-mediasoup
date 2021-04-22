@@ -95,7 +95,7 @@ module.exports = {
    *      }
    *
    */
-  watch: true,
+  watch: false,
 
   /**
    * DEV SERVER
