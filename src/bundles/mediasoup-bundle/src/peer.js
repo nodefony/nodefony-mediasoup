@@ -1,45 +1,3 @@
-const parserMediasoupApi = function (struct, type) {
-  switch (type) {
-  case "producer":
-    return {
-      kind: struct.kind,
-      type: struct.type,
-      appData: struct.appData,
-      paused: struct.paused,
-      closed: struct.closed
-    };
-  case "dataProducer":
-    return {
-      kind: "data",
-      type: struct.type,
-      appData: struct.appData,
-      closed: struct.closed,
-      label: struct.label,
-      protocol: struct.protocol
-    }
-  case "consumer":
-    return {
-      kind: struct.kind,
-      type: struct.type,
-      producerPaused: struct.producerPaused,
-      appData: struct.appData,
-      paused: struct.paused,
-      closed: struct.closed
-    };
-  case "dataConsumer":
-    return {
-      kind: "data",
-      type: struct.type,
-      appData: struct.appData,
-      closed: struct.closed,
-      label: struct.label,
-      protocol: struct.protocol
-    }
-  default:
-    return {}
-  }
-}
-
 class Peer extends nodefony.Service {
   constructor(peerid, transport, container) {
     super(`Peer`, container);
@@ -69,36 +27,128 @@ class Peer extends nodefony.Service {
     this.remotePorts = [];
   }
 
-  peerInfos() {
+  async parserMediasoupApi(struct, type, getStats = false) {
+    let stats = null;
+    try {
+      if (getStats && struct.getStats) {
+        stats = await struct.getStats();
+      }
+    } catch (e) {
+      this.log(e, "ERROR");
+    }
+
+    switch (type) {
+    case "producer":
+      return {
+        kind: struct.kind,
+        type: struct.type,
+        appData: struct.appData,
+        paused: struct.paused,
+        closed: struct.closed,
+        stats: stats
+      };
+    case "dataProducer":
+      return {
+        kind: "data",
+        type: struct.type,
+        appData: struct.appData,
+        closed: struct.closed,
+        label: struct.label,
+        protocol: struct.protocol,
+        stats: stats
+      }
+    case "consumer":
+      return {
+        kind: struct.kind,
+        type: struct.type,
+        producerPaused: struct.producerPaused,
+        appData: struct.appData,
+        paused: struct.paused,
+        closed: struct.closed,
+        stats: stats
+      };
+    case "dataConsumer":
+      return {
+        kind: "data",
+        type: struct.type,
+        appData: struct.appData,
+        closed: struct.closed,
+        label: struct.label,
+        protocol: struct.protocol,
+        stats: stats
+      }
+    case "transport":
+      return {
+        kind: struct.kind,
+        type: struct.type,
+        appData: struct.appData,
+        paused: struct.paused,
+        closed: struct.closed,
+        stats: stats
+      }
+    default:
+      return {}
+    }
+  }
+
+  async parser(stats) {
     let producers = {};
     let consumers = {};
     let dataProducers = {};
     let dataConsumers = {};
-    this.producers.forEach((producer, index) => {
-      producers[index] = parserMediasoupApi(producer, "producer");
-    });
-    this.consumers.forEach((consumer, index) => {
-      consumers[index] = parserMediasoupApi(consumer, "consumer");
-    });
-    this.dataProducers.forEach((producer, index) => {
-      dataProducers[index] = parserMediasoupApi(producer, "dataProducer");
-    });
-    this.dataConsumers.forEach((consumer, index) => {
-      dataConsumers[index] = parserMediasoupApi(consumer, "dataConsumer");
-    });
-    const res = {
-      id: this.id,
-      displayName: this.displayName,
-      status: this.status,
-      device: this.device,
-      user: this.user,
-      producers: producers,
-      consumers: consumers,
-      dataProducers: dataProducers,
-      dataConsumers: dataConsumers,
-      media: this.media
+    let transports = {};
+    try {
+      for (let [index, producer] of this.producers) {
+        producers[index] = await this.parserMediasoupApi(producer, "producer", stats);
+      }
+      for (let [index, consumer] of this.consumers) {
+        consumers[index] = await this.parserMediasoupApi(consumer, "consumer", stats);
+      }
+      for (let [index, producer] of this.dataProducers) {
+        dataProducers[index] = await this.parserMediasoupApi(producer, "dataProducer", stats);
+      }
+      for (let [index, consumer] of this.dataConsumers) {
+        dataConsumers[index] = await this.parserMediasoupApi(consumer, "dataConsumer", stats);
+      }
+      for (let [index, transport] of this.transports) {
+        transports[index] = await this.parserMediasoupApi(transport, "transport", stats);
+      }
+      return {
+        producers,
+        consumers,
+        dataProducers,
+        dataConsumers,
+        transports
+      }
+    } catch (e) {
+      throw e;
     }
-    return res;
+  }
+
+  async peerInfos(stats = false) {
+    try {
+      const parser = await this.parser(stats);
+      return {
+        id: this.id,
+        displayName: this.displayName,
+        status: this.status,
+        device: this.device,
+        user: this.user,
+        producers: parser.producers,
+        consumers: parser.consumers,
+        dataProducers: parser.dataProducers,
+        dataConsumers: parser.dataConsumers,
+        transports: parser.transports,
+        media: this.media
+      };
+    } catch (e) {
+      this.log(e, "ERROR");
+      throw e;
+    }
+  }
+
+  async peerStats() {
+    return await this.peerInfos(true);
   }
 
   hasConsumer(consumerId) {
@@ -172,7 +222,6 @@ class Peer extends nodefony.Service {
         this.log(e, "WARNING");
       }
     }
-
     this.fire("close", this);
     this.log(`Close Peer : ${this.id}`);
     return this;

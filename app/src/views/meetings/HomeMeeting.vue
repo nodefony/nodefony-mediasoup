@@ -227,6 +227,11 @@ export default {
             }
           } else {
             if (!this.isAuthenticated) {
+              let route = JSON.stringify({
+                routeName: this.$router.currentRoute.name,
+                params: this.$router.currentRoute.params
+              });
+              window.sessionStorage.setItem("redirect", route);
               this.$router.push({
                 name: 'Login'
               }).catch(() => {})

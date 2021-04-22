@@ -28,10 +28,14 @@ class Meetings extends nodefony.Service {
         //  mediaCodecs
         //});
         const router = await worker.createRouter({
-          mediaCodecs
+          mediaCodecs,
+          appData:{
+            roomid
+          }
         });
         // bot data
-        const bot = await this.botService.create("globalChat", router);
+        //const bot = await this.botService.create("globalChat", router);
+        const bot = null;
         const room = new Room(roomid, worker, router, bot, this.container);
         this.setRoom(room.id, room);
         router.once("workerclose", async () => {
@@ -76,7 +80,7 @@ class Meetings extends nodefony.Service {
           if (message.data.consuming) {
             type = "consuming";
           }
-          let transport = await room.createTransport("webrtc", message.data);
+          let transport = await room.createTransport("webrtc", message.data, message.peerid, message.roomid);
           transport.on('trace', (trace) => {
             this.log(`transport "trace" event [transportId:${transport.id}, trace.type:${trace.type} ]`, "DEBUG");
             this.log(trace, "DEBUG");
@@ -143,7 +147,7 @@ class Meetings extends nodefony.Service {
         for (const otherPeer of room.getJoinedPeers({
             excludePeer: peer
           })) {
-          otherPeer.notify(room, 'newPeer', peer.peerInfos());
+          otherPeer.notify(room, 'newPeer', await peer.peerInfos());
         }
         break;
       }
@@ -433,25 +437,18 @@ class Meetings extends nodefony.Service {
   getPeersInfo(room) {
     return new Promise(async (resolve, reject) => {
       let peers = [];
-      let i = room.peers.size;
-      if (i === 0) {
-        return resolve(peers);
-      }
-      room.peers.forEach((peer, key, map) => {
+      for( let [key, peer] of room.peers){
         let ele = {};
         ele.id = peer.id;
         ele.status = peer.status;
-        ele.transports = peer.transports.size;
-        ele.producers = peer.producers.size;
-        ele.consumers = peer.consumers.size;
-        ele.dataProducers = peer.dataProducers.size;
-        ele.dataConsumers = peer.dataConsumers.size;
+        ele.nbTransports = peer.transports.size;
+        ele.nbProducers = peer.producers.size;
+        ele.nbConsumers = peer.consumers.size;
+        ele.nbDataProducers = peer.dataProducers.size;
+        ele.nbDataConsumers = peer.dataConsumers.size;
+        ele.stats = await peer.peerStats();
         peers.push(ele);
-        if (i === 1) {
-          return resolve(peers);
-        }
-        i--;
-      });
+      }
       return resolve(peers);
     });
   }
@@ -463,18 +460,11 @@ class Meetings extends nodefony.Service {
           return resolve(await this.getRoomInfo(room));
         }
         let rows = [];
-        let i = this.rooms.size;
-        if (i === 0) {
-          return resolve(rows);
-        }
-        this.rooms.forEach(async (room, key, map) => {
-          let ele = await this.getRoomInfo(room)
+        for( let [key, room] of this.rooms){
+          let ele = await this.getRoomInfo(room);
           rows.push(ele);
-          if (i === 1) {
-            return resolve(rows);
-          }
-          i--;
-        })
+        }
+        return resolve(rows);
       } catch (e) {
         return reject(e);
       }

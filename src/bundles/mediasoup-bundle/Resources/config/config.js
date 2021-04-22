@@ -52,8 +52,6 @@ if(kernel.environement === "prod"){
   ip = kernel.settings.system.domain;
   anounceIp = kernel.settings.system.domain;
   gcIntervalTime = 1000*60*60;  // ms => garbage collector 0 or null for disabled
-  //rtcMinPort = 40000;
-  //rtcMaxPort = 49999;
   workerSettings ={
     logLevel: 'none',
     logTags: [
@@ -97,7 +95,7 @@ module.exports = {
    *      }
    *
    */
-  watch: false,
+  watch: true,
 
   /**
    * DEV SERVER

@@ -57,6 +57,7 @@ class Room extends nodefony.Service {
   async logStatus() {
     //let status = `logStatus() [roomId:${this.id}, Peers:${this.peers.length}, mediasoup Transports:${this.router._transports.size}]`;
     //this.log(status);
+    //console.log(this.router, this.router._transports)
     return {
       roomid: this.id,
       peers: this.peers.size,
@@ -64,13 +65,61 @@ class Room extends nodefony.Service {
         pid: this.worker.pid,
         usage: await this.worker.getResourceUsage()
       },
-      router: {
-        id: this.router.id,
-        transports: this.router._transports.size,
-        capabilities: this.getRouterRtpCapabilities()
-      },
+      router:await this.formatRouterStats(),
       broadcasters: this.broadcasters.size
     };
+  }
+
+  getRouterRtpCapabilities() {
+    return this.router.rtpCapabilities;
+  }
+
+  async formatRouterStats(){
+    let tab =[];
+    let nbProcucers = 0;
+    let nbConsumers = 0;
+    let nbDataProcucers = 0;
+    let nbDataConsumers = 0;
+    for ( let [id, transport] of this.router._transports){
+      tab.push({
+        id,
+        producers:transport._producers.size,
+        consumers:transport._consumers.size,
+        dataProducers:transport._dataProducers.size,
+        dataConsumers:transport._dataConsumers.size,
+        stats: await transport.getStats(),
+        appData:transport.appData
+      });
+      nbProcucers +=  transport._producers.size ;
+      nbConsumers +=  transport._consumers.size ;
+      nbDataProcucers +=  transport._dataProducers.size ;
+      nbDataConsumers +=  transport._dataConsumers.size ;
+    }
+    return{
+      id: this.router.id,
+      nbTransports: this.router._transports.size,
+      nbProcucers,
+      nbConsumers,
+      nbDataProcucers,
+      nbDataConsumers,
+      capabilities: this.router.rtpCapabilities,
+      transports:tab,
+      appData:this.router.appData
+    }
+  }
+
+  async logStats() {
+    let peers = {};
+    try {
+      for (let [index, peer] of this.peers) {
+        peers[index] = {
+          stats: await peer.peerStats()
+        }
+      }
+      return peers;
+    } catch (e) {
+      throw e;
+    }
   }
 
   getJoinedPeers({
@@ -148,17 +197,10 @@ class Room extends nodefony.Service {
     this.peers.delete(peerid);
   }
 
-  getPeers() {
+  async getPeers() {
     let peers = [];
-    for (const peer of this.peers) {
-      peers.push(peer[1].peerInfos())
-      /*peers.push({
-        id: peer[1].id,
-        status: peer[1].status,
-        joined: peer[1].joined,
-        displayName: peer[1].displayName,
-        user: peer[1].user
-      });*/
+    for (let [index, peer] of this.peers) {
+      peers.push(await peer.peerInfos());
     }
     return peers;
   }
@@ -199,10 +241,6 @@ class Room extends nodefony.Service {
         peerId: producer.appData.peerId
       });
     });
-  }
-
-  getRouterRtpCapabilities() {
-    return this.router.rtpCapabilities;
   }
 
   async close() {
@@ -265,19 +303,27 @@ class Room extends nodefony.Service {
     peer.joined = true;
     peer.status = "joined";
     this.fire("join", peer);
-    const peerInfos = joinedPeers
+    const tab = [];
+    for (const mypeer of joinedPeers) {
+      if (mypeer.id !== peer.id) {
+        tab.push(await mypeer.peerInfos());
+      }
+    }
+    return tab;
+    /*const peerInfos = joinedPeers
       .filter((joinedPeer) => joinedPeer.id !== peer.id)
-      .map((joinedPeer) => (joinedPeer.peerInfos()));
-    return peerInfos;
+      .map(async (joinedPeer) => (await joinedPeer.peerInfos()));
+      console.log(peerInfos)
+    return peerInfos;*/
   }
 
-  async createTransport(transportType, config) {
+  async createTransport(transportType, config, peerid, roomid) {
     switch (transportType) {
     case 'webrtc':
     case 'webRtc':
-      return await this.createWebRtcTransport(config);
+      return await this.createWebRtcTransport(config, peerid, roomid);
     case 'plain':
-      return await this.createPlainRtpTransport(config);
+      return await this.createPlainRtpTransport(config, peerid, roomid);
     }
   }
   async connectTransport(transportType, transport, options) {
@@ -290,7 +336,7 @@ class Room extends nodefony.Service {
     }
   }
 
-  async createPlainRtpTransport(config) {
+  async createPlainRtpTransport(config, peerid, roomid) {
     return await this.router.createPlainRtpTransport(config);
   }
 
@@ -298,7 +344,7 @@ class Room extends nodefony.Service {
     return await transport.connect(options);
   }
 
-  async createWebRtcTransport(config) {
+  async createWebRtcTransport(config, peerid, roomid) {
     const {
       forceTcp,
       producing,
@@ -311,7 +357,9 @@ class Room extends nodefony.Service {
       numSctpStreams: (sctpCapabilities || {}).numStreams,
       appData: {
         producing,
-        consuming
+        consuming,
+        peerid:peerid || null,
+        roomid:roomid || null
       }
     };
     if (forceTcp) {
@@ -478,7 +526,8 @@ class Room extends nodefony.Service {
       consumer = await transport.consume({
         producerId: producer.id,
         rtpCapabilities: consumerPeer.rtpCapabilities,
-        paused: true
+        paused: true,
+        appData: producer.appData
       });
     } catch (error) {
       this.log('_createConsumer() | transport.consume()', "ERROR");
@@ -566,6 +615,7 @@ class Room extends nodefony.Service {
   }
 
   async createDataConsumer(dataConsumerPeer, dataProducerPeer, dataProducer) {
+    //console.log(dataProducerPeer.dataProducers)
     // NOTE: Don't create the DataConsumer if the remote Peer cannot consume it.
     if (!dataConsumerPeer.sctpCapabilities) {
       return;
@@ -582,7 +632,8 @@ class Room extends nodefony.Service {
     let dataConsumer;
     try {
       dataConsumer = await transport.consumeData({
-        dataProducerId: dataProducer.id
+        dataProducerId: dataProducer.id,
+        appData: dataProducer.appData
       });
     } catch (error) {
       this.log('_createDataConsumer() | transport.consumeData()', "ERROR");
@@ -786,7 +837,7 @@ class Room extends nodefony.Service {
     const conf = {
       ...this.recordPlainTransportOptions
     }
-    const rtpTransport = await this.createTransport('plain', conf);
+    const rtpTransport = await this.createTransport('plain', conf, peer.id);
     // Set the receiver RTP ports
     const remoteRtpPort = await this.mediasoupService.getPort(conf.listenIp);
     peer.remotePorts.push(remoteRtpPort);

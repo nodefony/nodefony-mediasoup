@@ -31,11 +31,11 @@ class MediasoupStats extends nodefony.Service {
     switch (message.method) {
     case "startRoomStats":
       let tosend = this.getRoomStats(message, context)
-      context.send(JSON.stringify( tosend ));
-      context.once("onClose", () =>{
+      context.send(JSON.stringify(tosend));
+      context.once("onClose", () => {
         this.log(`Close Clear interval startRoomStats ${tosend.interval}`)
         let interval = this.intervalMap.get(tosend.interval);
-        if( interval){
+        if (interval) {
           clearInterval(interval);
         }
       })
@@ -46,38 +46,33 @@ class MediasoupStats extends nodefony.Service {
       return context.send(JSON.stringify({
         method: message.method,
         roomid: message.roomid,
-        code:200
+        code: 200
       }));
       break;
     }
   }
 
-  getRoomStats( message, context) {
+  getRoomStats(message, context) {
     let room = this.meetingsService.getRoom(message.roomid);
-    if( !room){
+    if (!room) {
       return {
         method: message.method,
         roomid: message.roomid,
         interval: null,
-        message:"room not found",
-        code:500
+        message: "room not found",
+        code: 500
       }
     }
     const interval = setInterval(async () => {
-      /*let roomStat = {
-        status:{
-        }
-      }*/
-      //const usage = await room.worker.getResourceUsage();
-
       this.log(`mediasoup Worker resource usage [pid:${room.worker.pid}]:`, "DEBUG");
-      //roomStat.status.worker = {usage};
+
       return context.send(JSON.stringify({
         method: "roomStats",
-        //room: roomStat
-        roomid:message.roomid,
+        //room: roomStat,
+        period:1 * 1000,
+        roomid: message.roomid,
         room: await this.meetingsService.getRoomsInfos(room),
-        peers:await this.meetingsService.getPeersInfo(room)
+        peers: await this.meetingsService.getPeersInfo(room)
       }));
     }, 1 * 1000);
     let idInterval = nodefony.generateId();
@@ -86,11 +81,9 @@ class MediasoupStats extends nodefony.Service {
       method: message.method,
       roomid: message.roomid,
       interval: idInterval,
-      code:200
+      code: 200
     }
   }
-
-
 
 };
 

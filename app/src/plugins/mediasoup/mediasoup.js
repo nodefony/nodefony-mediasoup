@@ -30,6 +30,25 @@ const VIDEO_CONSTRAINS = {
   }
 };
 
+const workerUsage = {
+  ru_idrss: "integral unshared data size",
+  ru_inblock: "block input operations",
+  ru_isrss: "integral unshared stack size",
+  ru_ixrss: "integral shared memory size",
+  ru_majflt: "page faults",
+  ru_maxrss: "maximum resident set size",
+  ru_minflt: "page reclaims",
+  ru_msgrcv: "messages received",
+  ru_msgsnd: "messages sent",
+  ru_nivcsw: "involuntary context switches",
+  ru_nsignals: "signals received",
+  ru_nswap: "swaps",
+  ru_nvcsw: "voluntary context switches",
+  ru_oublock: "block output operations ",
+  ru_stime: "system time used",
+  ru_utime: "user time used"
+};
+
 class Mediasoup extends nodefony.Service {
 
   constructor(settings, service) {
@@ -39,6 +58,7 @@ class Mediasoup extends nodefony.Service {
     this.peer = null;
     this.sock = null;
     this.domain = "localhost";
+    this.workerUsage = workerUsage;
     this.deviceInfo = nodefony.browser;
     this.domain = this.options.VUE_APP_DOMAIN;
     this.portHttp = this.options.VUE_APP_HTTP_PORT;
@@ -308,6 +328,42 @@ class Mediasoup extends nodefony.Service {
         this.sockStats = null;
       };
     })
+  }
+
+  getCpuUsage(worker){
+    let res = 0;
+    if (worker &&  worker.usage) {
+      let usage = worker.usage;
+      let usertime = null;
+      let systemtime = null;
+      if (this.utime && this.stime) {
+        usertime = (usage.ru_utime - this.utime) / 1000000;
+        systemtime = (usage.ru_stime - this.stime) / 1000000;
+        res = (usertime + systemtime) * 100000;
+        //console.log(usertime, systemtime, (usertime + systemtime), res)
+      }
+      this.stime = usage.ru_stime;
+      this.utime = usage.ru_utime
+      //return ((usage.ru_utime + usage.ru_stime) * 100) / (utime + stime); // Total CPU Utilization
+    }
+    return res.toFixed(2);
+  }
+  
+  getMemoryUsage(worker) {
+    if (worker &&  worker.usage) {
+      let usage = worker.usage;
+      let rss = usage.ru_maxrss;
+      let units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+        n = parseInt(rss, 10) || 0,
+        l = 0;
+      while (n >= 1024) {
+        n = n / 1024;
+        l++;
+      }
+      return `${n.toFixed(2)} ${units[l]}`;
+      //return (n.toFixed(n >= 10 || l < 1 ? 0 : 1) + ' ' + units[l]);
+    }
+    return undefined;
   }
 
 }

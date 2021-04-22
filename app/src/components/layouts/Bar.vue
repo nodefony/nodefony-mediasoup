@@ -28,9 +28,9 @@
       <v-subheader>{{$t("traduction")}}</v-subheader>
       <v-list-item-group v-model="selectedLang" color="primary">
         <v-list-item v-for="(item, i) in langs" :key="i" @click="changeLang(item)">
-          <v-list-item-icon>
+          <!--v-list-item-icon>
             <v-icon v-text="item.icon"></v-icon>
-          </v-list-item-icon>
+          </v-list-item-icon-->
           <v-list-item-content>
             <v-list-item-title>{{ item.text }}</v-list-item-title>
           </v-list-item-content>
@@ -168,6 +168,17 @@ export default {
     if (!this.getProfile) {
       if (this.getUser && this.isAuthenticated) {
         return await this.getUserProfile(`/api/users/${this.getUser}`)
+          .then((ele) => {
+            let tab = this.getProfile.lang.split("_");
+            if (tab[1] !== this.$root.$i18n.locale) {
+              for (let ele of this.langs) {
+                if (ele.locale === tab[1]) {
+                  this.changeLang(ele);
+                }
+              }
+            }
+            return ele;
+          })
           .catch(() => {
             document.location = `/app/login`;
           });
@@ -183,6 +194,7 @@ export default {
     changeLang(lang) {
       this.$root.$i18n.locale = lang.locale;
       window.sessionStorage.setItem("locale", lang.locale);
+      this.getLang();
     },
     getLang() {
       this.langs.forEach((item, i) => {
@@ -190,7 +202,7 @@ export default {
           this.selectedLang = i;
         }
       });
-      return this.selectedLang
+      return this.selectedLang;
     }
     /*async deconnect() {
       await this.logout()

@@ -20,6 +20,15 @@ import PageNotFound from '../views/404';
 
 const ifAuthenticated = (to, from, next) => {
   if (Store.getters.isAuthenticated) {
+    let redirect = window.sessionStorage.getItem("redirect")
+    if( redirect && !from.name && to.name === "Home"){
+      let res = JSON.parse(redirect);
+      window.sessionStorage.removeItem("redirect")
+      return next({
+        name: res.routeName,
+        params:res.params
+      });
+    }
     return next();
   }
   //next('Login');
