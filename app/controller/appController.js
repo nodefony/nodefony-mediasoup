@@ -18,7 +18,6 @@ class appController extends nodefony.Controller {
    *      name="App")
    */
   async appAction() {
-    console.log("passss", this.context.originUrl.pathname)
     if (this.context.originUrl.pathname === "/app/login"){
       await this.session.destroy();
     }
