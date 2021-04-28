@@ -34,7 +34,7 @@ const LOCALE = window.sessionStorage.getItem("locale");
 const LOCALE_DEFAULT = 'en';
 
 export default new VueI18n({
-  locale: LOCALE || process.env.VUE_APP_I18N_LOCALE || 'en',
+  locale: LOCALE || process.env.VUE_APP_I18N_LOCALE || LOCALE_DEFAULT,
   fallbackLocale: process.env.VUE_APP_I18N_FALLBACK_LOCALE || LOCALE_DEFAULT,
   messages: loadLocaleMessages()
 })

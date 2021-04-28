@@ -136,8 +136,12 @@ export default {
       }
     }
   }),
-  beforeRouteLeave(to, from, next) {
+  async beforeRouteLeave(to, from, next) {
     //this.openDrawer();
+    //console.log(to, from)
+    if (to.name !== "JoinMeeting") {
+      await this.$mediasoup.leaveRoom();
+    }
     this.openNavBar();
     return next();
   },
@@ -223,6 +227,11 @@ export default {
             }
           } else {
             if (!this.isAuthenticated) {
+              let route = JSON.stringify({
+                routeName: this.$router.currentRoute.name,
+                params: this.$router.currentRoute.params
+              });
+              window.sessionStorage.setItem("redirect", route);
               this.$router.push({
                 name: 'Login'
               }).catch(() => {})

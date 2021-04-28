@@ -34,17 +34,17 @@
     "node": ">=10"
   },
   "dependencies": {
-    "mongoose": "^5.12.3",
-    "nodefony": "^6.5.1",
-    "nodefony-client": "^6.0.0-beta.16",
+    "mongoose": "^5.12.6",
+    "nodefony": "^6.5.3",
+    "nodefony-client": "6.0.0-beta.16",
     "pm2": "^4.5.6",
     "pm2-logrotate": "^2.7.0",
     "sequelize": "^6.6.2",
-    "webpack": "^5.28.0",
+    "webpack": "^5.36.0",
     "webpack-dev-server": "^3.11.2"
   },
   "devDependencies": {
-    "node-gyp": "^7.1.2",
+    "node-gyp": "^8.0.0",
     "node-pre-gyp": "^0.17.0"
   },
   "author": "Christophe CAMENSULI <ccamensuli@gmail.com>",

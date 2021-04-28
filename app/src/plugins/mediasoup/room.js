@@ -1465,7 +1465,8 @@ class Room extends nodefony.Service {
         label: 'chat',
         priority: 'medium',
         appData: {
-          info: 'my-chat-DataProducer'
+          info: 'my-chat-DataProducer',
+          peer:this.peer.id
         }
       });
       //this.chatDataProducer.bufferedAmountLowThreshold = 100;

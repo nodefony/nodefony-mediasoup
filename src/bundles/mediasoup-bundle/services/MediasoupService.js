@@ -94,11 +94,11 @@ module.exports = class Mediasoup extends nodefony.Service {
         }
 
         // EVENTS
-        const sendWaitingMessage = (event, message = null, obj = {}) => {
+        const sendWaitingMessage = async (event, message = null, obj = {}) => {
           const sendMessage = nodefony.extend({
             method: "waiting",
             event: event,
-            peers: mdroom.getPeers(),
+            peers: await mdroom.getPeers(),
             administrators: administrators,
             room: room,
             to: query.peerId,
@@ -213,7 +213,7 @@ module.exports = class Mediasoup extends nodefony.Service {
         let sendMessage = {
           method: "waiting",
           status: status,
-          peers: mdroom.getPeers(),
+          peers: await mdroom.getPeers(),
           room: room,
           to: query.peerId,
           administrators: administrators,
@@ -283,6 +283,19 @@ module.exports = class Mediasoup extends nodefony.Service {
         }, 60 * 1000);*/
       }
     }
+  }
+
+  getWorker(pid){
+    if( ! pid){
+      return this.workers;
+    }
+    let worker = null;
+    for(let myworker of this.workers){
+      if( myworker.pid == pid){
+        worker = myworker
+      }
+    }
+    return worker;
   }
 
   getMediasoupWorker() {

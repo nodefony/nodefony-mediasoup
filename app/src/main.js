@@ -10,6 +10,7 @@ import store from './store'
 import nodefony from '@/plugins/nodefony/nodefony'
 import mediasoup from '@/plugins/mediasoup/mediasoup'
 import media_viewer from '@/plugins/mediasoup/mediaviewer/media_viewer'
+import vis from '@/plugins/vis/vis'
 //import apolloProvider from '@/apollo/apollo'
 
 import './pwa/registerServiceWorker'
@@ -34,6 +35,13 @@ Vue.use(media_viewer, {
   nodefony
 });
 
+Vue.use(vis, {
+  router,
+  store,
+  i18n,
+  nodefony
+});
+
 new Vue({
   router,
   store,
@@ -41,6 +49,7 @@ new Vue({
   i18n,
   created: function () {
     this.$nodefony.application = this;
+    this.$vis.application = this;
   },
   render: h => h(App)
 }).$mount('#app');

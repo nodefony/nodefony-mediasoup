@@ -16,6 +16,7 @@ class apiRoomController extends nodefony.Controller {
     this.roomsService = this.get("Rooms");
     this.meetingsService = this.get("Meetings");
     this.User = this.orm.getEntity("user");
+    this.userService = this.get("users");
     this.api = new nodefony.api.Json({
       name: "mediasoup-rooms",
       version: this.bundle.version,
@@ -238,6 +239,16 @@ class apiRoomController extends nodefony.Controller {
     throw error;
   }
 
+
+  /**
+   *  API
+   *    @Route ("/access/room/secure/{name}",
+   *      name="route-rooms-secure-access")
+   *    @Method ({"POST","GET"})
+   */
+   async checkRoomSecureAccessAction(name) {
+     return this.checkRoomAccessAction(name);
+   }
   /**
    *  API
    *    @Route ("/access/room/{name}",
@@ -249,11 +260,36 @@ class apiRoomController extends nodefony.Controller {
     if( ! this.query.username ){
       throw new nodefony.Error('Bad Request no user', 401)
     }
+    // check user exist
+    let user = null;
+    const userAuth = this.getUser();
+    try{
+      user = await this.userService.findOne(this.query.username);
+      if( ! userAuth){
+        return this.redirectToRoute("route-rooms-secure-access", {
+          name:name,
+          queryString:this.query
+        });
+      }
+    }catch(e){
+      this.log(e,"WARNING");
+    }
+    if( user){
+      if( ! userAuth){
+        throw new nodefony.Error(`Username can't be use for this room `, 401);
+      }else{
+        if( this.query.username !== userAuth.username ){
+          throw new nodefony.Error(`Username can't be use for this room `, 401);
+        }
+      }
+    }
     const room = await this.roomsService.findOne(name);
     if (room && room.secure) {
       return this.secureAction(name);
     }
     await this.setStykyCookie(name, room);
+    delete room.password;
+    delete room.sticky_cookie;
     return this.api.render({
       room,
       access: "authorized"
@@ -281,6 +317,7 @@ class apiRoomController extends nodefony.Controller {
       if (check) {
         await this.setStykyCookie(name, room);
         delete room.password;
+        delete room.sticky_cookie;
         return this.api.render({
           room,
           access: "authorized"

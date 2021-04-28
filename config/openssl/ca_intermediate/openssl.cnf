@@ -115,13 +115,9 @@ subjectAltName		= @alt_names
 [ alt_names ]
 IP.1			= 127.0.0.1
 IP.2			= 0.0.0.0
-IP.3			= 192.168.0.51
-IP.4			= 192.168.99.151
 DNS.1			= localhost
 DNS.2			= docker.nodefony-mediasoup.com
 DNS.3		  = nodefony-mediasoup.com
-DNS.4			= nodefony.dsb
-DNS.5			= mediasoup.nodefony.dsb
 
 
 [ usr_cert ]

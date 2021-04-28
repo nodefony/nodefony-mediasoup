@@ -19,7 +19,7 @@ class appController extends nodefony.Controller {
    */
   async appAction() {
     if (this.context.originUrl.pathname === "/app/login"){
-      this.session.destroy();
+      await this.session.destroy();
     }
     return this.render("app::index.html.twig", {
       name: this.kernel.projectName,
