@@ -1,5 +1,6 @@
 import {
   AUTH_REQUEST,
+  AUTH_REFRESH,
   AUTH_ERROR,
   AUTH_SUCCESS,
   AUTH_LOGOUT
@@ -15,7 +16,7 @@ import {
   Api as baseApi
 } from 'nodefony-client';
 const Api = new baseApi("auth", {
-  baseUrl:"/api/jwt",
+  baseUrl: "/api/jwt",
   storage: {
     type: "local"
   }
@@ -52,6 +53,32 @@ const actions = {
         .then(async response => {
           commit(AUTH_SUCCESS, response.result)
           commit(USER_PROFILE, response.result.user)
+          return resolve(response.result)
+        })
+        .catch(err => {
+          commit(AUTH_ERROR, err)
+          reject(err)
+        })
+    })
+  },
+  [AUTH_REFRESH]: ({
+    commit,
+    dispatch
+  }) => {
+    return new Promise((resolve, reject) => {
+      let body = JSON.stringify({
+        refreshToken: window.localStorage.getItem('refresh-token')
+      })
+      return Api.http("refresh", "post", {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+          },
+          body: body
+        })
+        .then(async response => {
+          if( response.result && response.result.refreshToken)
+          Api.refreshToken = response.result.refreshToken;
           return resolve(response.result)
         })
         .catch(err => {
@@ -103,15 +130,15 @@ const mutations = {
     state.status = 'logout'
     state.loading = false
     window.localStorage.removeItem('username')
-    state.username =null
+    state.username = null
     state.decodedToken = null
   },
-  clear(state){
+  clear(state) {
     state.token = null;
     state.decodedToken = null
     state.loading = false;
     window.localStorage.removeItem('username')
-    state.username =null
+    state.username = null
     Api.clearToken(true);
   }
 }

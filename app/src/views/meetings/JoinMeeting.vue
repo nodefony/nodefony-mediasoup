@@ -110,7 +110,7 @@ export default {
     return next();
   },
 
-  created() {
+  async created() {
     if (!this.room) {
       this.redirect("HomeMeeting")
         .then(() => {
@@ -118,12 +118,20 @@ export default {
           //this.notify(this.log("Room not ready", "WARNING"))
         })
     }
+    return await this.refresh()
+      .catch(e => {
+        this.log(e, "ERROR");
+        return this.$router.push({
+          name: "Logout",
+        });
+      })
   },
   destroyed() {
     this.log(`destroy join component `, "DEBUG");
     //this.$mediasoup.removeListener("waiting", this.onWaiting);
     this.$mediasoup.removeListener("closeSock", this.sockClose);
   },
+
   beforeMount() {
     this.closeDrawer();
     this.closeNavBar();
@@ -217,6 +225,10 @@ export default {
     ...mapActions([
       'getDevices'
     ]),
+    ...mapActions({
+      refresh: 'AUTH_REFRESH'
+    }),
+
     /*onWaiting(message) {
       if (message.message) {
         let pdu = this.log(message.message, "DEBUG");
