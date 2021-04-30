@@ -1,12 +1,6 @@
 import nodefony from 'nodefony-client'
-import media from "nodefony-client/dist/medias";
+import media from "nodefony-client/src/medias/medias";
 media(nodefony);
-//import webaudio from "nodefony-client/dist/webaudio";
-//webaudio(nodefony);
-//import socket from "nodefony-client/dist/socket";
-//socket(nodefony);
-//import sip from "nodefony-client/dist/sip";
-//sip(nodefony);
 
 import snackBar from './notify/snackbar';
 import alert from './notify/alert';
