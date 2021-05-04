@@ -118,13 +118,15 @@ export default {
           //this.notify(this.log("Room not ready", "WARNING"))
         })
     }
-    return await this.refresh()
-      .catch(e => {
-        this.log(e, "ERROR");
-        return this.$router.push({
-          name: "Logout",
-        });
-      })
+    if (this.isAuthenticated) {
+      return await this.refresh()
+        .catch(e => {
+          this.log(e, "ERROR");
+          return this.$router.push({
+            name: "Logout",
+          });
+        })
+    }
   },
   destroyed() {
     this.log(`destroy join component `, "DEBUG");
@@ -165,7 +167,8 @@ export default {
       "hasNoise",
       'getProfileUsername',
       'getProfileName',
-      'getProfileSurname'
+      'getProfileSurname',
+      'isAuthenticated'
     ]),
     /*peers: {
       get() {
