@@ -2,7 +2,7 @@
 <v-card :width="cardWidth" :height="height" class="rounded-lg" :elevation="elevation" :outlined="hover" :min-width="minWidth" :max-width="maxWidth" :max-height="maxHeight" :min-height="minHeight" :loading="loading" rounded @click="toggle" :class="{ focus: focus}"
   style="background:transparent;" :dark="dark">
 
-  <media-volume-peer v-if="volume && !screenShare" fab rounded absolute top left color="blue-grey" class=" white--text mt-5" :volume="this.volume || 0" :muted="local ? !hasAudio : !audio" />
+  <media-volume-peer v-if="volume && !screenShare" fab rounded absolute top left color="blue-grey" class=" white--text mt-5" :volume="volume || 0" :muted="local ? !hasAudio : !audio" />
 
   <slot name="peer"></slot>
 
@@ -14,7 +14,7 @@
 
           <v-row justify="center" align="center" class="pa-0 ma-0">
             <div v-show="hover || !video " style="position:absolute">
-              <v-avatar color="primary" class="white--text" :size="50">{{remote ? remote.getInitial() : ""}}</v-avatar>
+              <v-avatar v-if="remote" color="primary" class="white--text" :size="50">{{remote ? remote.getInitial() : ""}}</v-avatar>
             </div>
             <video style="width:100%;border-radius:8px 8px 0 0;" class="pa-0 ma-0" muted playsinline :controls="false" ref="prevideo" />
           </v-row>
@@ -26,7 +26,7 @@
           <v-container fluid fill-height style="min-height:120px;background-color:#034750;opacity:0.5;border-radius:8px 8px 0 0;" class="pa-0 ma-0">
             <v-row justify="center" align="center">
               <div style="position:absolute">
-                <v-avatar color="primary" class="white--text" :size="50">{{remote ? remote.getInitial() : ""}}</v-avatar>
+                <v-avatar v-if="remote" color="primary" class="white--text" :size="50">{{remote ? remote.getInitial() : ""}}</v-avatar>
                 <h1 v-if="hover" style="color:white"></h1>
               </div>
             </v-row>
@@ -49,18 +49,18 @@
           <v-divider></v-divider>
           <v-subheader>Devices Settings</v-subheader>
           <v-row justify="space-between" class="mt-0">
-            <v-col v-if="this.audio" class="d-flex" cols="12" sm="6">
+            <v-col v-if="audio" class="d-flex" cols="12" sm="6">
               <v-select v-model="audioDevice" dense :items="getDevicesAudioLabels" label="Audio Devices" outlined v-on:change='changeDevice("audio")'></v-select>
             </v-col>
-            <v-col v-if="this.video" class="d-flex" cols="12" sm="6">
+            <v-col v-if="video" class="d-flex" cols="12" sm="6">
               <v-select v-model="videoDevice" dense :items="getDevicesVideoLabels" label="Videos Devices" outlined v-on:change='changeDevice("video")'></v-select>
             </v-col>
           </v-row>
           <v-divider></v-divider>
-          <v-subheader v-if="this.video|| this.screen || this.noise">Videos Settings</v-subheader>
-          <v-row v-if="this.video|| this.screen || this.noise" justify="space-around" class="mt-0">
+          <v-subheader v-if="video|| screen || noise">Videos Settings</v-subheader>
+          <v-row v-if="video|| screen || noise" justify="space-around" class="mt-0">
             <v-col class="d-flex" cols="12" sm="6">
-              <v-select dense :items="this.options.videos" label="Videos" outlined v-model="resolution" @change='changeVideoFormat'>
+              <v-select dense :items="options.videos" label="Videos" outlined v-model="resolution" @change='changeVideoFormat'>
               </v-select>
             </v-col>
           </v-row>
@@ -146,9 +146,9 @@ export default {
       focus: false,
       resolution: "hd",
       devices: [],
-      audio: null,
-      video: null,
-      screen: null,
+      audio: false,
+      video: false,
+      screen: false,
       noise: null,
       level: -100,
       audioStream: null,
