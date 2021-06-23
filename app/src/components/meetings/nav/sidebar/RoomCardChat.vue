@@ -17,6 +17,7 @@
       </template>
 
       <v-container fluid>
+        <!--input-message v-model="input" /-->
         <v-textarea v-model="input" clear-icon="mdi-close-circle" @keydown.enter="eventsImput" @paste="eventsImput" @dragstart="eventsImput" @dragenter="eventsImput" @dragleave="eventsImput" @dragover="eventsImput" @drop.prevent.stop="eventsImput"
           auto-grow no-resize clearable label="Leave a comment.." rows="1" row-height="50" class="ml-1">
           <!--template v-slot:append>
@@ -100,8 +101,12 @@ import {
   //mapActions
 } from 'vuex';
 //import urlRegex from 'url-regex';
+//import InputMessage from "@/components/meetings/nav/sidebar/messages/Message";
 export default {
   name: 'MenuChat',
+  components: {
+    //"input-message": InputMessage
+  },
   data() {
     return {
       input: null,
