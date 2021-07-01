@@ -11,7 +11,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.3",
     "clean-webpack-plugin": "^3.0.0",
-    "core-js": "^3.15.1",
+    "core-js": "^3.15.2",
     "mediasoup-client": "^3.6.34",
     "moment": "^2.29.1",
     "ogp-parser": "^0.5.6",
@@ -23,7 +23,7 @@
     "vue": "^2.6.14",
     "vue-i18n": "^8.24.5",
     "vue-router": "^3.5.2",
-    "vuetify": "^2.5.5",
+    "vuetify": "^2.5.6",
     "vuex": "^3.6.2"
   },
   "devDependencies": {
@@ -43,7 +43,7 @@
     "vue-cli": "^2.9.6",
     "vue-cli-plugin-i18n": "^2.1.1",
     "vue-cli-plugin-vuetify": "^2.4.1",
-    "vue-loader": "^15.9.7",
+    "vue-loader": "^16.3.0",
     "vue-template-compiler": "^2.6.14",
     "vuetify-loader": "^1.7.2",
     "webpack-bundle-analyzer": "^4.4.2"
