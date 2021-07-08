@@ -44,7 +44,7 @@ const allReadyLogin = (to, from, next) => {
 
 Vue.use(VueRouter)
 
-const routes = [{
+let mainRoute = [{
   path: '/',
   alias: '/home',
   name: 'Home',
@@ -117,21 +117,30 @@ const routes = [{
   props: true,
   beforeEnter: ifAuthenticated,
   component: EditUser
- }, {
+}];
+
+let routes = null;
+// calendar
+import calendarRoutes from '@/../../src/bundles/calendar-bundle/Resources/vue/routes/routes.js';
+routes = mainRoute.concat(calendarRoutes);
+
+// dev routes
+import devRoute from './dev.index.js';
+if( process.env.VUE_APP_NODE_ENV){
+  routes = routes.concat(devRoute);
+}
+
+// tool routes
+routes.push({
   // and finally the default route, when none of the above matches:
   path: "*",
   component: PageNotFound
-}];
+})
 
 const router = new VueRouter({
   mode: 'history',
   base: `${process.env.BASE_URL}`,
   routes
 });
-
-import devRoute from './dev.index.js';
-if( process.env.VUE_APP_NODE_ENV){
-  router.addRoutes(devRoute);
-}
 
 export default router;
