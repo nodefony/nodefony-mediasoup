@@ -12,7 +12,7 @@
   </v-row>
   <div class="d-flex align-content-start flex-wrap">
     <section class="c-section">
-      <preview-peer max-width="100%" min-width="150px" max-height="100%" min-height="150px" rounded flat style="background:transparent" class="ma-1 mb-3" v-for="(mypeer) in peers" :key="`preview-${mypeer.id}`" :peerid="mypeer.id" :currentfocus="currentfocus" />
+      <preview-peer min-width="150px" min-height="150px" rounded flat style="background:transparent" class="ma-1 mb-3" v-for="(mypeer) in peers" :key="`preview-${mypeer.id}`" :peerid="mypeer.id" :currentfocus="currentfocus" />
 
       <!--v-card max-width="500px" min-width="200px" max-height="300px" min-height="150px" rounded outlined v-for="nb in 20" :key="`vid-${nb}`" style="border:solid 1px white;background:transparent" class="ma-1 mb-3 align-self-center flex-wrap flex-grow-0">
         <video constrols :ref="`video-${nb}`" style="width:100%;height:100%;border-radius:8px;" />

@@ -5,7 +5,7 @@
       <!--v-row class="mb-5" style="flex-wrap: nowrap;background-justify-space-between;color:black;width:100%;height:100%">
 
         <v-col cols="12" style="width:100%;height:100%;" class="d-flex align-content-start justify-space-start flex-wrap px-1"-->
-      <preview-peer v-for="n in 15" max-width="100%" min-width="150px" max-height="100%" min-height="150px" rounded flat class="ma-1 mb-3 video" :key="`preview-${n}`" :peerid="n" />
+      <preview-peer v-for="n in 1" max-width="100%" min-width="150px" max-height="100%" min-height="150px" rounded flat class="ma-1 mb-3 video" :key="`preview-${n}`" :peerid="n" />
       <!--/v-col>
 
       </v-row-->

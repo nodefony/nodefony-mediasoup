@@ -75,7 +75,7 @@
 import {
   mapGetters,
   mapMutations,
-  //mapActions
+  mapActions
 } from 'vuex';
 import Volume from '@/components/meetings/medias/peers/MediaVolumePeer';
 
@@ -294,6 +294,9 @@ export default {
       'changeWebcamDevice',
       'changeAudioDevice'
     ]),
+    ...mapActions([
+      'getDevices'
+    ]),
     async initialize() {
       this.audioStream = this.createAudioStream();
       this.videoStream = this.createVideoStream();
@@ -325,6 +328,7 @@ export default {
             this.log(e, "WARNING")
           })
       }
+      return await this.getDevices();
       /*if (this.hasScreen) {
         await this.getUserScreen()
           .catch((e) => {
@@ -584,6 +588,7 @@ export default {
           if (this.remote) {
             this.audioStream.attachStream();
           }
+          console.log(this.spectrum)
           if (this.spectrum) {
             if (this.$spectrum) {
               this.$spectrum.start(stream);

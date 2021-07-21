@@ -46,7 +46,7 @@ const getters = {
 
   getAudioDeviceByValue: (state) => (id) => {
     let device = null;
-    if (state.audioDevices.size) {
+    if (state.audioDevices && state.audioDevices.size) {
       state.audioDevices.forEach((value, key) => {
         if (!key) {
           device = {
@@ -104,7 +104,7 @@ const getters = {
   },
   getVideoDeviceByValue: (state) => (id) => {
     let device = null;
-    if (state.videoDevices.size) {
+    if (state.videoDevices && state.videoDevices.size) {
       state.videoDevices.forEach((value, key) => {
         if (!key) {
           device = {

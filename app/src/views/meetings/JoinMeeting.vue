@@ -126,7 +126,20 @@ export default {
             name: "Logout",
           });
         })
+      /*return await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true
+      }).then(async () => {
+        return await this.getDevices()
+          .then(() => {
+            this.loading = false;
+          })
+          .catch(() => {
+            this.loading = false;
+          });
+      });*/
     }
+
   },
   destroyed() {
     this.log(`destroy join component `, "DEBUG");
@@ -134,7 +147,7 @@ export default {
     this.$mediasoup.removeListener("closeSock", this.sockClose);
   },
 
-  beforeMount() {
+  async beforeMount() {
     this.closeDrawer();
     this.closeNavBar();
     this.medias = ["audio", "video"];
@@ -142,13 +155,6 @@ export default {
     this.loading = true;
   },
   async mounted() {
-    await this.getDevices()
-      .then(() => {
-        this.loading = false;
-      })
-      .catch(() => {
-        this.loading = false;
-      });
     this.peerComponent = this.$refs["peer"];
     //this.$mediasoup.on("waiting", this.onWaiting);
     this.$mediasoup.once("closeSock", this.sockClose);
@@ -226,7 +232,7 @@ export default {
       //'changeWebcamDevice'
     ]),
     ...mapActions([
-      'getDevices'
+      //'getDevices'
     ]),
     ...mapActions({
       refresh: 'AUTH_REFRESH'
