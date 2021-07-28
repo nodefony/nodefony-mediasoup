@@ -54,7 +54,7 @@
     "swagger-ui": "^3.51.1",
     "swagger-ui-dist": "^3.51.1",
     "terser-webpack-plugin": "^5.1.4",
-    "webpack": "^5.45.1",
+    "webpack": "^5.47.0",
     "webpack-merge": "^5.8.0"
   },
   "devDependencies": {

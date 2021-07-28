@@ -4,6 +4,7 @@
 /web/**
 **/assets/**
 config/generatedConfig.yml
+app/Resources/public/service-worker.js
 
 app/Resources/databases/*
 *.db
