@@ -13,11 +13,11 @@
   ],
   "repository": {},
   "dependencies": {
-    "mediasoup": "^3.8.1"
+    "mediasoup": "^3.8.3"
   },
   "devDependencies": {
     "@mapbox/node-pre-gyp": "^1.0.5",
-    "node-gyp": "^8.1.0"
+    "node-gyp": "^8.2.0"
   },
   "license": "",
   "readmeFilename": "README.md",
