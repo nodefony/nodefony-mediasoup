@@ -34,14 +34,14 @@
     "node": ">=10"
   },
   "dependencies": {
-    "mongoose": "^5.13.7",
-    "nodefony": "^6.5.7",
+    "mongoose": "^6.0.5",
+    "nodefony": "^6.6.0",
     "nodefony-client": "^6.0.0-beta.18",
-    "pm2": "^5.1.0",
+    "pm2": "^5.1.1",
     "pm2-logrotate": "^2.7.0",
     "sequelize": "^6.6.5",
-    "webpack": "^5.51.1",
-    "webpack-dev-server": "^3.11.2"
+    "webpack": "^5.52.1",
+    "webpack-dev-server": "^4.2.0"
   },
   "devDependencies": {
     "@mapbox/node-pre-gyp": "^1.0.5",
