@@ -588,7 +588,6 @@ export default {
           if (this.remote) {
             this.audioStream.attachStream();
           }
-          console.log(this.spectrum)
           if (this.spectrum) {
             if (this.$spectrum) {
               this.$spectrum.start(stream);
