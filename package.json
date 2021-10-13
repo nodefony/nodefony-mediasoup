@@ -35,11 +35,11 @@
   },
   "dependencies": {
     "mongoose": "^6.0.10",
-    "nodefony": "^6.6.0",
+    "nodefony": "^6.9.1",
     "nodefony-client": "^6.0.0-beta.18",
     "pm2": "^5.1.2",
     "pm2-logrotate": "^2.7.0",
-    "sequelize": "^6.6.5",
+    "sequelize": "^6.7.0",
     "webpack": "^5.58.1",
     "webpack-dev-server": "^4.3.1"
   },
