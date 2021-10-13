@@ -1,5 +1,5 @@
 const Broadcaster = require(path.resolve(__dirname, "broadcaster.js"));
-
+const util = require('util');
 
 const openMedia = function (roomid, peerid, type) {
   if (roomid === this.id) {
@@ -31,6 +31,24 @@ class Room extends nodefony.Service {
     this.closed = false;
     this.worker = worker;
     this.router = router;
+    this.transports = new Map();
+    this.router.observer.on("newtransport", (transport) => {
+      let ele ={
+        transport:transport,
+        nbProcucers:0
+      }
+      transport.observer.on("close", ()=>{
+        this.transports.delete(transport.id);
+      });
+      transport.observer.on("newproducer", (producer)=>{
+        ele.nbProcucers++;
+        producer.observer.on("close", ()=>{
+          ele.nbProcucers--
+        });
+      });
+      this.transports.set(transport.id, ele)
+    });
+
     this.bot = bot;
     this.peers = new Map();
     this.broadcasters = new Map();
@@ -65,7 +83,7 @@ class Room extends nodefony.Service {
         pid: this.worker.pid,
         usage: await this.worker.getResourceUsage()
       },
-      router:await this.formatRouterStats(),
+      router: await this.formatRouterStats(),
       broadcasters: this.broadcasters.size
     };
   }
@@ -74,37 +92,41 @@ class Room extends nodefony.Service {
     return this.router.rtpCapabilities;
   }
 
-  async formatRouterStats(){
-    let tab =[];
+  async formatRouterStats() {
+    let tab = [];
     let nbProcucers = 0;
     let nbConsumers = 0;
     let nbDataProcucers = 0;
     let nbDataConsumers = 0;
-    for ( let [id, transport] of this.router._transports){
+    for (const [id, transport] of this.transports) {
+      let producersSize = transport.nbProcucers ;
+      let consumersSize = transport.transport.consumers ? transport.transport.consumers.size : 0;
+      let dataProducersSize = transport.transport.dataProducers ? transport.transport.dataProducers.size : 0;
+      let dataConsumersSize = transport.transport.dataConsumers ? transport.transport.dataConsumers.size : 0;
       tab.push({
         id,
-        producers:transport._producers.size,
-        consumers:transport._consumers.size,
-        dataProducers:transport._dataProducers.size,
-        dataConsumers:transport._dataConsumers.size,
-        stats: await transport.getStats(),
-        appData:transport.appData
+        producers: producersSize,
+        consumers: consumersSize,
+        dataProducers: dataProducersSize,
+        dataConsumers: dataConsumersSize,
+        stats: await transport.transport.getStats(),
+        appData: transport.transport.appData
       });
-      nbProcucers +=  transport._producers.size ;
-      nbConsumers +=  transport._consumers.size ;
-      nbDataProcucers +=  transport._dataProducers.size ;
-      nbDataConsumers +=  transport._dataConsumers.size ;
+      nbProcucers += producersSize;
+      nbConsumers += consumersSize;
+      nbDataProcucers += dataProducersSize;
+      nbDataConsumers += dataConsumersSize;
     }
-    return{
+    return {
       id: this.router.id,
-      nbTransports: this.router._transports.size,
+      nbTransports: this.transports.size,
       nbProcucers,
       nbConsumers,
       nbDataProcucers,
       nbDataConsumers,
       capabilities: this.router.rtpCapabilities,
-      transports:tab,
-      appData:this.router.appData
+      transports: tab,
+      appData: this.router.appData
     }
   }
 
@@ -358,8 +380,8 @@ class Room extends nodefony.Service {
       appData: {
         producing,
         consuming,
-        peerid:peerid || null,
-        roomid:roomid || null
+        peerid: peerid || null,
+        roomid: roomid || null
       }
     };
     if (forceTcp) {
