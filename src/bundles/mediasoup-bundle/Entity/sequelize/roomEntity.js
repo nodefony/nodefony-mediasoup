@@ -2,7 +2,7 @@ const {
   Sequelize,
   DataTypes,
   Model
-} = require("sequelize");
+} = nodefony.Sequelize;
 const validator = require('validator');
 /*
  *
