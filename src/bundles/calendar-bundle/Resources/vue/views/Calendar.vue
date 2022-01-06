@@ -1,12 +1,15 @@
 <template>
 <v-container fluid>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 
 =======
 >>>>>>> d0cc6fc (add calendar demo)
 >>>>>>> db37bf5 (add bundle calendar)
+=======
+>>>>>>> be1634c51418675016ac4693319c4d62f7845f1f
   <v-row class="fill-height" style="">
     <v-col>
       <v-sheet height="64">
@@ -57,6 +60,7 @@
       <v-sheet height="100%">
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         <v-calendar ref="calendar" v-model="focus" color="primary" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
 =======
 <<<<<<< HEAD
@@ -65,6 +69,9 @@
         <v-calendar ref="calendar" v-model="focus" color="primary" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
 >>>>>>> d0cc6fc (add calendar demo)
 >>>>>>> db37bf5 (add bundle calendar)
+=======
+        <v-calendar ref="calendar" v-model="focus" color="teal" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
+>>>>>>> be1634c51418675016ac4693319c4d62f7845f1f
           @click:event="showEvent" @mousedown:time="startTime" @mousemove:time="mouseMove" @mouseup:time="endDrag" @mouseleave.native="cancelDrag">
           <template v-slot:event="{ event, timed, eventSummary }">
             <div class="v-event-draggable" v-html="eventSummary()"></div>
@@ -184,6 +191,7 @@ export default {
     mouseMove(tms) {
       const mouse = this.toTime(tms)
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 <<<<<<< HEAD
@@ -191,6 +199,9 @@ export default {
 
 >>>>>>> d0cc6fc (add calendar demo)
 >>>>>>> db37bf5 (add bundle calendar)
+=======
+
+>>>>>>> be1634c51418675016ac4693319c4d62f7845f1f
       if (this.dragEvent && this.dragTime !== null) {
         const start = this.dragEvent.start
         const end = this.dragEvent.end
@@ -199,6 +210,7 @@ export default {
         const newStart = this.roundTime(newStartTime)
         const newEnd = newStart + duration
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 <<<<<<< HEAD
@@ -206,6 +218,9 @@ export default {
 
 >>>>>>> d0cc6fc (add calendar demo)
 >>>>>>> db37bf5 (add bundle calendar)
+=======
+
+>>>>>>> be1634c51418675016ac4693319c4d62f7845f1f
         this.dragEvent.start = newStart
         this.dragEvent.end = newEnd
       } else if (this.createEvent && this.createStart !== null) {
@@ -213,6 +228,7 @@ export default {
         const min = Math.min(mouseRounded, this.createStart)
         const max = Math.max(mouseRounded, this.createStart)
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 <<<<<<< HEAD
@@ -220,6 +236,9 @@ export default {
 
 >>>>>>> d0cc6fc (add calendar demo)
 >>>>>>> db37bf5 (add bundle calendar)
+=======
+
+>>>>>>> be1634c51418675016ac4693319c4d62f7845f1f
         this.createEvent.start = min
         this.createEvent.end = max
       }
