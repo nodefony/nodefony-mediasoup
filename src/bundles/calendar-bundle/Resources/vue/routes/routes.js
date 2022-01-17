@@ -1,9 +1,9 @@
 import Calendar from '../views/Calendar.vue';
 
 const routes = [{
-  path: '/calendar',
+  path: '/calendar/:id',
   name: 'Calendar',
-  //props: true,
+  props: true,
   //beforeEnter: ifAuthenticated,
   component: Calendar
 }];

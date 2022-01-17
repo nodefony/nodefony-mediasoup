@@ -25,15 +25,15 @@
       <v-list-item-title @click="$router.resolve({ name: 'About'})">Home</v-list-item-title>
     </v-list-item>
 
-    <v-list-group class="" v-if="isAuthenticated" :value="false" prepend-icon="mdi-calendar-month">
+    <v-list-group class="" v-if="isAuthenticated && calendars.length" :value="false" prepend-icon="mdi-calendar-month">
 
       <template v-slot:activator>
         <v-list-item-title>{{$t('calendar.calendar')}}</v-list-item-title>
       </template>
 
-      <v-list-item sub-group @click="redirect('Calendar')">
+      <v-list-item v-for="{summary, id, etag} in  calendars" :key="id" sub-group @click="redirectId('Calendar', id)">
         <v-list-item-title class="ml-6">
-          {{$t('calendar.calendar')}}
+          {{ summary }}
         </v-list-item-title>
         <v-list-item-icon>
           <v-icon>mdi-calendar-account-outline</v-icon>
@@ -129,7 +129,9 @@ export default {
   components: {},
   props: {},
   data(vm) {
-    return {}
+    return {
+      calendars: []
+    }
   },
   computed: {
     ...mapGetters([
@@ -153,12 +155,29 @@ export default {
   },
   async mounted() {
     //console.log(this.$vuetify.breakpoint)
+    if (this.isAuthenticated) {
+      await this.$nodefony.request("calendar/list")
+        .then((res) => {
+          if (res) {
+            this.calendars = res.result;
+          }
+        })
+    }
   },
   async destroyed() {},
   methods: {
     redirect(route) {
       return this.$router.push({
           name: route
+        })
+        .catch(() => {})
+    },
+    redirectId(route, id) {
+      return this.$router.push({
+          name: route,
+          params: {
+            id: id
+          }
         })
         .catch(() => {})
     }

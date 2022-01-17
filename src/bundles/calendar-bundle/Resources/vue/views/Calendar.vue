@@ -1,149 +1,271 @@
 <template>
-<v-container fluid>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
+<v-window class="overflow-auto">
+  <v-sheet fixed height="64">
+    <v-toolbar flat fixed outlined style="">
+      <v-icon>mdi-calendar-account-outline</v-icon>
+      <v-toolbar-title class="px-5">{{ currentCalendar.summary }}</v-toolbar-title>
+      <v-toolbar-title class="px-5">{{ currentCalendar.description  }}</v-toolbar-title>
+    </v-toolbar>
+  </v-sheet>
+  <v-sheet height="48">
+    <v-toolbar dense flat outlined style="">
+      <v-btn outlined class="mr-4" color="grey darken-2" @click="setToday">
+        Today
+      </v-btn>
+      <v-btn fab text small color="grey darken-2" @click="prev">
+        <v-icon small>
+          mdi-chevron-left
+        </v-icon>
+      </v-btn>
+      <v-btn fab text small color="grey darken-2" @click="next">
+        <v-icon small>
+          mdi-chevron-right
+        </v-icon>
+      </v-btn>
+      <v-toolbar-title v-if="$refs.calendar">
+        {{ $refs.calendar.title }}
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
 
-=======
->>>>>>> d0cc6fc (add calendar demo)
->>>>>>> db37bf5 (add bundle calendar)
-=======
->>>>>>> be1634c51418675016ac4693319c4d62f7845f1f
-  <v-row class="fill-height" style="">
-    <v-col>
-      <v-sheet height="64">
-        <v-toolbar flat>
-          <v-btn outlined class="mr-4" color="grey darken-2" @click="setToday">
-            Today
-          </v-btn>
-          <v-btn fab text small color="grey darken-2" @click="prev">
-            <v-icon small>
-              mdi-chevron-left
+      <v-menu bottom right>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn outlined color="grey darken-2" v-bind="attrs" v-on="on">
+            <span>{{ typeToLabel[mytype] }}</span>
+            <v-icon right>
+              mdi-menu-down
             </v-icon>
           </v-btn>
-          <v-btn fab text small color="grey darken-2" @click="next">
-            <v-icon small>
-              mdi-chevron-right
-            </v-icon>
-          </v-btn>
-          <v-toolbar-title v-if="$refs.calendar">
-            {{ $refs.calendar.title }}
-          </v-toolbar-title>
-          <v-spacer></v-spacer>
-          <v-menu bottom right>
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn outlined color="grey darken-2" v-bind="attrs" v-on="on">
-                <span>{{ typeToLabel[type] }}</span>
-                <v-icon right>
-                  mdi-menu-down
-                </v-icon>
-              </v-btn>
-            </template>
-            <v-list>
-              <v-list-item @click="type = 'day'">
-                <v-list-item-title>Day</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="type = 'week'">
-                <v-list-item-title>Week</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="type = 'month'">
-                <v-list-item-title>Month</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="type = '4day'">
-                <v-list-item-title>4 days</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
-        </v-toolbar>
-      </v-sheet>
-      <v-sheet height="100%">
+        </template>
+        <v-list>
+          <v-list-item @click="mytype = 'day'">
+            <v-list-item-title>Day</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="mytype = 'week'">
+            <v-list-item-title>Week</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="mytype = 'month'">
+            <v-list-item-title>Month</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="mytype = '4day'">
+            <v-list-item-title>4 days</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </v-toolbar>
+  </v-sheet>
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        <v-calendar ref="calendar" v-model="focus" color="primary" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
-=======
-<<<<<<< HEAD
-        <v-calendar ref="calendar" v-model="focus" color="teal" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
-=======
-        <v-calendar ref="calendar" v-model="focus" color="primary" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
->>>>>>> d0cc6fc (add calendar demo)
->>>>>>> db37bf5 (add bundle calendar)
-=======
-        <v-calendar ref="calendar" v-model="focus" color="teal" :type="type" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getEvents" @mousedown:event="startDrag" @click:more="viewDay" @click:date="viewDay"
->>>>>>> be1634c51418675016ac4693319c4d62f7845f1f
-          @click:event="showEvent" @mousedown:time="startTime" @mousemove:time="mouseMove" @mouseup:time="endDrag" @mouseleave.native="cancelDrag">
-          <template v-slot:event="{ event, timed, eventSummary }">
-            <div class="v-event-draggable" v-html="eventSummary()"></div>
-            <div v-if="timed" class="v-event-drag-bottom" @mousedown.stop="extendBottom(event)"></div>
-          </template>
-        </v-calendar>
+  <v-sheet height="fill-height">
+    <!--v-overlay :value="overlay">
+      <v-progress-circular indeterminate size="64"></v-progress-circular>
+    </v-overlay-->
+    <v-calendar v-if="ready" ref="calendar" v-model="focus" :locale="locale" color="primary" :type="mytype" :events="events" :event-color="getEventColor" :event-ripple="false" @change="getRemoteEvents" @mousedown:event="startDrag" @click:event="showEvent"
+      @mousedown:time="startTime" @mousemove:time="mouseMove" @mouseup:time="endDrag" @mouseleave.native="cancelDrag">
 
-        <v-menu v-model="selectedOpen" :close-on-content-click="false" :activator="selectedElement" offset-x>
-          <v-card color="grey lighten-4" min-width="350px" flat>
-            <v-toolbar :color="selectedEvent.color" dark>
-              <v-btn icon>
-                <v-icon>mdi-pencil</v-icon>
-              </v-btn>
-              <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
-              <v-spacer></v-spacer>
-              <v-btn icon>
-                <v-icon>mdi-heart</v-icon>
-              </v-btn>
-              <v-btn icon>
-                <v-icon>mdi-dots-vertical</v-icon>
-              </v-btn>
-            </v-toolbar>
-            <v-card-text>
-              <span v-html="selectedEvent.details"></span>
-            </v-card-text>
-            <v-card-actions>
-              <v-btn text color="secondary" @click="selectedOpen = false">
-                Cancel
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-menu>
+      <template v-slot:event="{ event, timed, eventSummary }">
+        <div class="v-event-draggable" v-html="eventSummary()"></div>
+        <div v-if="timed" class="v-event-drag-bottom" @mousedown.stop="extendBottom(event)"></div>
+      </template>
 
-      </v-sheet>
-    </v-col>
-  </v-row>
-</v-container>
+      <!--template v-slot:day="{ event }">
+        <div> {{event}}</div>
+      </template-->
+
+    </v-calendar>
+
+    <event-item v-if="addEvent" :calendar="cal" :event="createEvent" :selectedEvent="selectedEvent" @cancel="cancelFormEvent" @valid="validFormEvent"></event-item>
+
+  </v-sheet>
+</v-window>
 </template>
 
 <script>
+import {
+  tz
+} from "moment-timezone";
+import {
+  mapGetters,
+  mapMutations,
+  mapActions
+} from 'vuex';
+import EventItem from '@../../../src/bundles/calendar-bundle/Resources/vue/components/Event';
+import nodefony from 'nodefony-client';
 export default {
+  name: "calendar",
+  components: {
+    "event-item": EventItem
+  },
   data: () => ({
+    ready: false,
     focus: '',
-    type: 'month',
+    overlay: false,
+    mytype: "week",
     typeToLabel: {
       month: 'Month',
       week: 'Week',
       day: 'Day',
       '4day': '4 Days',
     },
-    selectedEvent: {},
-    selectedElement: null,
-    selectedOpen: false,
-    events: [],
     colors: ['#2196F3', '#3F51B5', '#673AB7', '#00BCD4', '#4CAF50', '#FF9800', '#757575'],
-    names: ['Meeting', 'Holiday', 'PTO', 'Travel', 'Event', 'Birthday', 'Conference', 'Party'],
+    //names: ['Meeting', 'Holiday', 'PTO', 'Travel', 'Event', 'Birthday', 'Conference', 'Party'],
+    addEvent: false,
     dragEvent: null,
     dragStart: null,
     createEvent: null,
     createStart: null,
     extendOriginal: null,
+    selectedEvent: {},
+    selectedElement: null,
+    selectedOpen: false,
+    events: [],
+    currentIndexEvent: null,
+    currentCalendar: {},
   }),
-  mounted() {
-    this.$refs.calendar.checkChange()
+  props: {
+    id: null,
+    type: {
+      type: String,
+      default: "week"
+    }
   },
+  computed: {
+    ...mapGetters([
+      'isAuthenticated',
+      'getUser',
+      'getProfile',
+      'getLocale'
+    ]),
+    locale() {
+      return this.$root.$i18n.locale;
+    },
+    cal() {
+      return this.ready ? this.$refs.calendar : null
+    },
+    nowY() {
+      return this.cal ? this.cal.timeToY(this.cal.times.now) + 'px' : '-10px'
+    },
+
+    myTimeZone() {
+      let code = tz.zonesForCountry(this.getLocale[3])
+      return {
+        zone: this.currentCalendar.timeZone,
+        utc: tz(code).format('(zZ)')
+      }
+    },
+    timezone() {
+      return {
+        zone: this.currentCalendar.timeZone,
+        utc: tz(this.currentCalendar.timeZone).format('(zZ)')
+      }
+    }
+  },
+  async mounted() {
+    //this.$refs.calendar.checkChange()
+    this.mytype = this.type;
+    if (this.isAuthenticated) {
+      await this.getCalendar(this.id)
+      this.ready = true
+      //this.cal.scrollToTime('20:00')
+      //this.cal.scrollToTime({
+      //  hour: "20",
+      //  minute: "30"
+      //})
+      //this.scrollToTime()
+      //this.updateTime()
+    }
+  },
+
   methods: {
+    async getRemoteEvents({
+        start,
+        end
+      },
+      id = this.id) {
+      this.overlay = true;
+      let options = {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+      if (start && end) {
+        options = nodefony.extend(true, {}, options, {
+          body: JSON.stringify({
+            start: start,
+            end: end
+          })
+        })
+      }
+      return await this.$nodefony.request(`events/calendar/${id}/events`, "POST", options)
+        .then(async (res) => {
+          this.events = [];
+          const calendarEvents = res.result;
+          calendarEvents.map((item) => {
+            console.log(item)
+            console.log(JSON.parse(item.iCalUID))
+            let mystart = new Date(item.start)
+            let myend = new Date(item.end)
+            const timed = myend.getDate() === mystart.getDate();
+            this.events.push({
+              name: item.summary,
+              start: mystart.getTime(),
+              end: myend.getTime(),
+              color: item.colorId || 'primary',
+              timed: timed
+            })
+          })
+          this.overlay = false;
+        }).catch(e => {
+          console.log(e)
+          this.overlay = false;
+        })
+    },
+
+    async getCalendar(id) {
+      return await this.$nodefony.request(`calendar/calendar/${id}`, "GET", {})
+        .then((res) => {
+          this.currentCalendar = res.result;
+          return this.currentCalendar
+        })
+    },
+
+    getCurrentTime() {
+      return this.cal ? this.cal.times.now.hour * 60 + this.cal.times.now.minute : 0
+    },
+    scrollToTime() {
+      const time = this.getCurrentTime()
+      console.log(time)
+      const first = Math.max(0, time - (time % 30) - 30)
+      console.log(first)
+      this.cal.scrollToTime(first)
+    },
+    updateTime() {
+      setInterval(() => this.cal.updateTimes(), 60 * 1000)
+    },
+    showEvent({
+      nativeEvent,
+      event
+    }) {
+      const open = () => {
+        console.log("open event nativeEvent")
+        console.log(event, nativeEvent)
+        this.selectedEvent = event
+        this.selectedElement = nativeEvent.target
+        requestAnimationFrame(() => requestAnimationFrame(() => this.addEvent = true))
+      }
+      if (this.addEvent) {
+        this.addEvent = false
+        requestAnimationFrame(() => requestAnimationFrame(() => open()))
+      } else {
+        open()
+      }
+      nativeEvent.stopPropagation()
+    },
     viewDay({
       date
     }) {
       this.focus = date
-      this.type = 'day'
+      this.mytype = 'day'
     },
+
     setToday() {
       this.focus = ''
     },
@@ -165,43 +287,75 @@ export default {
     },
     startTime(tms) {
       const mouse = this.toTime(tms)
-
       if (this.dragEvent && this.dragTime === null) {
         const start = this.dragEvent.start
-
         this.dragTime = mouse - start
+        console.log("startTime already created")
       } else {
         this.createStart = this.roundTime(mouse)
+        console.log("startTime createEvent")
         this.createEvent = {
-          name: `Event #${this.events.length}`,
+          name: `Event#${this.events.length}`,
           color: this.rndElement(this.colors),
           start: this.createStart,
           end: this.createStart,
           timed: true,
         }
-
-        this.events.push(this.createEvent)
+        const index = this.events.push(this.createEvent)
+        this.currentIndexEvent = index - 1;
       }
     },
+    async endDrag(tms) {
+      console.log("endDrag")
+      if (this.createEvent) {
+        await this.createFormEvent()
+      }
+      console.log("endDrag after await")
+      this.dragTime = null
+      this.dragEvent = null
+      this.createEvent = null
+      this.createStart = null
+      this.extendOriginal = null
+    },
+    createFormEvent(tms) {
+      this.addEvent = true
+    },
+    validFormEvent(data) {
+      return new Promise((resolve, reject) => {
+          console.log(data)
+          this.addEvent = false;
+          return resolve()
+        })
+        .catch(() => {
+          this.cancelFormEvent()
+        })
+    },
+    cancelFormEvent() {
+      if (this.currentIndexEvent !== null) {
+        this.log("delte index event")
+        this.events.splice(this.currentIndexEvent, 1)
+      }
+      this.cleanDragDrop()
+    },
+
+    cleanDragDrop() {
+      this.currentIndexEvent = null;
+      this.addEvent = false;
+      this.dragTime = null
+      this.dragEvent = null
+      this.createEvent = null
+      this.createStart = null
+      this.extendOriginal = null
+    },
+
     extendBottom(event) {
+      console.log("mouse stop  extendBottom")
       this.createEvent = event
       this.createStart = event.start
       this.extendOriginal = event.end
     },
     mouseMove(tms) {
       const mouse = this.toTime(tms)
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
-<<<<<<< HEAD
-=======
-
->>>>>>> d0cc6fc (add calendar demo)
->>>>>>> db37bf5 (add bundle calendar)
-=======
-
->>>>>>> be1634c51418675016ac4693319c4d62f7845f1f
       if (this.dragEvent && this.dragTime !== null) {
         const start = this.dragEvent.start
         const end = this.dragEvent.end
@@ -209,51 +363,25 @@ export default {
         const newStartTime = mouse - this.dragTime
         const newStart = this.roundTime(newStartTime)
         const newEnd = newStart + duration
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
-<<<<<<< HEAD
-=======
-
->>>>>>> d0cc6fc (add calendar demo)
->>>>>>> db37bf5 (add bundle calendar)
-=======
-
->>>>>>> be1634c51418675016ac4693319c4d62f7845f1f
         this.dragEvent.start = newStart
         this.dragEvent.end = newEnd
+        this.end = new Date(this.dragEvent.end)
       } else if (this.createEvent && this.createStart !== null) {
         const mouseRounded = this.roundTime(mouse, false)
         const min = Math.min(mouseRounded, this.createStart)
         const max = Math.max(mouseRounded, this.createStart)
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
-<<<<<<< HEAD
-=======
-
->>>>>>> d0cc6fc (add calendar demo)
->>>>>>> db37bf5 (add bundle calendar)
-=======
-
->>>>>>> be1634c51418675016ac4693319c4d62f7845f1f
         this.createEvent.start = min
         this.createEvent.end = max
       }
     },
-    endDrag() {
-      this.dragTime = null
-      this.dragEvent = null
-      this.createEvent = null
-      this.createStart = null
-      this.extendOriginal = null
-    },
-    cancelDrag() {
+
+    cancelDrag(...args) {
+      console.log("cancel drag", args)
+      return;
       if (this.createEvent) {
         if (this.extendOriginal) {
           this.createEvent.end = this.extendOriginal
+          this.end = new Date(this.createEvent.end)
         } else {
           const i = this.events.indexOf(this.createEvent)
           if (i !== -1) {
@@ -261,7 +389,6 @@ export default {
           }
         }
       }
-
       this.createEvent = null
       this.createStart = null
       this.dragTime = null
@@ -270,7 +397,6 @@ export default {
     roundTime(time, down = true) {
       const roundTo = 15 // minutes
       const roundDownTime = roundTo * 60 * 1000
-
       return down ?
         time - time % roundDownTime :
         time + (roundDownTime - (time % roundDownTime))
@@ -290,12 +416,11 @@ export default {
         `rgba(${r}, ${g}, ${b}, 0.7)` :
         event.color
     },
-    getEvents({
+    /*async getEvents({
       start,
       end
     }) {
-      const events = []
-
+      console.log(start, end, `${start.date}T00:00:00`, `${end.date}T23:59:59`)
       const min = new Date(`${start.date}T00:00:00`).getTime()
       const max = new Date(`${end.date}T23:59:59`).getTime()
       const days = (max - min) / 86400000
@@ -307,8 +432,7 @@ export default {
         const secondTimestamp = this.rnd(2, timed ? 8 : 288) * 900000
         const start = firstTimestamp - (firstTimestamp % 900000)
         const end = start + secondTimestamp
-
-        events.push({
+        this.events.push({
           name: this.rndElement(this.names),
           color: this.rndElement(this.colors),
           start,
@@ -316,30 +440,9 @@ export default {
           timed,
         })
       }
+    },*/
 
-      this.events = events
-    },
-    showEvent({
-      nativeEvent,
-      event
-    }) {
-      const open = () => {
-        this.selectedEvent = event
-        this.selectedElement = nativeEvent.target
-        setTimeout(() => {
-          this.selectedOpen = true
-        }, 10)
-      }
 
-      if (this.selectedOpen) {
-        this.selectedOpen = false
-        setTimeout(open, 10)
-      } else {
-        open()
-      }
-
-      nativeEvent.stopPropagation()
-    },
     rnd(a, b) {
       return Math.floor((b - a + 1) * Math.random()) + a
     },
@@ -354,12 +457,10 @@ export default {
 .v-event-draggable {
     padding-left: 6px;
 }
-
 .v-event-timed {
     user-select: none;
     -webkit-user-select: none;
 }
-
 .v-event-drag-bottom {
     position: absolute;
     left: 0;
@@ -367,7 +468,6 @@ export default {
     bottom: 4px;
     height: 4px;
     cursor: ns-resize;
-
     &::after {
         display: none;
         position: absolute;
@@ -380,7 +480,6 @@ export default {
         opacity: 0.8;
         content: '';
     }
-
     &:hover::after {
         display: block;
     }

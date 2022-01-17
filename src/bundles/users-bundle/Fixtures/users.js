@@ -1,7 +1,7 @@
 const localFramework = kernel.app.settings.locale;
 let Faker = null ;
 try {
-  Faker = require(`faker`);
+  Faker = require(`@withshepherd/faker`);
 } catch (e) {}
 //const local = localFramework.slice(0, 2);
 //const Faker = require(`faker/locale/${local}`);
@@ -20,13 +20,14 @@ const defaultFixtures = [{
   password: "anonymous",
   email: "anonymous@nodefony.com",
   "2fa": false,
-  lang: "en_en",
+  lang: "en_us",
   roles: ["ROLE_ANONYMOUS"]
 }, {
   username: "admin",
   name: "administrator",
   surname: "nodefony",
   password: "admin",
+  lang: "en_us",
   "2fa": false,
   email: "administrator@nodefony.com",
   roles: ["ROLE_ADMIN"]
