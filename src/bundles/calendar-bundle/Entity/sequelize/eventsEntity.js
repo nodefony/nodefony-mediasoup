@@ -218,10 +218,10 @@ module.exports = class events extends nodefony.Entity {
       },
       freezeTableName: true,
       //add indexes
-      indexes: [{
-        unique: true,
-        fields: ['summary',"calendarId"]
-      }]
+      //indexes: [{
+        //unique: true,
+        //fields: ['summary',"calendarId"]
+      //}]
     })
     return MyModel;
   }

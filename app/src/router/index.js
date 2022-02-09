@@ -1,22 +1,24 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Store from '../store';
-import Login from '../views/Login.vue';
-import Home from '../views/Home.vue';
+import Store from '@/store';
+import Login from '@/views/Login.vue';
+import Home from '@/views/Home.vue';
 
-import Rooms from '../views/rooms/Rooms.vue';
-import EditRoom from '../views/rooms/EditRoom.vue';
+import Rooms from '@/views/rooms/Rooms.vue';
+import EditRoom from '@/views/rooms/EditRoom.vue';
 
-import Meeting from '../views/meetings/Meeting.vue';
-import HomeMeeting from '../views/meetings/HomeMeeting.vue';
-import JoinMeeting from '../views/meetings/JoinMeeting.vue';
-import Meetings from '../views/meetings/Meetings.vue';
-import MeetingDetails from '../views/meetings/MeetingDetails.vue';
+import Meeting from '@/views/meetings/Meeting.vue';
+import HomeMeeting from '@/views/meetings/HomeMeeting.vue';
+import JoinMeeting from '@/views/meetings/JoinMeeting.vue';
+import Meetings from '@/views/meetings/Meetings.vue';
+import MeetingDetails from '@/views/meetings/MeetingDetails.vue';
 
-import Users from '../views/users/Users.vue';
-import EditUser from '../views/users/EditUser.vue';
+import Users from '@/views/users/Users.vue';
+import EditUser from '@/views/users/EditUser.vue';
 
-import PageNotFound from '../views/404';
+import PageNotFound from '@/views/404';
+
+import testLayout from '@/views/test/Layout.vue'
 
 const ifAuthenticated = (to, from, next) => {
   if (Store.getters.isAuthenticated) {
@@ -63,7 +65,7 @@ let mainRoute = [{
   path: '/about',
   name: 'About',
   component: () =>
-    import( /* webpackChunkName: "about" */ '../views/About.vue')
+    import( /* webpackChunkName: "about" */ '@/views/About.vue')
  }, {
   path: '/rooms',
   alias: '/rooms/home',
@@ -117,11 +119,15 @@ let mainRoute = [{
   props: true,
   beforeEnter: ifAuthenticated,
   component: EditUser
+},{
+  path: '/layout',
+  name: 'Layout',
+  component: testLayout
 }];
 
 let routes = null;
 // calendar
-import calendarRoutes from '@/../../src/bundles/calendar-bundle/Resources/vue/routes/routes.js';
+import calendarRoutes from '@bundles/calendar-bundle/Resources/vue/routes/routes.js';
 routes = mainRoute.concat(calendarRoutes);
 
 // dev routes

@@ -1,8 +1,6 @@
 <template>
-<dashboard-item v-if="isAuthenticated" title="Meetings" class="my-2">
-  <v-container>
-    <calendar type="month" v-if="calendar" ref="calendar" :id="calendar.id"></calendar>
-  </v-container>
+<dashboard-item v-bind="{...$props, ...$attrs}" v-if="isAuthenticated" class="my-2">
+  <calendar rounded="lg" height="400" color="purple darken-4" readonly type="month" v-if="calendar" ref="calendar" :id="calendar.id"></calendar>
 </dashboard-item>
 </template>
 
@@ -14,7 +12,7 @@ import {
 } from 'vuex';
 // @ is an alias to /src
 import DashboardItem from "@/components/dashboard/DashboardItem";
-import calendar from "../views/Calendar";
+import calendar from "@bundles/calendar-bundle/Resources/vue/views/Calendar";
 export default {
   name: 'DashboardCalendar',
   components: {

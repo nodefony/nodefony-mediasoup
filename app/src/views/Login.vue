@@ -1,7 +1,7 @@
 <template>
 <v-container class="nodefony--background" fluid>
   <v-row class="mt-10" justify="center" style="width:100%;height:100%">
-    <v-card dark width="60%" height="400px" max-height="80%">
+    <v-card dark rounded="xl" color="#1a242d" elevation="8" width="60%" height="400px" max-height="80%">
       <v-row class="ma-5">
         <v-col>
           <v-row justify="center" align="center" class="mb-3">
@@ -82,13 +82,13 @@ export default {
       'isLoading'
     ])
   },
-  mounted() {
-    this.clear();
-    this.openNavBar();
+  async mounted() {
+    await this.clear();
+    //this.openNavBar();
     if (this.$route.name === "Logout") {
-      this.logout()
+      await this.logout()
     }
-    //this.closeDrawer();
+    await this.closeDrawer();
   },
   beforeUpdate() {
 

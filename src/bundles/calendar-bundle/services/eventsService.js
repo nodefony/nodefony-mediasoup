@@ -29,25 +29,25 @@ module.exports = class events extends nodefony.Service {
     return error;
   }
 
-  list(calendarId, username, start, end) {
+  list(calendarId, username, start = null, end = null) {
     if (!calendarId) {
-      throw new nodefony.Error("No calendar id")
+      throw new nodefony.Error("No calendar id", 404)
     }
     let options = {
-      where:{
+      where: {
         calendarId: calendarId
       },
       include: [{ // Notice `include` takes an ARRAY
         model: this.calendarEntity,
       }]
     }
-    if( start){
-      options.where.start ={
+    if (start) {
+      options.where.start = {
           [Op.gte]: start,
       }
     }
-    if(end){
-      options.where.end ={
+    if (end) {
+      options.where.end = {
           [Op.lte]: end,
       }
     }
@@ -55,16 +55,18 @@ module.exports = class events extends nodefony.Service {
       options.where.creator = username;
       //console.log(options)
       return this.eventsEntity.findAndCountAll(options)
-        .then((res) => {
-          return res.rows;
+        .then(({ count, rows } ) => {
+          return rows;
         }).catch(e => {
+          this.log(e,"ERROR");
           throw this.sanitizeSequelizeError(e);
         });
     }
     return this.eventsEntity.findAndCountAll(options)
-      .then((res) => {
-        return res.rows;
+      .then(({ count, rows }) => {
+        return rows;
       }).catch(e => {
+        this.log(e,"ERROR");
         throw this.sanitizeSequelizeError(e);
       });
   }
@@ -72,10 +74,10 @@ module.exports = class events extends nodefony.Service {
 
   getEvent(calendarId, eventId, username, start, stop) {
     if (!calendarId) {
-      throw new nodefony.Error("No calendar id")
+      throw new nodefony.Error("No calendar id", 404)
     }
     if (!eventId) {
-      throw new nodefony.Error("No Event id")
+      throw new nodefony.Error("No Event id", 404)
     }
     if (username) {
       return this.eventsEntity.findOne({
@@ -91,6 +93,7 @@ module.exports = class events extends nodefony.Service {
         .then((res) => {
           return res;
         }).catch(e => {
+          this.log(e,"ERROR");
           throw this.sanitizeSequelizeError(e);
         });
     }
@@ -106,40 +109,133 @@ module.exports = class events extends nodefony.Service {
       .then((res) => {
         return res;
       }).catch(e => {
+        this.log(e,"ERROR");
         throw this.sanitizeSequelizeError(e);
       });
   }
 
+  async insert(calendarId, username, event) {
+    let transaction = null;
+    try {
+      transaction = await this.orm.startTransaction("events");
+      return this.eventsEntity.create(event, {
+          transaction: transaction
+        })
+        .then((el) => {
+          transaction.commit();
+          let myevent = el.get({
+            plain: true
+          });
+          return myevent;
+        }).catch(e => {
+          this.log(e, 'ERROR')
+          if (transaction) {
+            transaction.rollback();
+          }
+          throw this.sanitizeSequelizeError(e);
+        });
+    } catch (e) {
+      if (transaction) {
+        transaction.rollback();
+      }
+      this.log(e,"ERROR");
+      throw this.sanitizeSequelizeError(e);
+    }
+  }
+
+  async quickAdd() {
+    let transaction = null;
+    try {
+      transaction = await this.orm.startTransaction("events");
+      return this.eventsEntity.create(event, {
+          transaction: transaction
+        })
+        .then((el) => {
+          transaction.commit();
+          let myevent = el.get({
+            plain: true
+          });
+          return myevent;
+        }).catch(e => {
+          this.log(e, 'ERROR')
+          if (transaction) {
+            transaction.rollback();
+          }
+          throw this.sanitizeSequelizeError(e);
+        });
+    } catch (e) {
+      this.log(e, 'ERROR')
+      if (transaction) {
+        transaction.rollback();
+      }
+      throw this.sanitizeSequelizeError(e);
+    }
+  }
+
+  async delete(calendarId, eventId, username) {
+    let transaction = null;
+    try {
+
+      return this.eventsEntity.findOne({
+          where: {
+            creator: username,
+            calendarId: calendarId,
+            id: eventId
+          }
+        })
+        .then(async (event) => {
+          if (!event) {
+            throw new nodefony.Error(`Event ${eventId}  for ${username} not found`, 404);
+          }
+          transaction = await this.orm.startTransaction("events");
+          return event.destroy({
+              transaction: transaction
+            })
+            .then((event) => {
+              transaction.commit();
+              return event;
+            }).catch(e => {
+              this.log(e, 'ERROR')
+              transaction.rollback();
+              throw this.sanitizeSequelizeError(e, 500);
+            });
+        })
+        .catch(e => {
+          this.log(e, 'ERROR')
+          if (transaction) {
+            transaction.rollback();
+          }
+          throw this.sanitizeSequelizeError(e);
+        });
+    } catch (e) {
+      this.log(e, 'ERROR')
+      if (transaction) {
+        transaction.rollback();
+      }
+      throw this.sanitizeSequelizeError(e);
+    }
+  }
+
+  update(calendarId, eventId, username, event) {
+    return new Promise.resolve(event)
+  }
 
 
-  quickAdd() {
-
+  patch(calendarId, eventId, username, event) {
+    return new Promise.resolve(event)
   }
 
 
   watch() {
-
+    return new Promise.resolve()
   }
-
-  update() {
-
-  }
-
-
-  patch() {
-
-  }
-
 
   move() {
-
+    return new Promise.resolve()
   }
 
-  insert() {
-
-  }
 
   import() {
-
+    return new Promise.resolve()
   }
 };

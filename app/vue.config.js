@@ -11,8 +11,7 @@ const {
 } = require('clean-webpack-plugin');
 const title = Package.name;
 
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-
+//const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 const packageVuetify = require(path.resolve("node_modules", "vuetify", "package.json"));
 process.env.VUE_APP_VERSION = Package.version;
@@ -53,6 +52,11 @@ module.exports = {
 
   configureWebpack: {
     devtool: process.env.NODE_ENV === "development" ? "source-map" : "",
+    resolve: {
+      alias: {
+        "@bundles": path.join(__dirname, "..", "src", "bundles")
+      }
+    },
     output: {
       hotUpdateChunkFilename: 'hot/[id].[hash].hot-update.js',
       hotUpdateMainFilename: 'hot/[hash].hot-update.json'

@@ -1,126 +1,59 @@
 <template>
-<v-dialog v-model="show" persistent fullscreen transition="dialog-bottom-transition" hide-overlay>
-  <!--v-form ref="form" v-model="valid" lazy-validation-->
-  <v-card tile height="100%">
-    <v-toolbar outlined elevation="1" :color="color">
-      <v-btn icon dark @click="cancelFormEvent">
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
-      <v-toolbar-title>{{name}}</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-btn color="indigo" @click="validFormEvent">
-        Save
-      </v-btn>
-      <v-btn color="deep-purple" outlined @click="cancelFormEvent">
-        Close
-      </v-btn>
-    </v-toolbar>
-    <!--v-toolbar flat outlined elevation="0" class="d-flex flex-row mb-6">
-        <v-select dense v-model="calendar.timezone" :hint="`${timezone.zone}, ${timezone.utc}`" :items="timezoneList" item-text="zone" item-value="utc" label="" persistent-hint return-object single-line></v-select>
-      </v-toolbar-->
+<!--v-dialog v-model="show" persistent :max-width="!fullscreen?'600px':null" :fullscreen="fullscreen"-->
+<v-card rounded="lg" v-bind="{...$props, ...$attrs}">
+  <v-system-bar v-if="!systemBar" height="35px" dark class="mycolor">
 
-    <v-card-text>
-      <!--v-row>
-            <v-col cols="4">
-              <v-subheader>Suffix for time zone</v-subheader>
-            </v-col>
-            <v-col cols="8">
-              <v-text-field label="Label Text" value="12:30:00" type="time" suffix="PST"></v-text-field>
-            </v-col>
-          </v-row-->
-      <v-row>
-        <v-col cols="1" class="text-center">
-          <v-subheader>Title</v-subheader>
+    <v-icon @click="moveCalendar" class="ml-2">mdi-calendar-plus</v-icon>
+    <v-subheader>@{{calendarInfo.summary}}</v-subheader>
+    <v-spacer></v-spacer>
+    <v-icon @click="removeEvent" color="red" class="ml-5">mdi-delete</v-icon>
+    <v-icon @click="moveCalendar" color="blue" class="ml-5">mdi-pencil</v-icon>
+    <v-icon @click="" color="green" class="ml-5">mdi-dots-vertical</v-icon>
+    <v-icon @click="cancelFormEvent" class="ml-10">mdi-close</v-icon>
+  </v-system-bar>
+  <v-toolbar height="48px" dark :color="color" flat>
+    <v-toolbar-title>{{formData.summary}}</v-toolbar-title>
+    <v-spacer></v-spacer>
+  </v-toolbar>
+
+  <v-card-text>
+    <v-container fluid>
+      <v-row v-if="!fullscreen">
+        <v-col cols="12">
+          <v-text-field prepend-icon="mdi-pencil-outline" label="Add Title" :value="formData.summary" single-line full-width></v-text-field>
+          <v-subheader>{{start}}</v-subheader>
+          <v-subheader>{{isoStartDate}} {{isoStartTime}}</v-subheader>
+          <v-subheader>{{end}}</v-subheader>
+          <v-subheader>{{isoEndDate}} {{isoEndTime}}</v-subheader>
         </v-col>
-        <v-col cols="11">
-          <v-text-field prepend-icon="mdi-pencil-outline" label="Title" :value="name" single-line full-width></v-text-field>
-        </v-col>
+
       </v-row>
 
-      <v-row>
-        <v-col cols="1">
-          <v-subheader>DATE</v-subheader>
+      <v-row v-else>
+        <v-col cols="6">
+          <v-text-field prepend-icon="mdi-pencil-outline" label="Add Title" :value="formData.summary" single-line full-width></v-text-field>
         </v-col>
-        <v-col cols="11" class="d-flex flex-row mb-6">
-          <!--START DATE-->
-          <v-menu ref="menuStartDate" v-model="menuStartDate" :close-on-content-click="false" :return-value.sync="isoStartDate" transition="scale-transition" offset-y min-width="auto">
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field v-model="isoStartDate" label="Date Start" prepend-icon="mdi-calendar" readonly v-bind="attrs" v-on="on"></v-text-field>
-            </template>
-            <v-date-picker v-if="menuStartDate" v-model="isoStartDate" :locale="locale" no-title scrollable>
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" @click="menuStartDate = false">
-                Cancel
-              </v-btn>
-              <v-btn text color="primary" @click="$refs.menuStartDate.save(start)">
-                OK
-              </v-btn>
-            </v-date-picker>
-          </v-menu>
+        <v-col cols="6">
+          <v-sheet ref="calendar" height="79vh">
 
-          <!--START TIME-->
-          <v-menu ref="menuStart" v-model="menuStart" :close-on-content-click="false" :nudge-right="40" :return-value.sync="isoStartTime" transition="scale-transition" offset-y max-width="290px" min-width="290px">
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field v-model="isoStartTime" label="Time start" prepend-icon="mdi-clock-time-four-outline" readonly v-bind="attrs" v-on="on"></v-text-field>
-            </template>
-            <v-time-picker v-if="menuStart" v-model="isoStartTime" full-width @click:minute="$refs.menuStart.save(isoStartTime)" format="24hr"></v-time-picker>
-          </v-menu>
-
-          <!--END DATE-->
-          <v-menu ref="menuEndDate" v-model="menuEndDate" :close-on-content-click="false" :return-value.sync="isoEndDate" transition="scale-transition" offset-y min-width="auto">
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field v-model="isoEndDate" label="Date End" prepend-icon="mdi-calendar" readonly v-bind="attrs" v-on="on"></v-text-field>
-            </template>
-            <v-date-picker v-if="menuEndDate" v-model="isoEndDate" :locale="locale" no-title scrollable>
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" @click="menuEndDate = false">
-                Cancel
-              </v-btn>
-              <v-btn text color="primary" @click="$refs.menuEndDate.save(end)">
-                OK
-              </v-btn>
-            </v-date-picker>
-          </v-menu>
-          <!--END TIME-->
-          <v-menu ref="menuEnd" v-model="menuEnd" :close-on-content-click="false" :nudge-right="40" :return-value.sync="isoEndTime" transition="scale-transition" offset-y max-width="290px" min-width="290px">
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field v-model="isoEndTime" label="Time end" prepend-icon="mdi-clock-time-four-outline" readonly v-bind="attrs" v-on="on"></v-text-field>
-            </template>
-            <v-time-picker v-if="menuEnd" v-model="isoEndTime" full-width @click:minute="$refs.menuEnd.save(isoEndTime)" format="24hr"></v-time-picker>
-          </v-menu>
+          </v-sheet>
         </v-col>
       </v-row>
-      <v-row>
-        <v-col cols="1">
-          <v-subheader>Description</v-subheader>
-        </v-col>
-        <v-col cols="11">
-          <v-textarea v-model="description" color="teal">
-            <template v-slot:label>
-              <div>
-                Description <small>(optional)</small>
-              </div>
-            </template>
-          </v-textarea>
-        </v-col>
-      </v-row>
-    </v-card-text>
+    </v-container>
 
-    <v-divider></v-divider>
-
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="primary" text @click="validFormEvent">
-        I accept
-      </v-btn>
-      <v-btn color="primary" text @click="cancelFormEvent">
-        Cancel
-      </v-btn>
-    </v-card-actions>
-  </v-card>
-  <!--/v-form-->
-</v-dialog>
+  </v-card-text>
+  <v-card-actions>
+    <v-spacer></v-spacer>
+    <v-btn color="blue darken-1" text @click="cancelFormEvent">
+      Close
+    </v-btn>
+    <v-btn color="blue darken-1" text @click="validFormEvent">
+      Save
+    </v-btn>
+  </v-card-actions>
+</v-card>
 </template>
+
 
 <script>
 import {
@@ -132,26 +65,27 @@ import {
   mapActions
 } from 'vuex';
 const reg = /^(..?){1}:(..?){1}$/;
-
+import Vue from 'vue'
 
 export default {
   name: "event",
+  components: {
+
+  },
   data: () => ({
+    fullscreen: false,
     color: "primary",
     show: "true",
     valid: true,
-    name: "",
     start: new Date(),
     end: new Date(),
     menuEnd: false,
     menuStart: false,
     menuStartDate: false,
     menuEndDate: false,
-    summary: ``,
     description: "",
     formData: {
-      start: null,
-      end: null
+      name: ""
     }
   }),
   props: {
@@ -163,40 +97,42 @@ export default {
       type: Object,
       default: null
     },
-    selectedEvent: {
+    calendarInfo: {
       type: Object,
       default: null
+    },
+    systemBar: {
+      type: Boolean,
+      default: false
     }
+
   },
   mounted() {
     //console.log(this.event, this.calendar)
-    console.log("mounted", this.event, this.selectedEvent)
-    const event = this.event || this.selectedEvent
-    this.start = new Date(event.start)
-    this.end = new Date(event.end)
-    this.name = event.name;
-    this.color = event.color
+    this.formData = this.event;
+    this.start = new Date(this.event.start)
+    this.end = new Date(this.event.end)
+    this.color = this.event.colorId
+    console.log("mounted", this.event, this.start, this.end)
   },
   computed: {
+
     locale() {
       return this.$root.$i18n.locale;
     },
     isoStartTime: {
       get() {
-        let date = new Date(this.start)
-        return `${date.getHours()}:${date.getMinutes()}`;
+        //let date = new Date(this.start)
+        return `${new Date(this.event.start).getHours()}:${new Date(this.event.start).getMinutes()}`;
       },
       set(ele) {
-        console.log(ele)
         let res = reg.exec(ele)
         if (res) {
-          console.log(res)
           this.start.setHours(res[1]);
           this.start.setMinutes(res[2]);
           return ele //`${this.start.getHours()}:${this.start.getMinutes()}`;
         } else {
           let date = new Date(ele)
-          console.log(date)
           return ele //`${date.getHours()}:${date.getMinutes()}`;
         }
 
@@ -204,20 +140,17 @@ export default {
     },
     isoEndTime: {
       get() {
-        let date = new Date(this.end)
-        return `${date.getHours()}:${date.getMinutes()}`;
+        //let date = new Date(this.end)
+        return `${new Date(this.event.end).getHours()}:${new Date(this.event.end).getMinutes()}`;
       },
       set(ele) {
-        console.log(ele)
         let res = reg.exec(ele)
         if (res) {
-          console.log(res)
           this.end.setHours(res[1]);
           this.end.setMinutes(res[2]);
           return ele //`${this.end.getHours()}:${this.end.getMinutes()}`;
         } else {
           let date = new Date(ele)
-          console.log(date)
           return ele //`${date.getHours()}:${date.getMinutes()}`;
         }
       }
@@ -225,8 +158,8 @@ export default {
 
     isoStartDate: {
       get() {
-        let date = new Date(this.start)
-        return date.toISOString().substr(0, 10)
+        //let date = new Date(this.start)
+        return new Date(this.event.start).toISOString().substr(0, 10)
       },
       set(ele) {
         this.start = new Date(ele)
@@ -236,8 +169,8 @@ export default {
     },
     isoEndDate: {
       get() {
-        const date = new Date(this.end)
-        return date.toISOString().substr(0, 10)
+        //const date = new Date(this.end)
+        return new Date(this.event.end).toISOString().substr(0, 10)
       },
       set(ele) {
         this.end = new Date(ele)
@@ -256,16 +189,50 @@ export default {
     },
   },
   methods: {
+    scrollToTime(date) {
+      this.calendar.scrollToTime(this.isoStartTime)
+    },
+    fullCalendar() {
+      return this.moveCalendar(this.calendar)
+    },
+    moveCalendar() {
+      this.$emit("fullscreen");
+      return;
+      if (!this.fullscreen) {
+        this.fullscreen = !this.fullscreen;
+        this.$nextTick(() => {
+          this.calendarEle = this.calendar.$el;
+          //console.log(this.calendar.$el, this.$refs)
+          //this.$refs.calendar.$el.append(this.calendar.$el)
+          this.scrollToTime(this.formData.start)
+          this.$emit("fullscreen", this.fullscreen, this.formData, this.$refs.calendar.$el);
+        })
+      } else {
+        //console.log(this.calendarEle)
+        this.$emit("fullscreen", !this.fullscreen, this.formData, this.calendarEle);
+        this.$nextTick(() => {
+          this.fullscreen = !this.fullscreen;
+        })
+      }
+    },
     validFormEvent() {
-      let res = this.$refs.form.validate()
+      /*let res = this.$refs.form.validate()
       if (res) {
         this.$emit('valid')
-      }
+      }*/
+      this.$emit('valid', this.formData)
       return;
     },
     cancelFormEvent() {
+      if (this.fullscreen) {
+        this.fullCalendar();
+        this.calendarEle = null;
+      }
       this.$emit('cancel')
     },
+    removeEvent() {
+      this.$emit('remove', this.event)
+    }
   }
 }
 </script>

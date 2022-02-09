@@ -15,7 +15,7 @@
     "kill": "nodefony kill",
     "test": "nodefony test",
     "help": "nodefony -h",
-    "fixtures":"./bin/fixtures.sh"
+    "fixtures": "./bin/fixtures.sh"
   },
   "private": true,
   "keywords": [
@@ -35,15 +35,15 @@
     "node": ">=10"
   },
   "dependencies": {
-    "i18n-iso-countries": "^7.2.0",
-    "mongoose": "^6.1.6",
+    "i18n-iso-countries": "7.3.0",
+    "mongoose": "6.2.0",
     "nodefony": "^6.10.0",
     "nodefony-client": "^6.0.0",
     "pm2": "^5.1.2",
     "pm2-logrotate": "^2.7.0",
-    "sequelize": "^6.12.4",
-    "webpack": "^5.66.0",
-    "webpack-dev-server": "^4.7.3"
+    "sequelize": "6.15.0",
+    "webpack": "5.68.0",
+    "webpack-dev-server": "4.7.4"
   },
   "devDependencies": {
     "@mapbox/node-pre-gyp": "^1.0.8",

@@ -1,77 +1,60 @@
 <template>
-<v-container fluid class="pa-0">
-  <v-window class="nodefony--background overflow-auto">
+<v-window class="nodefony--background overflow-auto">
 
-    <v-sheet v-if="!isAuthenticated" height="fill-height" class="ma-5" color="transparent">
-      <v-col cols="12" sm="6">
-        <v-row justify="center" align="center" class="mt-10">
-          <img src="../assets/mediasoup.png">
-        </v-row>
-        <v-row justify="center" align="center" class="mt-10">
-          <div class="text-h2 teal--text text--lighten-4"> MEDIASOUP</div>
-        </v-row>
-        <v-row justify="center" align="center" class="mt-10">
-          <div class="text-h4 teal--text text--lighten-2"> FSU </div>
-        </v-row>
+  <v-toolbar dark elevation="4" color="#1a242d" class="fixed-bar mb-3">
+    <v-icon>mdi-home</v-icon>
+    <v-toolbar-title class="mx-5">
+      Dashboard
+    </v-toolbar-title>
+  </v-toolbar>
+
+  <v-sheet v-if="isAuthenticated" class="ma-5 mt-15" color="transparent">
+
+    <v-row class="mt-3">
+      <v-col cols="4" sm="4" lg="4" xs="12">
+        <town-card dark class="mb-7 fill-height">
+        </town-card>
       </v-col>
-    </v-sheet>
 
-    <v-sheet v-if="isAuthenticated" height="fill-height" class="ma-5" color="transparent">
-      <v-row class="">
-        <v-col cols="12" sm="12" class="pa-2">
-          <dashboard-calendar height="300px" title="Calendar">
-          </dashboard-calendar>
-        </v-col>
-      </v-row>
-
-      <v-row class="pa-3">
-        <!-- COL 1-->
-        <v-col cols="12" sm="6" class="pa-2">
-          <dashboard-item height="200" title="Meetings">
-            <v-data-table fixed-header :loading="loading" :headers="headersRooms" :items="meetings" :items-per-page="15" class="elevation-2" :headers-length="30" :search="search">
-
-              <template v-slot:item.id="{ item }">
-                <v-btn x-small class="mr-2 mt-1" @click="redirect(item.id)">{{item.id}}</v-btn>
-              </template>
-
-              <template v-slot:item.actions="{ item }">
-                <v-icon small class="mr-2" @click="">
-                  mdi-eye
-                </v-icon>
-                <v-icon v-if="true" small class="mr-2" @click="">
-                  mdi-delete
-                </v-icon>
-              </template>
-              <template v-slot:no-data>
-              </template>
-            </v-data-table>
-
-          </dashboard-item>
-        </v-col>
-        <!-- COL 2-->
-        <!--v-col cols="12" sm="4">
-        <v-row justify="center" align="center" class="mt-10">
-          <img src="../assets/mediasoup.png">
+      <v-col cols="8">
+        <v-row>
+          <v-col cols="12" xs="12">
+            <dashboard-calendar>
+            </dashboard-calendar>
+          </v-col>
         </v-row>
-        <v-row justify="center" align="center" class="mt-10">
-          <div class="text-h2 teal--text text--lighten-4"> MEDIASOUP</div>
+        <v-row>
+          <v-col cols="6" xs="12">
+            <dashboard-item title="Meetings" class="mb-7 fill-height">
+              <v-data-table fixed-header :loading="loading" :headers="headersRooms" :items="meetings" :items-per-page="15" class="elevation-2" :headers-length="30" :search="search">
+                <template v-slot:item.id="{ item }">
+                  <v-btn x-small class="mr-2 mt-1" @click="redirect(item.id)">{{item.id}}</v-btn>
+                </template>
+                <template v-slot:item.actions="{ item }">
+                  <v-icon small class="mr-2" @click="">
+                    mdi-eye
+                  </v-icon>
+                  <v-icon v-if="true" small class="mr-2" @click="">
+                    mdi-delete
+                  </v-icon>
+                </template>
+                <template v-slot:no-data>
+                </template>
+              </v-data-table>
+            </dashboard-item>
+          </v-col>
+
+          <v-col class="fill-height" cols="6" xs="12">
+            <dashboard-item title="Contacts" class="mb-7 fill-height">
+              <v-data-table :headers="headersUsers" :items="users" :items-per-page="5" class="elevation-1"></v-data-table>
+            </dashboard-item>
+          </v-col>
         </v-row>
 
-        <dashboard-calendar class="my-5" v-if="isAuthenticated" title="Meetings">
-        </dashboard-calendar>
-      </v-col-->
-
-        <!-- COL 3-->
-        <v-col cols="12" sm="6" class="pa-3">
-          <dashboard-item title="Contacts">
-            <v-data-table :headers="headersUsers" :items="users" :items-per-page="5" class="elevation-1"></v-data-table>
-          </dashboard-item>
-        </v-col>
-      </v-row>
-
-    </v-sheet>
-  </v-window>
-</v-container>
+      </v-col>
+    </v-row>
+  </v-sheet>
+</v-window>
 </template>
 
 <script>
@@ -82,13 +65,15 @@ import {
 } from 'vuex';
 // @ is an alias to /src
 import DashboardItem from "@/components/dashboard/DashboardItem";
+import TownCard from "@/components/dashboard/TownCard";
 import DashboardCalendar from '@../../../src/bundles/calendar-bundle/Resources/vue/components/DashbordCalendar';
 export default {
   name: 'Home',
   props: {},
   components: {
     "dashboard-item": DashboardItem,
-    "dashboard-calendar": DashboardCalendar
+    "dashboard-calendar": DashboardCalendar,
+    "town-card": TownCard
   },
   data: () => ({
     search: "",
@@ -211,14 +196,24 @@ export default {
 </script>
 
 <style lang="scss">
-.nodefony--background {
-    position: relative;
-    height: 100vh;
+.fixed-bar {
+    position: fixed;
     width: 100%;
+    margin-bottom: 30px;
+    /* for Safari */
+    z-index: 2;
+}
+.nodefony--background {
+    /*position: relative;
+    height: 100vh;
+    width: 100%;*/
     /*display: flex;
     align-items: center;
     justify-content: center;*/
-    background-image: url("../assets/chateau-if.jpg");
+    /*background-image: url("../assets/chateau-if.jpg");*/
+    height: 100%;
+    width: 100%;
+    background-color: #1a242d;
     background-size: cover;
     overflow: hidden;
 }
@@ -231,5 +226,11 @@ export default {
     bottom: 0;
     left: 0;
     background-color: rgba(0,0,0,0.65);
+}
+.mycolor {
+    background: linear-gradient(125.83deg , rgb(95, 95, 126) 0%, rgb(26, 36, 45) 85.09%);
+}
+.mycolor2 {
+    background: linear-gradient(200.83deg , rgb(95, 95, 126) 0%, rgb(26, 36, 45) 85.09%);
 }
 </style>

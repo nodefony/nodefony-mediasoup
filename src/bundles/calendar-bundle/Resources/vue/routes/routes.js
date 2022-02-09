@@ -1,4 +1,4 @@
-import Calendar from '../views/Calendar.vue';
+import Calendar from '@bundles/calendar-bundle/Resources/vue/views/Calendar.vue';
 
 const routes = [{
   path: '/calendar/:id',

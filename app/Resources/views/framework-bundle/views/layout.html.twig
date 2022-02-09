@@ -5,40 +5,45 @@
 {% endblock %}
 
 {% block content %}
-    {{ parent() }}
+  {{ parent() }}
+  <div class="container">
     <div class="row pb-5 mt-7">
-        <div class="col-lg-12">
-          <div class="card bg-light text-dark shadow p-3 mb-5 rounded">
-            <div class="card-body mx-auto">
-                <img src='{{CDN("image")}}/app/images/app-logo.png'><button class="btn btn-sm btn-danger" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                  {{ error.type }}
-                </button>
-                <h1 class="display-4 text-danger">{{ error.code }} - {{ error.message }}</h1>
-            </div>
+      <div class="col-lg-12">
+        <div class="card bg-light text-dark shadow p-3 mb-5 rounded">
+          <div class="card-body mx-auto">
+            <img src='{{CDN("image")}}/app/images/app-logo.png'>
+            <button class="btn btn-sm btn-danger" role="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+              {{ error.type }}
+            </button>
+            <h1 class="display-4 text-danger">{{ error.code }}
+              -
+              {{ error.message }}</h1>
           </div>
-          <hr class="my-4">
-          <div class="accordion" id="accordion">
+        </div>
+        <hr class="my-4">
+        <div class="accordion" id="accordion">
+          <div class="accordion-item">
             <div class="card shadow rounded">
-              <div class="card-header" >
+              <div class="card-header" id="panelsStayOpen-headingOne">
                 <h5 class="mb-1">
-                  <button class="btn btn-sm btn-outline-danger" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                  <button class="btn btn-sm btn-outline-danger" href="#collapseOne" data-bs-target="#collapseOne" role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseOne">
                     {{ error.name }}
                   </button>
                 </h5>
               </div>
-              <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+              <div id="collapseOne" class="collapse" aria-labelledby="panelsStayOpen-headingOne" data-parent="#accordion">
                 <div class="card-body">
                   <ul class="list-group list-group-flush">
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                       URL
                       <div class="alert alert-info" role="alert">
                         {{ error.url }}
-                        </div>
+                      </div>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                       code
                       <div class="alert alert-danger" role="alert">
-                      {{ error.code }}
+                        {{ error.code }}
                       </div>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -80,33 +85,36 @@
                         </li>
                       {% endif %}
                       {% if error.controller %}
-                      <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Controller
-                        <div class="d-inline p-1 bg-secondary text-white rounded">{{ error.controller }}</div>
-                      </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                          Controller
+                          <div class="d-inline p-1 bg-secondary text-white rounded">{{ error.controller }}</div>
+                        </li>
                       {% endif %}
                       {% if error.action %}
-                      <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Action
-                        <div class="d-inline p-1 bg-secondary text-white rounded">{{ error.action }}</div>
-                      </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                          Action
+                          <div class="d-inline p-1 bg-secondary text-white rounded">{{ error.action }}</div>
+                        </li>
                       {% endif %}
                     {% endif %}
-                    {% if error.pdu  %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                      PDU (Protocol Data Unit syslog json)
-                      <div class="d-inline p-1 bg-secondary text-white rounded">{{ error.pdu }}</div>
-                    </li>
+                    {% if error.pdu %}
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        PDU (Protocol Data Unit syslog json)
+                        <div class="d-inline p-1 bg-secondary text-white rounded">{{ error.pdu }}</div>
+                      </li>
                     {% endif %}
                   </ul>
                 </div>
               </div>
             </div>
+          </div>
 
+          {% if nodefony.environment == 'dev' %}
+          <div class="accordion-item">
             <div class="card shadow mt-4">
               <div class="card-header" id="headingTwo">
                 <h5 class="mb-1">
-                  <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                  <button class="btn btn-sm btn-outline-secondary" role="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                     STACK
                   </button>
                 </h5>
@@ -118,6 +126,9 @@
               </div>
             </div>
           </div>
+          {% endif %}
         </div>
+      </div>
     </div>
+  </div>
 {% endblock %}

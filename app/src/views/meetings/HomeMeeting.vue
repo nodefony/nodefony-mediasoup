@@ -148,6 +148,7 @@ export default {
   async mounted() {
     this.loading = true;
     this.waiting = false;
+    await this.closeDrawer();
     return this.getRoom(this.roomid);
   },
   destroyed() {
@@ -418,7 +419,8 @@ export default {
     /*display: flex;
     align-items: center;
     justify-content: center;*/
-    background-image: url("../../assets/chateau-if.jpg");
+    /*background-image: url("../../assets/chateau-if.jpg");*/
+    background-color: #1a242d;
     background-size: cover;
     overflow: hidden;
 }
@@ -430,6 +432,6 @@ export default {
     right: 0;
     bottom: 0;
     left: 0;
-    background-color: rgba(0,0,0,0.65);
+    /*background-color: rgba(0,0,0,0.65);*/
 }
 </style>
