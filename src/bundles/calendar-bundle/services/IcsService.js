@@ -80,7 +80,17 @@ class Ics extends nodefony.Service {
       url:`https://${this.kernel.domain}/calendar/events/etag`,
       attendees:
     });*/
-    const myevent = calendar.createEvent(event)
+
+    let myEvent = nodefony.extend(true, {}, event)
+    if( myEvent.start){
+      myEvent.start = event.start.iso
+    }
+    if( myEvent.end){
+      myEvent.end = event.end.iso
+    }
+    //myEvent.start = event.start.iso
+    //myEvent.end = event.end.iso
+    const myevent = calendar.createEvent(myEvent)
     myevent.timestamp = moment().toDate().getTime()
     return JSON.stringify(myevent);
   }

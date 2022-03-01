@@ -1,48 +1,106 @@
 <template>
 <!--v-dialog v-model="show" persistent :max-width="!fullscreen?'600px':null" :fullscreen="fullscreen"-->
-<v-card rounded="lg" v-bind="{...$props, ...$attrs}">
+<v-card v-if="event" rounded="lg" v-bind="{...$props, ...$attrs}">
   <v-system-bar v-if="!systemBar" height="35px" dark class="mycolor">
+
 
     <v-icon @click="moveCalendar" class="ml-2">mdi-calendar-plus</v-icon>
     <v-subheader>@{{calendarInfo.summary}}</v-subheader>
     <v-spacer></v-spacer>
-    <v-icon @click="removeEvent" color="red" class="ml-5">mdi-delete</v-icon>
-    <v-icon @click="moveCalendar" color="blue" class="ml-5">mdi-pencil</v-icon>
-    <v-icon @click="" color="green" class="ml-5">mdi-dots-vertical</v-icon>
+    <div v-if="!edit">
+      <v-icon @click="removeEvent" color="red" class="ml-5">mdi-delete</v-icon>
+      <v-icon @click="moveCalendar" color="blue" class="ml-5">mdi-pencil</v-icon>
+      <v-icon @click="" color="green" class="ml-5">mdi-dots-vertical</v-icon>
+    </div>
     <v-icon @click="cancelFormEvent" class="ml-10">mdi-close</v-icon>
   </v-system-bar>
+
   <v-toolbar height="48px" dark :color="color" flat>
-    <v-toolbar-title>{{formData.summary}}</v-toolbar-title>
+    <v-toolbar-title>{{summary}}</v-toolbar-title>
     <v-spacer></v-spacer>
   </v-toolbar>
 
   <v-card-text>
     <v-container fluid>
-      <v-row v-if="!fullscreen">
+      <v-row>
         <v-col cols="12">
-          <v-text-field prepend-icon="mdi-pencil-outline" label="Add Title" :value="formData.summary" single-line full-width></v-text-field>
-          <v-subheader>{{start}}</v-subheader>
-          <v-subheader>{{isoStartDate}} {{isoStartTime}}</v-subheader>
-          <v-subheader>{{end}}</v-subheader>
-          <v-subheader>{{isoEndDate}} {{isoEndTime}}</v-subheader>
-        </v-col>
+          <v-text-field :readonly="!edit" v-model="summary" dense prepend-icon="mdi-map-marker">
+            <template v-slot:label>
+              <div>
+                Event Name
+              </div>
+            </template>
+          </v-text-field>
 
+          <v-row>
+            <v-col cols="4" sm="4">
+              <v-checkbox @change="allDayCheckAction" prepend-icon="mdi-map-marker" :readonly="!edit" v-model="dayAll" hide-details class="">
+                <template v-slot:label>
+                  <div>
+                    All day
+                  </div>
+                </template>
+              </v-checkbox>
+            </v-col>
+
+            <v-col cols="8" sm="8">
+              <v-menu v-if="dayAll" offset-x v-model="menuAllDay" :close-on-content-click="true" max-width="290">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-text-field :readonly="!edit" dense :value="startFormat" readonly v-bind="attrs" v-on="on" class="mt-5">
+                    <template v-slot:label>
+                      <div>
+                        All day
+                      </div>
+                    </template>
+                  </v-text-field>
+                </template>
+                <v-date-picker @change="allDayAction" no-title :locale="locale" v-model="isoStart"></v-date-picker>
+              </v-menu>
+            </v-col>
+          </v-row>
+
+          <v-row v-if="!dayAll">
+            <v-col cols="12" sm="6" class="pl-13">
+              <v-menu offset-x v-model="menuStart" :close-on-content-click="true" max-width="290">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-text-field :readonly="!edit" dense :value="startFormat" label="Start Event Date" readonly v-bind="attrs" v-on="on"></v-text-field>
+                </template>
+                <v-date-picker no-title :locale="locale" v-model="isoStart"></v-date-picker>
+              </v-menu>
+
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select @change="startTimeChange" :readonly="!edit" v-model="timeStart" dense :items="hours" label="Start Event Time" menu-props="auto"></v-select>
+            </v-col>
+          </v-row>
+          <v-row v-if="!dayAll">
+            <v-col cols="12" sm="6" class="pl-13">
+              <v-menu offset-x v-model="menuEnd" :close-on-content-click="true" max-width="290">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-text-field :readonly="!edit" dense :value="endFormat" label="End Event Date" readonly v-bind="attrs" v-on="on"></v-text-field>
+                </template>
+                <v-date-picker offset-y no-title :locale="locale" v-model="isoEnd"></v-date-picker>
+              </v-menu>
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select @change="endTimeChange" :readonly="!edit" v-model="timeEnd" dense :items="hours" label="End Event Time" menu-props="auto"></v-select>
+            </v-col>
+          </v-row>
+
+          <v-textarea :readonly="!edit" dense v-model="formData.description" color="teal" prepend-icon="mdi-map-marker">
+            <template v-slot:label>
+              <div>
+                Deccription <small>(optional)</small>
+              </div>
+            </template>
+          </v-textarea>
+        </v-col>
       </v-row>
 
-      <v-row v-else>
-        <v-col cols="6">
-          <v-text-field prepend-icon="mdi-pencil-outline" label="Add Title" :value="formData.summary" single-line full-width></v-text-field>
-        </v-col>
-        <v-col cols="6">
-          <v-sheet ref="calendar" height="79vh">
-
-          </v-sheet>
-        </v-col>
-      </v-row>
     </v-container>
 
   </v-card-text>
-  <v-card-actions>
+  <v-card-actions v-if="edit">
     <v-spacer></v-spacer>
     <v-btn color="blue darken-1" text @click="cancelFormEvent">
       Close
@@ -59,6 +117,7 @@
 import {
   tz
 } from "moment-timezone";
+import moment from 'moment'
 import {
   mapGetters,
   mapMutations,
@@ -74,19 +133,20 @@ export default {
   },
   data: () => ({
     fullscreen: false,
-    color: "primary",
     show: "true",
     valid: true,
-    start: new Date(),
-    end: new Date(),
     menuEnd: false,
     menuStart: false,
+    menuAllDay: false,
     menuStartDate: false,
     menuEndDate: false,
-    description: "",
-    formData: {
-      name: ""
-    }
+    formData: {},
+    dayAll: null,
+    end: null,
+    start: null,
+    timeStart: null,
+    timeEnd: null,
+    edit: false
   }),
   props: {
     event: {
@@ -104,83 +164,104 @@ export default {
     systemBar: {
       type: Boolean,
       default: false
+    },
+    read: {
+      type: Boolean,
+      default: true
     }
-
+  },
+  created() {
+    this.$moment = moment;
+    this.$moment.locale(this.locale);
   },
   mounted() {
-    //console.log(this.event, this.calendar)
-    this.formData = this.event;
-    this.start = new Date(this.event.start)
-    this.end = new Date(this.event.end)
-    this.color = this.event.colorId
-    console.log("mounted", this.event, this.start, this.end)
+    this.formData = this.event.event || {};
+    this.dayAll = !this.event.timed
+    this.start = this.$moment(this.event.start)
+    this.end = this.$moment(this.event.end)
+    this.timeStart = this.start.format("HH:mm")
+    this.timeEnd = this.end.format("HH:mm")
+    this.edit = !this.read
+    //console.log("mounted", this.event, this.start, this.end)
+  },
+  watch: {
+    event(ev) {
+      console.log("change ", ev)
+      //this.formData = ev
+    }
   },
   computed: {
-
+    hours() {
+      const tab = []
+      for (let i = 0; i < 24; i++) {
+        if (i < 10) {
+          tab.push(`0${i}:00`)
+          tab.push(`0${i}:15`)
+          tab.push(`0${i}:30`)
+          tab.push(`0${i}:45`)
+        } else {
+          tab.push(`${i}:00`)
+          tab.push(`${i}:15`)
+          tab.push(`${i}:30`)
+          tab.push(`${i}:45`)
+        }
+      }
+      return tab
+    },
     locale() {
       return this.$root.$i18n.locale;
     },
-    isoStartTime: {
+    summary() {
+      return this.formData.summary
+    },
+    description() {
+      return this.formData.description
+    },
+    color() {
+      return this.event.color || 'primary';
+    },
+    locale() {
+      return this.$root.$i18n.locale;
+    },
+    startFormat() {
+      return this.event.start ? this.$moment(this.start).format('dddd DD MMMM YYYY') : ''
+    },
+    endFormat() {
+      return this.event.end ? this.$moment(this.end).format('dddd DD MMMM YYYY') : ''
+    },
+    isoStart: {
       get() {
-        //let date = new Date(this.start)
-        return `${new Date(this.event.start).getHours()}:${new Date(this.event.start).getMinutes()}`;
+        return this.$moment(this.start).format("YYYY-MM-DD")
       },
-      set(ele) {
-        let res = reg.exec(ele)
-        if (res) {
-          this.start.setHours(res[1]);
-          this.start.setMinutes(res[2]);
-          return ele //`${this.start.getHours()}:${this.start.getMinutes()}`;
-        } else {
-          let date = new Date(ele)
-          return ele //`${date.getHours()}:${date.getMinutes()}`;
-        }
+      set(start) {
+        start = this.$moment(start)
+        let mm = this.start.format("mm")
+        let hh = this.start.format("HH")
+        this.start = start.hours(hh).minutes(mm)
+        this.event.start = this.start.valueOf()
+        this.checkTimed()
+        return this.start
+      }
+    },
+    isoEnd: {
+      get() {
+        return this.$moment(this.end).format("YYYY-MM-DD")
+      },
+      set(end) {
+        end = this.$moment(end)
+        let mm = this.end.format("mm")
+        let hh = this.end.format("HH")
+        this.end = end.hours(hh).minutes(mm)
+        this.event.end = this.end.valueOf()
+        this.checkTimed()
+        return this.end
+      }
+    },
 
-      }
-    },
-    isoEndTime: {
-      get() {
-        //let date = new Date(this.end)
-        return `${new Date(this.event.end).getHours()}:${new Date(this.event.end).getMinutes()}`;
-      },
-      set(ele) {
-        let res = reg.exec(ele)
-        if (res) {
-          this.end.setHours(res[1]);
-          this.end.setMinutes(res[2]);
-          return ele //`${this.end.getHours()}:${this.end.getMinutes()}`;
-        } else {
-          let date = new Date(ele)
-          return ele //`${date.getHours()}:${date.getMinutes()}`;
-        }
-      }
-    },
-
-    isoStartDate: {
-      get() {
-        //let date = new Date(this.start)
-        return new Date(this.event.start).toISOString().substr(0, 10)
-      },
-      set(ele) {
-        this.start = new Date(ele)
-        return this.start.toISOString().substr(0, 10);;
-      }
-
-    },
-    isoEndDate: {
-      get() {
-        //const date = new Date(this.end)
-        return new Date(this.event.end).toISOString().substr(0, 10)
-      },
-      set(ele) {
-        this.end = new Date(ele)
-        return this.end.toISOString().substr(0, 10);
-      }
-    },
     timezoneList() {
-      let ele = tz.names();
+      let ele = moment.tz.names();
       return ele.map((item) => {
-        let utc = tz(item).format('(zZ)')
+        let utc = moment.tz(item).format('(zZ)')
         return {
           zone: item,
           utc: utc
@@ -189,6 +270,58 @@ export default {
     },
   },
   methods: {
+    checkTimed() {
+      console.log(`Same DATE : ${this.start.isSame(this.end)}`, `Same DAY :  ${this.start.date() === this.start.date()}`)
+      const sameDate = this.start.isSame(this.end);
+      if (sameDate) {
+        this.event.timed = false
+        this.dayAll = !this.event.timed
+        return
+      }
+      const sameDay = this.start.date() === this.end.date()
+      const sameHour = this.start.hour() === this.end.hour()
+      const sameMinute = this.start.minute() === this.end.minute()
+      if (sameDay) {
+        if (sameHour && sameMinute) {
+          this.event.timed = false
+        } else {
+          this.event.timed = true
+        }
+        this.dayAll = !this.event.timed
+        return
+      }
+      this.event.timed = false;
+      this.dayAll = !this.event.timed
+    },
+    startTimeChange(time) {
+      let res = reg.exec(time)
+      this.start = this.start.hours(res[1]).minutes(res[2])
+      this.event.start = this.start.valueOf()
+      this.checkTimed()
+      return time
+    },
+
+    endTimeChange(time) {
+      let res = reg.exec(time)
+      this.end = this.end.hours(res[1]).minutes(res[2])
+      this.event.end = this.end.valueOf()
+      this.checkTimed()
+      return time
+    },
+    allDayAction(date) {
+      this.start = this.$moment(date)
+      this.event.start = this.start.valueOf()
+      this.end = this.$moment(date)
+      this.event.end = this.end.valueOf()
+      this.event.timed = false
+    },
+    allDayCheckAction(res) {
+      if (res) {
+        this.event.timed = false
+      } else {
+        this.event.timed = true
+      }
+    },
     scrollToTime(date) {
       this.calendar.scrollToTime(this.isoStartTime)
     },
@@ -196,7 +329,8 @@ export default {
       return this.moveCalendar(this.calendar)
     },
     moveCalendar() {
-      this.$emit("fullscreen");
+      //this.$emit("fullscreen");
+      this.edit = !this.edit;
       return;
       if (!this.fullscreen) {
         this.fullscreen = !this.fullscreen;

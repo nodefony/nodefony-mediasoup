@@ -29,7 +29,7 @@ module.exports = class calendar extends nodefony.Service {
     if (username) {
       return this.calendarEntity.findAndCountAll({
           where: {
-            userUsername: username
+            creator: username
           },
           include: [{// Notice `include` takes an ARRAY
             model: this.User,
@@ -64,7 +64,7 @@ module.exports = class calendar extends nodefony.Service {
       return this.calendarEntity.findOne({
           where: {
             id: calendarId,
-            userUsername: username
+            creator: username
           },
           include: [{// Notice `include` takes an ARRAY
             model: this.User,
@@ -98,7 +98,7 @@ module.exports = class calendar extends nodefony.Service {
       return this.calendarEntity.findOne({
           where: {
             primary:true,
-            userUsername: username
+            creator: username
           },
           include: [{// Notice `include` takes an ARRAY
             model: this.User,

@@ -122,7 +122,7 @@ module.exports = {
     bundles: {
       "users-bundle": path.resolve("src", "bundles", "users-bundle"),
       "mediasoup-bundle": path.resolve("src", "bundles", "mediasoup-bundle"),
-      "calendar-bundle": path.resolve("src", "bundles", "calendar-bundle")
+      "calendar-bundle": path.resolve("src", "bundles", "calendar-bundle"),
     },
     /**
      * SYSLOG NODEFONY

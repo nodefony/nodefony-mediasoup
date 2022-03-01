@@ -25,7 +25,7 @@
       <v-list-item-title @click="$router.resolve({ name: 'About'})">Home</v-list-item-title>
     </v-list-item>
 
-    <v-list-group class="" v-if="isAuthenticated && calendars.length" :value="false" prepend-icon="mdi-calendar-month">
+    <v-list-group class="" v-if="isAuthenticated && calendars && calendars.length" :value="false" prepend-icon="mdi-calendar-month">
 
       <template v-slot:activator>
         <v-list-item-title>{{$t('calendar.calendar')}}</v-list-item-title>
@@ -122,7 +122,9 @@
 
 <script>
 import {
-  mapGetters
+  mapGetters,
+  mapActions,
+  mapState
 } from 'vuex';
 export default {
   name: 'Navigation',
@@ -130,10 +132,13 @@ export default {
   props: {},
   data(vm) {
     return {
-      calendars: []
+      //calendars: []
     }
   },
   computed: {
+    ...mapGetters({
+      calendars: 'getCalendars'
+    }),
     ...mapGetters([
       'isAuthenticated',
       'getUser',
@@ -156,16 +161,18 @@ export default {
   async mounted() {
     //console.log(this.$vuetify.breakpoint)
     if (this.isAuthenticated) {
-      await this.$nodefony.request("calendar/list")
+      await this.getRemoteCalendars()
+        //await this.$nodefony.request("calendar/list")
         .then((res) => {
           if (res) {
-            this.calendars = res.result;
+            //this.calendars = res.result;
           }
         })
     }
   },
   async destroyed() {},
   methods: {
+    ...mapActions(["getRemoteCalendars"]),
     redirect(route) {
       return this.$router.push({
           name: route

@@ -20,18 +20,24 @@ module.exports = class calendar extends nodefony.Entity {
      */
     super(bundle, "calendar", "sequelize", "nodefony");
     this.orm.on("onOrmReady", (orm) => {
-      let user = this.orm.getEntity("user");
-      if (user) {
-        this.model.belongsTo(user, {
-          foreignKey: {
-            allowNull: false
-          }
-        });
-        user.hasMany(this.model, {
-          onDelete: 'CASCADE'
-        })
-      } else {
-        this.log("ENTITY ASSOCIATION user NOT AVAILABLE", "WARNING");
+      try{
+        let user = this.orm.getEntity("user");
+        if (user) {
+          this.model.belongsTo(user, {
+            foreignKey: {
+              allowNull: false,
+              name:"creator"
+            },
+            targetKey:"username",
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE'
+          });
+        } else {
+          this.log("ENTITY ASSOCIATION user NOT AVAILABLE", "WARNING");
+        }
+      }catch(e){
+        this.log(e,"ERROR")
+        throw e
       }
     });
 
@@ -100,10 +106,10 @@ module.exports = class calendar extends nodefony.Entity {
       hooks: {},
       freezeTableName: true,
       //add indexes
-      indexes: [{
+      /*indexes: [{
         unique: true,
-        fields: ['summary']
-      }]
+        fields: ["id",'creator']
+      }]*/
     })
     return MyModel;
   }

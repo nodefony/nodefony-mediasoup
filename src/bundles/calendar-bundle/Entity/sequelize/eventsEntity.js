@@ -26,23 +26,18 @@ module.exports = class events extends nodefony.Entity {
           foreignKey: {
             allowNull: false
           },
-          onDelete: 'CASCADE'
-          //foreignKey: 'calendar_id',
-          //constraints: false
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
         });
         this.model.belongsTo(user, {
           foreignKey: {
             allowNull: false,
             name:"creator"
           },
-          onDelete: 'CASCADE'
+          targetKey:"username",
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
         });
-        calendar.hasMany(this.model, {
-          onDelete: 'CASCADE'
-        })
-        /*user.hasMany(this.model, {
-          onDelete: 'CASCADE'
-        })*/
       } else {
         this.log("ENTITY ASSOCIATION calendar NOT AVAILABLE", "WARNING");
       }
@@ -100,11 +95,11 @@ module.exports = class events extends nodefony.Entity {
         "timeZone": "Europe/Zurich"}
       */
       start: {
-        type: DataTypes.DATE,
-        allowNull: false
+        type: DataTypes.JSON,
+        //allowNull: false
       },
       end: {
-        type: DataTypes.DATE,
+        type: DataTypes.JSON,
       },
       timezone:{
         type: DataTypes.STRING,
@@ -214,13 +209,18 @@ module.exports = class events extends nodefony.Entity {
           if (!event.organizer){
             event.organizer = event.creator
           }
+        },
+        beforeCreate: (event) => {
+          if(! event.end){
+            event.endTimeUnspecified = true
+          }
         }
       },
       freezeTableName: true,
       //add indexes
       //indexes: [{
-        //unique: true,
-        //fields: ['summary',"calendarId"]
+      //  unique: true,
+      //  fields: ['creator',"calendarId","id"]
       //}]
     })
     return MyModel;

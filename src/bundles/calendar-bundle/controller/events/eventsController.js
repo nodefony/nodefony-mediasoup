@@ -5,6 +5,13 @@
  *	@param {class} context
  *  @Route ("/api/events/calendar")
  */
+const oneDay = 24 * 60 * 60 * 1000
+const month = oneDay *31
+//const {tz} = require("moment-timezone");
+const moment = require('moment-timezone');
+const tz = moment.tz;
+
+
 class eventsController extends nodefony.Controller {
 
   constructor(container, context) {
@@ -41,59 +48,113 @@ class eventsController extends nodefony.Controller {
       let end = null;
       this.query.start = JSON.parse(this.query.start)
       this.query.end = JSON.parse(this.query.end)
+      this.query.timezone = JSON.parse(this.query.timezone)
+      //console.log( this.query.start, this.query.end)
+
       if (this.query.start) {
-        start = new Date();
-        start.setUTCFullYear(this.query.start.year);
-        start.setUTCMonth(this.query.start.month - 1);
-        if (this.query.start.hasDay) {
-          start.setUTCDate(this.query.start.day)
-        } else {
-          start.setUTCDate(1)
-        }
+        //start = tz(this.query.start.date, this.query.timezone.zone);
+        start = moment(this.query.start.date);
+        //start = new Date();
+        //start.setUTCFullYear(this.query.start.year);
+        //start.setUTCMonth(this.query.start.month - 1);
+        //if (this.query.start.hasDay) {
+        //  start.setUTCDate(this.query.start.day)
+        //} else {
+        //  start.setUTCDate(1)
+        //}
         if (this.query.start.hasTime) {
-          start.setUTCHours(this.query.start.hour, this.query.start.minute, 59)
+          //start.setUTCHours(this.query.start.hour, this.query.start.minute, 59)
+          start.set('hour', this.query.start.hour);
+          start.set('minute', this.query.start.minute);
+          start.set('second', 59);
         } else {
-          start.setUTCHours(0, 0, 0)
+          start.set('hour', 0);
+          start.set('minute', 0);
+          start.set('second', 0);
+          //start.setUTCHours(0, 0, 0)
         }
         //console.log(this.query.start, start)
       }
       if (this.query.end) {
-        end = new Date();
-        end.setUTCFullYear(this.query.end.year);
-        end.setUTCMonth(this.query.end.month - 1);
-        if (this.query.end.hasDay) {
+        //end = tz(this.query.end.date, this.query.timezone.zone);
+        end = moment(this.query.end.date);
+        //end = new Date();
+        //end.setUTCFullYear(this.query.end.year);
+        //end.setUTCMonth(this.query.end.month - 1);
+        /*if (this.query.end.hasDay) {
           end.setUTCDate(this.query.end.day)
         } else {
           end.setUTCDate(1)
-        }
+        }*/
         if (this.query.end.hasTime) {
-          end.setUTCHours(this.query.end.hour, this.query.end.minute, 59)
+          //end.setUTCHours(this.query.end.hour, this.query.end.minute, 59)
+          end.set('hour', this.query.end.hour);
+          end.set('minute', this.query.end.minute);
+          end.set('second', 59);
         } else {
-          end.setUTCHours(23, 59, 59)
+          end.set('hour', 23);
+          end.set('minute', 59);
+          end.set('second', 59);
+          //end.setUTCHours(23, 59, 59)
         }
         //console.log(this.query.end, end)
       }
-      const oneDay = 24*60*60*1000
-      switch(this.query.end.type){
-        case "week":
-        case "4day":
-          start = new Date(start.getTime()-oneDay);
-          end = new Date(end.getTime()+oneDay);
+
+      /*let interval = 0
+      switch (this.query.end.type) {
+      case "week":
+      case "4day":
+      case "day":
+        interval = oneDay
+        //start = new Date(start.getTime() - oneDay);
+        //end = new Date(end.getTime() + oneDay);
         break;
-        case "day":
-          end = new Date(end.getTime()+oneDay);
+      case "month":
+        interval = month
         break;
-        case "month":
-        break;
-      }
+      }*/
       //console.log(start, end)
       let res = await this.eventsService.list(calendarId, user.username, start, end)
       //console.log(res)
       return this.api.render(res)
-      .catch(e=>{
-        throw e;
-      })
+        .catch(e => {
+          throw e;
+        })
     } catch (e) {
+      throw e;
+    }
+  }
+
+  /**
+   *    @Method ({"GET"})
+   *    @Route ("/{calendarId}/month/events",
+   *      name="route-calendar-bundle-events-list-mounth")
+   */
+  async listMonthAction(calendarId) {
+    try {
+      let user = this.getUser();
+      if (this.query.month) {
+        this.query.month = JSON.parse(this.query.month)
+        //const date = new Date(this.query.month);
+        //const start = new Date(date.getFullYear(), date.getMonth(), 1);
+        //const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        //end.setUTCHours(23, 59, 59)
+
+        const start =moment(this.query.month).startOf('month')
+        const end = moment(this.query.month).endOf('month')
+        end.set('hour', 23);
+        end.set('minute', 59);
+        end.set('second', 59);
+        console.log("month", start, end)
+
+        let res = await this.eventsService.list(calendarId, user.username, start, end)
+        return this.api.render(res)
+          .catch(e => {
+            throw e;
+          })
+      }
+    } catch (e) {
+      this.log(e,"ERROR")
       throw e;
     }
   }
@@ -108,9 +169,9 @@ class eventsController extends nodefony.Controller {
       let user = this.getUser();
       let res = await this.eventsService.list(calendarId, user.username)
       return this.api.render(res)
-      .catch(e=>{
-        throw e;
-      })
+        .catch(e => {
+          throw e;
+        })
     } catch (e) {
       throw e;
     }
@@ -134,9 +195,9 @@ class eventsController extends nodefony.Controller {
         creator: user.username
       })
       return this.api.render(res)
-      .catch(e=>{
-        throw e;
-      })
+        .catch(e => {
+          throw e;
+        })
     } catch (e) {
       throw e;
     }
@@ -158,9 +219,9 @@ class eventsController extends nodefony.Controller {
         creator: user.username
       })
       return this.api.render(res)
-      .catch(e=>{
-        throw e;
-      })
+        .catch(e => {
+          throw e;
+        })
     } catch (e) {
       throw e;
     }
@@ -176,9 +237,9 @@ class eventsController extends nodefony.Controller {
       let user = this.getUser();
       let res = await this.eventsService.delete(calendarId, id, user.username)
       return this.api.render(res)
-      .catch(e=>{
-        throw e;
-      })
+        .catch(e => {
+          throw e;
+        })
     } catch (e) {
       throw e;
     }
@@ -193,12 +254,12 @@ class eventsController extends nodefony.Controller {
     try {
       let user = this.getUser();
       let res = await this.eventsService.update(calendarId, id, user.username, {
-        event:this.query.event
+        event: this.query.event
       })
       return this.api.render(res)
-      .catch(e=>{
-        throw e;
-      })
+        .catch(e => {
+          throw e;
+        })
     } catch (e) {
       throw e;
     }
@@ -212,12 +273,12 @@ class eventsController extends nodefony.Controller {
     try {
       let user = this.getUser();
       let res = await this.eventsService.patch(calendarId, id, user.username, {
-        event:this.query.event
+        event: this.query.event
       })
       return this.api.render(res)
-      .catch(e=>{
-        throw e;
-      })
+        .catch(e => {
+          throw e;
+        })
     } catch (e) {
       throw e;
     }

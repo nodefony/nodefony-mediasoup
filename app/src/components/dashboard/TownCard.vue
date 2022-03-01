@@ -4,8 +4,12 @@
   <v-card-title class="text-h6 pl-15">{{getProfileName}} {{getProfileSurname}}</v-card-title>
   <v-card-title class="text-h5">{{nowLocal}}</v-card-title>
   <v-card-subtitle class="">{{now}}</v-card-subtitle>
+  <v-card-title class="text-h6">Browser</v-card-title>
+  <v-card-subtitle>Time-Zone : {{browserInfo.dateFormat.timeZone}}</v-card-subtitle>
+
   <v-card-title v-if="loaded" class="text-h4">{{city}}</v-card-title>
   <v-card-subtitle v-if="loaded" class="">Latitude: {{latitude}} ° Longitude: {{longitude}} °</v-card-subtitle>
+
   <v-card-title class="text-h6">Position</v-card-title>
   <v-card-text class="cyan--text lighten-5 text-h5 font-weight-bold ">
     <v-row>
@@ -129,6 +133,12 @@ export default {
         return this.display_name.split(",")
       }
       return []
+    },
+    browserInfo() {
+      let res = Intl.DateTimeFormat().resolvedOptions()
+      return {
+        dateFormat: res
+      }
     }
   },
   mounted() {

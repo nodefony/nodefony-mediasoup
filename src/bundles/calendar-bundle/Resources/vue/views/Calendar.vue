@@ -1,21 +1,21 @@
 <template>
 <!--v-container fluid class="transparent pa-0 ma-0"-->
 <!--object-entry v-for="(value, key) in event" v-bind:key="key" v-bind:entry-key="key" v-bind:entry-value="value" /-->
-<app-layout :rounded="rounded" :height="height">
+<app-layout v-if="currentCalendar" :rounded="rounded" :height="height">
   <template v-slot:navigation>
     <v-divider />
     <v-expansion-panels accordion>
 
-      <v-expansion-panel class="transparent" style="">
-        <v-expansion-panel-header class="pl-0">
-          <v-list dense class="pa-0 ma-0" style="width: 100%;position: fixed;top: 0px;">
-            <v-list-item class=" mycolor">
+      <v-expansion-panel v-for="calendar in calendars" key="calendar.id" class="transparent">
+        <v-expansion-panel-header class="pl-0 ma-0 pa-0">
+          <v-list dense class="mycolor pa-0 ma-0">
+            <v-list-item class="  ma-0 pa-0" @click="redirectId('Calendar',calendar.id)">
               <v-list-item-avatar>
                 <v-icon>mdi-calendar-account-outline</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
-                <v-list-item-title>{{ currentCalendar.summary }}</v-list-item-title>
-                <v-list-item-subtitle>{{ currentCalendar.description  }}</v-list-item-subtitle>
+                <v-list-item-title>{{ calendar.summary }}</v-list-item-title>
+                <v-list-item-subtitle>{{ calendar.description  }}</v-list-item-subtitle>
 
               </v-list-item-content>
               <v-menu top :offset-x="true">
@@ -32,9 +32,6 @@
                   <v-list-item>
                     <v-list-item-title>Task</v-list-item-title>
                   </v-list-item>
-                  <v-list-item>
-                    <v-list-item-title>Meeting</v-list-item-title>
-                  </v-list-item>
                 </v-list>
               </v-menu>
             </v-list-item>
@@ -50,7 +47,7 @@
 
               <v-list-item-content>
 
-                <v-list-item-title>Time-Zone : {{ currentCalendar.timeZone }}</v-list-item-title>
+                <v-list-item-title>Time-Zone : {{ calendar.timeZone }}</v-list-item-title>
               </v-list-item-content>
             </v-list-item>
           </v-list>
@@ -60,7 +57,7 @@
     <v-divider></v-divider>
     <v-list-item class="px-0">
       <v-list-item-content class="pa-0 ma-0">
-        <picker-calendar :focus="focus" :events="events" :calendar="currentCalendar" @click-day="pickerClickDay" @click-month="pickerClickMonth" @click-change="pickerClickMonth"></picker-calendar>
+        <picker-calendar v-if="currentCalendar" :focus="focus" :events="eventsPicker" :calendar="currentCalendar" @click-day="pickerClickDay" @click-month="pickerClickMonth" @click-change="pickerClickMonth"></picker-calendar>
       </v-list-item-content>
     </v-list-item>
 
@@ -78,15 +75,23 @@
 
         <v-divider />
         <v-expansion-panel-content>
-          <v-list dense class="pa-0 ma-0">
+          <v-list dense class="pa-0 ma-0" style="z-index:0">
+
             <v-list-item v-for="
-              item in events" :key="item.title" link>
+              item in events" :key="item.title" link three-line>
               <v-list-item-icon>
                 <v-icon>mdi-calendar-clock-outline</v-icon>
               </v-list-item-icon>
 
               <v-list-item-content>
-                <v-list-item-title>{{ item.name }}</v-list-item-title>
+                <v-list-item-title>{{ item.name }} {{item.event.timezone}}</v-list-item-title>
+                <v-list-item-subtitle>
+                  {{format(item.start)}}
+                </v-list-item-subtitle>
+
+                <v-list-item-subtitle>
+                  {{format(item.end)}}
+                </v-list-item-subtitle>
               </v-list-item-content>
             </v-list-item>
           </v-list>
@@ -128,7 +133,7 @@
 
   <template v-slot:toolbar>
     <v-icon>mdi-calendar-account-outline</v-icon>
-    <v-toolbar-title class="px-3" @click="redirectId('Calendar',id)">{{ currentCalendar.summary }}</v-toolbar-title>
+    <v-toolbar-title class="px-3" @click="redirectId('Calendar',id)">{{ currentCalendar ? currentCalendar.summary  :''}}</v-toolbar-title>
   </template>
 
   <v-sheet height="48" style="">
@@ -178,7 +183,6 @@
     </v-toolbar>
   </v-sheet>
 
-
   <v-sheet class='appHeight' ref="calendarContainer" :style="contentStyle">
 
     <v-calendar ref="calendar" v-model="focus" :locale="locale" color="primary" :type="mytype" :events="events" :event-color="getEventColor" :event-ripple="false" @change="calendarChange" @mousedown:event="startDrag" @click:event="showEvent"
@@ -197,9 +201,9 @@
     </v-calendar>
 
     <v-menu v-model="selectedOpen" :activator="selectedElement" offset-x :close-on-content-click="false">
-      <event-item min-width="500px" min-height="350px" max-height="50%" :calendar="cal" :calendar-info="currentCalendar" :event="currentEvent" @cancel="cancelFormEvent" @valid="validFormEvent" @remove="removeEvent" @fullscreen="showFullscreenEvent"></event-item>
+      <event-item v-if="selectedEvent" min-width="500px" min-height="350px" :calendar="cal" :calendar-info="currentCalendar" :event="selectedEvent" @cancel="cancelFormEvent" @valid="validFormEvent" @remove="removeEvent" @fullscreen="showFullscreenEvent"
+        :read="!isNewEvent"></event-item>
     </v-menu>
-
   </v-sheet>
 
 
@@ -384,8 +388,10 @@ export default {
     selectedElement: null,
     selectedOpen: false,
     events: [],
+    newEvent: false,
     currentIndexEvent: null,
-    currentCalendar: {},
+    currentCalendar: null,
+    calendarElement: null,
     message: null
   }),
   watch: {
@@ -399,28 +405,50 @@ export default {
     }
   },
 
-  async mounted() {
-    this.ready = true;
-    this.myreadonly = this.readonly;
-    this.now = this.$refs.calendar.times.now
-    this.scrollToTime()
-    this.updateTime()
+  updated() {
+    if (!this.calendarElement && this.$refs.calendar) {
+      this.calendarElement = this.$refs.calendar
+    }
+  },
+  async created() {
     if (this.isAuthenticated) {
       await this.getCalendar(this.id)
-      this.mytype = this.type;
-      this.$refs.calendar.checkChange()
-      window.addEventListener("keyup", this.onEscapeKeyUp);
+    }
+  },
+
+  async mounted() {
+    this.myreadonly = this.readonly;
+    if (this.isAuthenticated) {
+      this.$nextTick(() => {
+        this.ready = true;
+        this.mytype = this.type;
+        //this.$refs.calendar.checkChange()
+        window.addEventListener("keyup", this.onEscapeKeyUp);
+        this.updateTime()
+      })
+
     }
     return await this.closeDrawer();
   },
 
   computed: {
+    ...mapGetters({
+      calendars: 'getCalendars'
+    }),
     ...mapGetters([
       'isAuthenticated',
       'getUser',
       'getProfile',
       'getLocale'
     ]),
+    cal() {
+      if (this.calendarElement) {
+        this.scrollToTime()
+        this.calendarElement.checkChange()
+        return this.calendarElement
+      }
+      return null
+    },
     contentStyle() {
       if (this.height) {
         return {
@@ -432,24 +460,29 @@ export default {
     locale() {
       return this.$root.$i18n.locale;
     },
-    cal() {
-      return this.ready ? this.$refs.calendar : null
-    },
+
     currentEvent() {
       //console.log("currentEvent", `dragEvent: ${this.dragEvent}  / selectedEvent: ${this.selectedEvent} / createEvent: ${this.createEvent}`);
       if (this.dragEvent) {
-        return this.dragEvent.event
+        return this.dragEvent
       }
       if (this.createEvent) {
-        return this.createEvent.event
+        return this.createEvent
       }
       if (this.selectedEvent) {
-        return this.selectedEvent.event
+        return this.selectedEvent
       }
       return null
     },
+    isNewEvent() {
+      return this.newEvent
+    },
     nowY() {
-      return this.cal ? this.cal.timeToY(this.now) + 'px' : '-10px'
+      if (this.calendarElement) {
+        this.now = this.calendarElement.times.now
+        return this.cal ? this.calendarElement.timeToY(this.now) + 'px' : '-10px'
+      }
+      return '-10px'
     },
     myTimeZone() {
       let code = tz.zonesForCountry(this.getLocale[3])
@@ -459,10 +492,24 @@ export default {
       }
     },
     timezone() {
-      return {
-        zone: this.currentCalendar.timeZone,
-        utc: tz(this.currentCalendar.timeZone).format('(zZ)')
+      if (this.currentCalendar) {
+        return {
+          zone: this.currentCalendar.timeZone,
+          utc: tz(this.currentCalendar.timeZone).format('(zZ)')
+        }
       }
+      return null
+    },
+    browserTimeZone() {
+      if (this.ready) {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone
+      }
+    },
+    eventsPicker() {
+      if (this.mytype === "month") {
+        return this.events
+      }
+      return null
     }
   },
 
@@ -478,6 +525,9 @@ export default {
       'updateRemoteEvent',
       'patchRemoteEvent'
     ]),
+    format(ts) {
+      return new Date(ts).toLocaleString()
+    },
     onEscapeKeyUp(event) {
       if (event.which === 27) {
         if (this.addEvent) {
@@ -509,25 +559,29 @@ export default {
           throw e;
         })
     },
+
     async calendarChange({
         start,
         end
       },
       id = this.id) {
       this.overlay = true;
+      this.events = [];
       return this.getRemoteEvents({
           id,
           start,
           end,
           hasTime: false,
-          type: this.mytype
+          type: this.mytype,
+          timezone: this.timezone
         })
         .then(async (result) => {
-          this.events = [];
           result.map((item) => {
             this.addEventCalendar(item)
           })
-          this.cal.checkChange()
+          if (this.cal) {
+            this.cal.checkChange()
+          }
           this.overlay = false;
           this.scrollToTime()
           return result
@@ -537,6 +591,7 @@ export default {
           this.overlay = false;
           throw e;
         })
+
     },
 
     async createRemoteEvent(event, id = this.id) {
@@ -618,18 +673,40 @@ export default {
     },
 
     addEventCalendar(item, index) {
-      let mystart = new Date(item.start)
-      let myend = new Date(item.end)
+      let mystart, myend;
+
+      if (item.start) {
+        mystart = new Date(item.start.iso)
+      }
+      if (item.end) {
+        myend = new Date(item.end.iso)
+      }
       //let timestampS = mystart.getDate();
       //let timestampE = myend.getDate();
-      const timed = mystart.getDate() === myend.getDate();
+      let timed = true
+      if (item.endTimeUnspecified) {
+        timed = false
+        if (mystart) {
+          myend = mystart
+        } else {
+          return
+        }
+      } else {
+        if (mystart) {
+          if (!myend) {
+            timed = false
+          } else {
+            timed = mystart.getDate() === myend.getDate();
+          }
+        }
+      }
       if (index || index === 0) {
         this.events.splice(index, 1)
       }
       return this.events.push({
         name: item.summary,
         start: mystart.getTime(),
-        end: myend.getTime(),
+        end: myend ? myend.getTime() : null,
         color: item.colorId || 'primary',
         timed: timed,
         event: item
@@ -646,7 +723,6 @@ export default {
     updateEventCalendar() {
 
     },
-
 
     getIndexEvent(item) {
       return this.events.findIndex((ele, index) => {
@@ -665,7 +741,12 @@ export default {
       this.$refs.calendar.scrollToTime(first)
     },
     updateTime() {
-      setInterval(() => this.cal.updateTimes(), 60 * 1000)
+      return setInterval(() => {
+        if (this.$refs.calendar) {
+          this.log('update time line')
+          this.$refs.calendar.updateTimes()
+        }
+      }, 60 * 1000)
     },
     viewDay({
       date
@@ -695,7 +776,8 @@ export default {
       this.focus = date;
       this.mytype = 'day'
     },
-    pickerClickMonth(date, change = true) {
+    pickerClickMonth(date, change = false) {
+      //console.log("passss", date)
       this.focus = `${date}-01`;
       if (change) {
         this.mytype = 'month'
@@ -738,10 +820,27 @@ export default {
       nativeEvent,
       event
     }) {
+      this.log("showEvent", "WARNING")
+      //this.selectedEvent = event
+      /*let start = new Date(this.selectedEvent.start);
+      let end = new Date(this.selectedEvent.end);
+      let timed = false;
+      if (start.getTime() !== end.getTime()) {
+        timed = true
+      } else {
+        if (start.getDate() !== end.getDate()) {
+          timed = true
+        }
+      }
+      this.selectedEvent.timed = timed*/
+
       const open = () => {
         this.selectedEvent = event
         this.selectedElement = nativeEvent.target
-        requestAnimationFrame(() => requestAnimationFrame(() => this.selectedOpen = true))
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          //this.selectedElement = nativeEvent.target
+          this.selectedOpen = true
+        }))
       }
 
       if (this.selectedOpen) {
@@ -778,7 +877,6 @@ export default {
       }
     },
 
-
     /*
     startTime(tms) {
       this.log(`START TIME : `, "WARNING");
@@ -812,31 +910,38 @@ export default {
         this.currentIndexEvent = index - 1;
       }
     },*/
-    createDefaultEvent(event) {
+    createDefaultEvent() {
+      let color = this.rndElement(this.colors)
+      let name = `Event #${this.events.length}`
       return {
-        summary: event.name,
-        start: event.start,
-        end: event.end,
-        colorId: event.color
+        name: name,
+        color: color,
+        start: this.createStart,
+        end: this.createStart,
+        timed: true,
+        event: {
+          summary: name,
+          start: this.createStart,
+          end: this.createStart,
+          colorId: color
+        }
       }
     },
     startTime(tms) {
+      this.log("startTime", "WARNING")
       const mouse = this.toTime(tms)
-
       if (this.dragEvent && this.dragTime === null) {
         const start = this.dragEvent.start
         this.dragTime = mouse - start
       } else {
-        this.createStart = this.roundTime(mouse)
-        this.createEvent = {
-          name: `Event #${this.events.length}`,
-          color: this.rndElement(this.colors),
-          start: this.createStart,
-          end: this.createStart,
-          timed: true,
+        if (this.selectedOpen) {
+          return this.cancelFormEvent()
         }
-        this.createEvent.event = this.createDefaultEvent(this.createEvent)
-        this.events.push(this.createEvent)
+        this.createStart = this.roundTime(mouse)
+        this.createEvent = this.createDefaultEvent()
+        this.newEvent = true;
+        const index = this.events.push(this.createEvent)
+        this.currentIndexEvent = index - 1;
       }
     },
 
@@ -871,8 +976,8 @@ export default {
       }
     },*/
     mouseMove(tms) {
+      //this.log("mouseMove", "WARNING")
       const mouse = this.toTime(tms)
-
       if (this.dragEvent && this.dragTime !== null) {
         const start = this.dragEvent.start
         const end = this.dragEvent.end
@@ -880,16 +985,16 @@ export default {
         const newStartTime = mouse - this.dragTime
         const newStart = this.roundTime(newStartTime)
         const newEnd = newStart + duration
-
         this.dragEvent.start = newStart
         this.dragEvent.end = newEnd
       } else if (this.createEvent && this.createStart !== null) {
         const mouseRounded = this.roundTime(mouse, false)
         const min = Math.min(mouseRounded, this.createStart)
         const max = Math.max(mouseRounded, this.createStart)
-
         this.createEvent.start = min
         this.createEvent.end = max
+        this.createEvent.event.start = min
+        this.createEvent.event.end = max
       }
     },
 
@@ -934,12 +1039,30 @@ export default {
         }, 200)
       }
     },*/
-    endDrag() {
+    endDrag(tms) {
+      this.log("endDrag", "WARNING")
+      if (this.createEvent) {
+        //this.selectedElement = tms.nativeEvent.target;
+        //this.selectedEvent = this.createEvent
+        this.selectedOpen = true;
+        tms.event = this.createEvent
+        this.showEvent(tms)
+        this.$nextTick(() => {
+          this.dragTime = null
+          this.dragEvent = null
+          this.createEvent = null
+          this.createStart = null
+          this.extendOriginal = null
+          this.selectedElement = null
+        })
+        return
+      }
       this.dragTime = null
       this.dragEvent = null
       this.createEvent = null
       this.createStart = null
       this.extendOriginal = null
+      this.selectedElement = null
     },
 
     /*extendBottom(event) {
@@ -996,19 +1119,20 @@ export default {
       this.extendOriginal = event.end
     },
 
-
-    cancelDrag() {
+    cancelDrag(mouseEvent) {
+      this.log("cancelDrag", "WARNING")
       if (this.createEvent) {
         if (this.extendOriginal) {
           this.createEvent.end = this.extendOriginal
         } else {
-          const i = this.events.indexOf(this.createEvent)
-          if (i !== -1) {
-            this.events.splice(i, 1)
+          if (!mouseEvent) {
+            const i = this.events.indexOf(this.createEvent)
+            if (i !== -1) {
+              this.events.splice(i, 1)
+            }
           }
         }
       }
-
       this.createEvent = null
       this.createStart = null
       this.dragTime = null
@@ -1026,6 +1150,12 @@ export default {
       if (this.currentIndexEvent !== null) {
         this.events.splice(this.currentIndexEvent, 1)
       }
+      this.selectedOpen = false
+      this.$nextTick(() => {
+        this.selectedEvent = null
+        this.currentIndexEvent = null
+        this.newEvent = false
+      })
       //this.cleanDragDrop()
     },
 

@@ -55,7 +55,6 @@ export default {
     async getCalendar() {
       return await this.$nodefony.request(`calendar`, "GET", {})
         .then((res) => {
-          console.log(res)
           this.calendar = res.result;
           return calendar
         })

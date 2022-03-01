@@ -21,18 +21,6 @@ class userEntity extends nodefony.Entity {
      *   @param connection name
      */
     super(bundle, "user", "sequelize", "nodefony");
-    /*this.orm.on("onOrmReady", ( orm ) => {
-        let session = this.orm.getEntity("session");
-        if (session) {
-          this.model.hasMany(session, {
-            foreignKey: 'username',
-            onDelete: 'CASCADE'
-          });
-
-        } else {
-          throw new Error("ENTITY ASSOCIATION session NOT AVAILABLE");
-        }
-      });*/
   }
 
   getSchema() {
@@ -86,7 +74,7 @@ class userEntity extends nodefony.Entity {
       },
       email: {
         type: DataTypes.STRING,
-        primaryKey: true,
+        //primaryKey: true,
         unique: true,
         allowNull: false,
         validate: {
@@ -189,10 +177,10 @@ class userEntity extends nodefony.Entity {
       },
       freezeTableName: true,
       //add indexes
-      indexes: [{
-        unique: true,
-        fields: ['email']
-      }]
+      //indexes: [{
+      //  unique: true,
+      //  fields: ['email']
+      //}]
       // add custom validations
       //validate: {}
     });

@@ -18,8 +18,9 @@ class eventsFixture extends nodefony.Fixture {
 
   async runMongoose() {
     try {
+      let ev = events.default()
       let tab = [];
-      for await (let event of events.default) {
+      for await (let event of ev) {
         tab.push(await this.loadMongooseFixtures(event));
       }
       return tab;
@@ -30,8 +31,9 @@ class eventsFixture extends nodefony.Fixture {
 
   async runSequelize() {
     try {
+      let ev = events.default()
       let tab = [];
-      for await (let event of events.default) {
+      for await (let event of ev) {
         tab.push(await this.loadSequelizeFixtures(event));
       }
       return tab;

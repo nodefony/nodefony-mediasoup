@@ -6,8 +6,8 @@
   "scripts": {
     "nodefony": "nodefony",
     "pm2": "pm2",
-    "start": "nodefony",
-    "dev": "nodefony dev",
+    "start": "npx --node-options='--openssl-legacy-provider' nodefony",
+    "dev": "npx --node-options='--openssl-legacy-provider' nodefony dev",
     "build": "nodefony build",
     "rebuild": "nodefony rebuild",
     "stop": "nodefony stop",
@@ -36,18 +36,18 @@
   },
   "dependencies": {
     "i18n-iso-countries": "7.3.0",
-    "mongoose": "6.2.0",
-    "nodefony": "^6.10.0",
-    "nodefony-client": "^6.0.0",
-    "pm2": "^5.1.2",
+    "mongoose": "6.2.4",
+    "nodefony": "6.11.0",
+    "nodefony-client": "6.0.2",
+    "pm2": "5.2.0",
     "pm2-logrotate": "^2.7.0",
-    "sequelize": "6.15.0",
-    "webpack": "5.68.0",
+    "sequelize": "6.17.0",
+    "webpack": "5.69.1",
     "webpack-dev-server": "4.7.4"
   },
   "devDependencies": {
     "@mapbox/node-pre-gyp": "^1.0.8",
-    "node-gyp": "^8.4.1"
+    "node-gyp": "9.0.0"
   },
   "author": "Christophe CAMENSULI <ccamensuli@gmail.com>",
   "readmeFilename": "README.md",

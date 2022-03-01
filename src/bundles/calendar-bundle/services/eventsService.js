@@ -29,44 +29,98 @@ module.exports = class events extends nodefony.Service {
     return error;
   }
 
-  list(calendarId, username, start = null, end = null) {
+  list(calendarId, username, start = null, end = null/*, interval = 0*/) {
+    //console.log(start, end, interval)
     if (!calendarId) {
       throw new nodefony.Error("No calendar id", 404)
     }
     let options = {
-      where: {
-        calendarId: calendarId
-      },
       include: [{ // Notice `include` takes an ARRAY
         model: this.calendarEntity,
       }]
     }
-    if (start) {
-      options.where.start = {
-          [Op.gte]: start,
-      }
+    //start = new Date(start.unix() - interval)
+    //end = new Date(end.getTime() + interval)
+    start = start.toISOString();
+    end = end.toISOString();
+
+    options.where = {
+      calendarId: calendarId,
+      [Op.or]: [{
+        // colStart < start 08 00 00 < colEnd
+        [Op.and]: [{
+          start: {
+            iso: {
+              [Op.lt]: start
+            }
+          }
+          }, {
+          end: {
+            iso: {
+              [Op.gt]: start
+            }
+          }
+        }]
+        }, {
+        // colStart < end  08 23 59 < colEnd
+        [Op.and]: [{
+          start: {
+            iso: {
+              [Op.lt]: end
+            }
+          }
+            }, {
+          end: {
+            iso: {
+              [Op.gt]: end
+            }
+          }
+        }]
+        }, {
+        // inside
+        start: {
+          iso: {
+            [Op.between]: [start, end]
+          }
+        },
+        end: {
+          iso: {
+            [Op.between]: [start, end]
+          }
+        }
+      }, {
+        // no end
+        start: {
+          iso: {
+            [Op.between]: [start, end]
+          }
+        }
+      }]
     }
-    if (end) {
-      options.where.end = {
-          [Op.lte]: end,
-      }
-    }
+    //console.log(util.inspect(options.where, {
+    //  depth: 8
+    //}))
     if (username) {
       options.where.creator = username;
-      //console.log(options)
       return this.eventsEntity.findAndCountAll(options)
-        .then(({ count, rows } ) => {
+        .then(({
+          count,
+          rows
+        }) => {
           return rows;
         }).catch(e => {
-          this.log(e,"ERROR");
+          this.log(e, "ERROR");
           throw this.sanitizeSequelizeError(e);
         });
     }
     return this.eventsEntity.findAndCountAll(options)
-      .then(({ count, rows }) => {
+      .then(({
+        count,
+        rows
+      }) => {
         return rows;
       }).catch(e => {
-        this.log(e,"ERROR");
+        this.log(e, "ERROR");
         throw this.sanitizeSequelizeError(e);
       });
   }
@@ -93,7 +147,7 @@ module.exports = class events extends nodefony.Service {
         .then((res) => {
           return res;
         }).catch(e => {
-          this.log(e,"ERROR");
+          this.log(e, "ERROR");
           throw this.sanitizeSequelizeError(e);
         });
     }
@@ -109,7 +163,7 @@ module.exports = class events extends nodefony.Service {
       .then((res) => {
         return res;
       }).catch(e => {
-        this.log(e,"ERROR");
+        this.log(e, "ERROR");
         throw this.sanitizeSequelizeError(e);
       });
   }
@@ -138,7 +192,7 @@ module.exports = class events extends nodefony.Service {
       if (transaction) {
         transaction.rollback();
       }
-      this.log(e,"ERROR");
+      this.log(e, "ERROR");
       throw this.sanitizeSequelizeError(e);
     }
   }

@@ -16,7 +16,12 @@ const actions = {
   async getRemoteEvents({
     commit,
     dispatch
-  }, {id, start, end, hasTime, type}) {
+  }, {id, start, end, hasTime, type, timezone}) {
+    let options = {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
     const $nodefony = this._vm.$nodefony
     let url = `events/calendar/${id}/events`;
     if (start || end) {
@@ -26,13 +31,46 @@ const actions = {
         end.hasTime = false
         end.type=type
       }
+      /*if( start){
+        start.date = new Date(start.date).getTime()
+      }
+      if(end){
+        end.date = new Date(end.date).getTime()
+      }*/
+      //$nodefony.log(start, "WARNING")
+      //$nodefony.log(end, "WARNING")
       let qs = $nodefony.queryString({
         start: JSON.stringify(start),
-        end: JSON.stringify(end)
+        end: JSON.stringify(end),
+        timezone:JSON.stringify(timezone)
       })
       url = `${url}?${qs}`
     }
-    return await $nodefony.request(url, "GET", {})
+    return await $nodefony.request(url, "GET", options)
+      .then(async (res) => {
+        return res.result;
+      })
+      .catch(e => {
+        throw e;
+      })
+  },
+
+  async getRemoteEventsMonth({
+    commit,
+    dispatch
+  }, {id, month}){
+    let options = {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }
+    const $nodefony = this._vm.$nodefony
+    let url = `events/calendar/${id}/month/events`;
+    let qs = $nodefony.queryString({
+      month: JSON.stringify(month)
+    })
+    url = `${url}?${qs}`
+    return await $nodefony.request(url, "GET", options)
       .then(async (res) => {
         return res.result;
       })
