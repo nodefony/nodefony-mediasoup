@@ -4,7 +4,6 @@ const routes = [{
   path: '/calendar/:id',
   name: 'Calendar',
   props: true,
-  //beforeEnter: ifAuthenticated,
   component: Calendar
 }];
 

@@ -4,9 +4,9 @@
 <app-layout v-if="currentCalendar" :rounded="rounded" :height="height">
   <template v-slot:navigation>
     <v-divider />
-    <v-expansion-panels accordion>
+    <v-expansion-panels accordion focusable>
 
-      <v-expansion-panel v-for="calendar in calendars" key="calendar.id" class="transparent">
+      <v-expansion-panel active-class="" v-for="calendar in calendars" :key="calendar.etag" class="transparent">
         <v-expansion-panel-header class="pl-0 ma-0 pa-0">
           <v-list dense class="mycolor pa-0 ma-0">
             <v-list-item class="  ma-0 pa-0" @click="redirectId('Calendar',calendar.id)">
@@ -201,7 +201,7 @@
     </v-calendar>
 
     <v-menu v-model="selectedOpen" :activator="selectedElement" offset-x :close-on-content-click="false">
-      <event-item v-if="selectedEvent" min-width="500px" min-height="350px" :calendar="cal" :calendar-info="currentCalendar" :event="selectedEvent" @cancel="cancelFormEvent" @valid="validFormEvent" @remove="removeEvent" @fullscreen="showFullscreenEvent"
+      <event-item v-if="selectedEvent" min-width="500px" min-height="350px" :calendar="cal" :calendar-info="currentCalendar" :event="currentEvent" @cancel="cancelFormEvent" @valid="validFormEvent" @remove="removeEvent" @fullscreen="showFullscreenEvent"
         :read="!isNewEvent"></event-item>
     </v-menu>
   </v-sheet>
@@ -321,7 +321,6 @@ import {
   mapActions
 } from 'vuex';
 import EventItem from '@bundles/calendar-bundle/Resources/vue/components/Event';
-import nodefony from 'nodefony-client';
 import AppLayout from '@/components/layouts/AppLayout.vue';
 
 import PickerCalendar from '@bundles/calendar-bundle/Resources/vue/components/PickerCalendar.vue';
@@ -426,7 +425,6 @@ export default {
         window.addEventListener("keyup", this.onEscapeKeyUp);
         this.updateTime()
       })
-
     }
     return await this.closeDrawer();
   },
@@ -620,7 +618,6 @@ export default {
           id,
           options
         })
-        //return await this.$nodefony.request(url, "DELETE", options)
         .then(async (result) => {
           return this.removeEventCalendar(result)
         })
@@ -821,6 +818,7 @@ export default {
       event
     }) {
       this.log("showEvent", "WARNING")
+      this.log(event)
       //this.selectedEvent = event
       /*let start = new Date(this.selectedEvent.start);
       let end = new Date(this.selectedEvent.end);
@@ -1160,6 +1158,7 @@ export default {
     },
 
     async validFormEvent(event) {
+      console.log(event, this.createEvent)
       if (this.createEvent) {
         return await this.createRemoteEvent(this.createEvent)
           .then(() => {

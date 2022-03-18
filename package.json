@@ -36,13 +36,13 @@
   },
   "dependencies": {
     "i18n-iso-countries": "7.3.0",
-    "mongoose": "6.2.4",
-    "nodefony": "6.11.0",
+    "mongoose": "6.2.7",
+    "nodefony": "6.12.0",
     "nodefony-client": "6.0.2",
     "pm2": "5.2.0",
     "pm2-logrotate": "^2.7.0",
     "sequelize": "6.17.0",
-    "webpack": "5.69.1",
+    "webpack": "5.70.0",
     "webpack-dev-server": "4.7.4"
   },
   "devDependencies": {

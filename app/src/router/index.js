@@ -126,8 +126,12 @@ let mainRoute = [{
 }];
 
 let routes = null;
+
 // calendar
 import calendarRoutes from '@bundles/calendar-bundle/Resources/vue/routes/routes.js';
+calendarRoutes.forEach((item, i) => {
+  item.beforeEnter = ifAuthenticated
+});
 routes = mainRoute.concat(calendarRoutes);
 
 // dev routes

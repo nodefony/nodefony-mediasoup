@@ -16,7 +16,7 @@
   </v-system-bar>
 
   <v-toolbar height="48px" dark :color="color" flat>
-    <v-toolbar-title>{{summary}}</v-toolbar-title>
+    <v-toolbar-title>{{formData.summary}}</v-toolbar-title>
     <v-spacer></v-spacer>
   </v-toolbar>
 
@@ -24,7 +24,7 @@
     <v-container fluid>
       <v-row>
         <v-col cols="12">
-          <v-text-field :readonly="!edit" v-model="summary" dense prepend-icon="mdi-map-marker">
+          <v-text-field :readonly="!edit" v-model="formData.summary" dense prepend-icon="mdi-map-marker">
             <template v-slot:label>
               <div>
                 Event Name
@@ -175,6 +175,7 @@ export default {
     this.$moment.locale(this.locale);
   },
   mounted() {
+    console.log(this.event)
     this.formData = this.event.event || {};
     this.dayAll = !this.event.timed
     this.start = this.$moment(this.event.start)
@@ -211,17 +212,11 @@ export default {
     locale() {
       return this.$root.$i18n.locale;
     },
-    summary() {
-      return this.formData.summary
-    },
     description() {
       return this.formData.description
     },
     color() {
       return this.event.color || 'primary';
-    },
-    locale() {
-      return this.$root.$i18n.locale;
     },
     startFormat() {
       return this.event.start ? this.$moment(this.start).format('dddd DD MMMM YYYY') : ''
@@ -238,7 +233,8 @@ export default {
         let mm = this.start.format("mm")
         let hh = this.start.format("HH")
         this.start = start.hours(hh).minutes(mm)
-        this.event.start = this.start.valueOf()
+        this.event.start = this.start.unix()
+        this.formData.start = start.unix()
         this.checkTimed()
         return this.start
       }
@@ -252,7 +248,8 @@ export default {
         let mm = this.end.format("mm")
         let hh = this.end.format("HH")
         this.end = end.hours(hh).minutes(mm)
-        this.event.end = this.end.valueOf()
+        this.event.end = end.unix()
+        this.formData.end = end.unix()
         this.checkTimed()
         return this.end
       }
