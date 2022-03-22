@@ -16,7 +16,7 @@
   ],
   "repository": {},
   "dependencies": {
-    "@babel/core": "7.17.7",
+    "@babel/core": "7.17.8",
     "@babel/plugin-proposal-class-properties": "^7.16.7",
     "@babel/plugin-syntax-dynamic-import": "^7.8.3",
     "@babel/preset-env": "^7.16.11",
@@ -51,8 +51,8 @@
     "sass-loader": "12.6.0",
     "style-loader": "^3.3.1",
     "svg-inline-loader": "^0.8.2",
-    "swagger-ui": "4.6.2",
-    "swagger-ui-dist": "4.6.2",
+    "swagger-ui": "4.8.0",
+    "swagger-ui-dist": "4.8.0",
     "terser-webpack-plugin": "5.3.1",
     "webpack": "5.70.0",
     "webpack-merge": "^5.8.0"

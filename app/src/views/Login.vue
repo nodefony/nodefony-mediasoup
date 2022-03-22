@@ -1,15 +1,14 @@
 <template>
 <v-container class="nodefony--background" fluid>
-  <v-row class="mt-10" justify="center" style="width:100%;height:100%">
-    <v-card dark rounded="xl" color="#1a242d" elevation="8" width="60%" height="400px" max-height="80%">
+  <v-row class="mt-10" justify="center" align="center" style="width:100%;height:100%">
+    <v-card dark rounded="xl" color="#1a242d" elevation="8" width="50%" style="margin-top:-200px">
       <v-row class="ma-5">
         <v-col>
           <v-row justify="center" align="center" class="mb-3">
-            <img src="../assets/mediasoup.png" />
+            <img width="80px" height="" src="../assets/nodefony.png" />
+            <v-card-title>Nodefony </v-card-title>
           </v-row>
-          <v-row justify="center" align="center">
-            <v-card-title>Mediasoup </v-card-title>
-          </v-row>
+
         </v-col>
       </v-row>
 
