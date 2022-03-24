@@ -1,6 +1,7 @@
 const {
   Op
 } = nodefony.Sequelize;
+
 module.exports = class events extends nodefony.Service {
 
   constructor(container, calendar) {
@@ -29,7 +30,7 @@ module.exports = class events extends nodefony.Service {
     return error;
   }
 
-  list(calendarId, username, start = null, end = null/*, interval = 0*/) {
+  list(calendarId, username, start = null, end = null /*, interval = 0*/ ) {
     //console.log(start, end, interval)
     if (!calendarId) {
       throw new nodefony.Error("No calendar id", 404)
@@ -125,7 +126,6 @@ module.exports = class events extends nodefony.Service {
       });
   }
 
-
   getEvent(calendarId, eventId, username, start, stop) {
     if (!calendarId) {
       throw new nodefony.Error("No calendar id", 404)
@@ -167,6 +167,8 @@ module.exports = class events extends nodefony.Service {
         throw this.sanitizeSequelizeError(e);
       });
   }
+
+
 
   async insert(calendarId, username, event) {
     let transaction = null;
@@ -270,8 +272,37 @@ module.exports = class events extends nodefony.Service {
     }
   }
 
-  update(calendarId, eventId, username, event) {
-    return new Promise.resolve(event)
+  async update(calendarId, eventId, username, event) {
+    let transaction = null;
+    try {
+      if (!event) {
+        throw new nodefony.Error(`Event ${eventId}  for ${username} not found`, 404);
+      }
+      transaction = await this.orm.startTransaction("events");
+      return this.eventsEntity.update(event, {
+          where: {
+            creator: username,
+            calendarId: calendarId,
+            id: eventId
+          }
+        }, {
+          transaction: transaction
+        })
+        .then((event) => {
+          transaction.commit();
+          return event;
+        }).catch(e => {
+          transaction.rollback();
+          throw this.sanitizeSequelizeError(e);
+        });
+    } catch (e) {
+      this.log(e, 'ERROR')
+      if (transaction) {
+        transaction.rollback();
+      }
+      throw this.sanitizeSequelizeError(e);
+    }
+
   }
 
 

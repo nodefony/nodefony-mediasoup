@@ -631,7 +631,8 @@ export default {
     async updateEvent(event, id = this.id) {
       let options = {
         body: JSON.stringify({
-          sendNotifications: false
+          sendNotifications: false,
+          event: event
         })
       }
       return await this.updateRemoteEvent({
@@ -922,7 +923,8 @@ export default {
           start: this.createStart,
           end: this.createStart,
           colorId: color
-        }
+        },
+        newEvent: true
       }
     },
     startTime(tms) {
@@ -1157,10 +1159,9 @@ export default {
       //this.cleanDragDrop()
     },
 
-    async validFormEvent(event) {
-      console.log(event, this.createEvent)
-      if (this.createEvent) {
-        return await this.createRemoteEvent(this.createEvent)
+    async validFormEvent(event, newEvent) {
+      if (newEvent) {
+        return await this.createRemoteEvent(event)
           .then(() => {
             //this.cleanDragDrop();
           })

@@ -32,9 +32,9 @@ module.exports = class events extends nodefony.Entity {
         this.model.belongsTo(user, {
           foreignKey: {
             allowNull: false,
-            name:"creator"
+            name: "creator"
           },
-          targetKey:"username",
+          targetKey: "username",
           onDelete: 'CASCADE',
           onUpdate: 'CASCADE'
         });
@@ -60,7 +60,13 @@ module.exports = class events extends nodefony.Entity {
       },
       summary: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        validate: {
+          is: {
+            args: /^[\w-_.#\s]+$/,
+            msg: `summary allow alphanumeric and ( _ | - | . ) characters`
+          }
+        }
       },
       htmlLink: {
         type: DataTypes.STRING
@@ -69,13 +75,19 @@ module.exports = class events extends nodefony.Entity {
         type: DataTypes.STRING
       },
       description: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        validate: {
+          is: {
+            args: /^[\w-_.#\s]+$/,
+            msg: `description allow alphanumeric and ( _ | - | . ) characters`
+          }
+        }
       },
-      colorId:{
+      colorId: {
         type: DataTypes.STRING
       },
       /* confirmed tentative cancelled */
-      status:{
+      status: {
         type: DataTypes.STRING
       },
       /*
@@ -101,7 +113,7 @@ module.exports = class events extends nodefony.Entity {
       end: {
         type: DataTypes.JSON,
       },
-      timezone:{
+      timezone: {
         type: DataTypes.STRING,
         defaultValue: "Europe/Paris"
       },
@@ -175,24 +187,24 @@ module.exports = class events extends nodefony.Entity {
         }
       },
       */
-      extendedProperties:{
+      extendedProperties: {
         type: DataTypes.JSON,
         defaultValue: {}
       },
       /* default public private confidential */
-      visibility:{
+      visibility: {
         type: DataTypes.STRING,
-        defaultValue:"default"
+        defaultValue: "default"
       },
-      conferenceData:{
+      conferenceData: {
         type: DataTypes.JSON,
         defaultValue: {}
       },
-      guestsCanInviteOthers:{
+      guestsCanInviteOthers: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
       },
-      guestsCanModify:{
+      guestsCanModify: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
       }
@@ -206,12 +218,12 @@ module.exports = class events extends nodefony.Entity {
       modelName: this.name,
       hooks: {
         beforeSave: (event) => {
-          if (!event.organizer){
+          if (!event.organizer) {
             event.organizer = event.creator
           }
         },
         beforeCreate: (event) => {
-          if(! event.end){
+          if (!event.end) {
             event.endTimeUnspecified = true
           }
         }

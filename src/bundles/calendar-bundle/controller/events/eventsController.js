@@ -177,6 +177,38 @@ class eventsController extends nodefony.Controller {
     }
   }
 
+  formatEvent(calendarId, event, user){
+    let start = moment(event.start)
+    let end = moment(event.end)
+    let myTZ = "";
+    if( event.timeZone){
+      myTZ = event.timeZone
+    }else{
+      if( event.calendar){
+        myTZ = event.calendar.timeZone
+      }
+    }
+    return {
+      calendarId: calendarId,
+      start: {
+        date: start.format("YYYY-MM-DD"),
+        dateTime: event.start,
+        timeZone: myTZ,
+        iso: tz(start, myTZ).toISOString()
+      },
+      end: {
+        date: end.format("YYYY-MM-DD"),
+        dateTime: event.end,
+        timeZone: myTZ,
+        iso: tz(end, myTZ).toISOString()
+      },
+      colorId: event.color,
+      summary: event.summary,
+      creator: user.username,
+      description:event.description
+    }
+  }
+
   /**
    *    insert event
    *    @Method ({"POST"})
@@ -186,14 +218,8 @@ class eventsController extends nodefony.Controller {
   async insertAction(calendarId) {
     try {
       let user = this.getUser();
-      let res = await this.eventsService.insert(calendarId, user.username, {
-        calendarId: calendarId,
-        start: this.query.event.start,
-        end: this.query.event.end,
-        colorId: this.query.event.color,
-        summary: this.query.event.name,
-        creator: user.username
-      })
+      let event = this.formatEvent(calendarId, this.query.event, user)
+      let res = await this.eventsService.insert(calendarId, user.username, event)
       return this.api.render(res)
         .catch(e => {
           throw e;
@@ -212,12 +238,8 @@ class eventsController extends nodefony.Controller {
   async quickAddAction(calendarId) {
     try {
       let user = this.getUser();
-      let res = await this.eventsService.insert(calendarId, user.username, {
-        calendarId: calendarId,
-        start: this.query.event.start,
-        summary: this.query.event.name,
-        creator: user.username
-      })
+      let event = this.formatEvent(calendarId, this.query.event, user)
+      let res = await this.eventsService.insert(calendarId, user.username, event)
       return this.api.render(res)
         .catch(e => {
           throw e;
@@ -253,14 +275,16 @@ class eventsController extends nodefony.Controller {
   async updateAction(calendarId, id) {
     try {
       let user = this.getUser();
-      let res = await this.eventsService.update(calendarId, id, user.username, {
-        event: this.query.event
-      })
+      let event = this.formatEvent(calendarId, this.query.event, user)
+      console.log(event)
+      let res = await this.eventsService.update(calendarId, id, user.username, event)
       return this.api.render(res)
         .catch(e => {
+          this.log(e,'ERROR')
           throw e;
         })
     } catch (e) {
+      this.log(e,'ERROR')
       throw e;
     }
   }
@@ -272,9 +296,8 @@ class eventsController extends nodefony.Controller {
   async patchAction(calendarId, id) {
     try {
       let user = this.getUser();
-      let res = await this.eventsService.patch(calendarId, id, user.username, {
-        event: this.query.event
-      })
+      let event = this.formatEvent(calendarId, this.query.event, user)
+      let res = await this.eventsService.patch(calendarId, id, user.username, event)
       return this.api.render(res)
         .catch(e => {
           throw e;
