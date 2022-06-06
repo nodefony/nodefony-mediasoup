@@ -35,7 +35,7 @@ let domainCheck = false;
 let CDN = null;
 let statics = true;
 let monitoring = true;
-let documentation = false;
+let documentation = true;
 let mail = true;
 let unitTest = false;
 
