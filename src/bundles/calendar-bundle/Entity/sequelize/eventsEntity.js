@@ -19,8 +19,9 @@ module.exports = class events extends nodefony.Entity {
      */
     super(bundle, "events", "sequelize", "nodefony");
     this.orm.on("onOrmReady", (orm) => {
-      let calendar = this.orm.getEntity("calendar");
-      let user = this.orm.getEntity("user");
+      const calendar = this.orm.getEntity("calendar");
+      const user = this.orm.getEntity("user");
+      const room = this.orm.getEntity("room");
       if (calendar && user) {
         this.model.belongsTo(calendar, {
           foreignKey: {
@@ -29,6 +30,7 @@ module.exports = class events extends nodefony.Entity {
           onDelete: 'CASCADE',
           onUpdate: 'CASCADE'
         });
+
         this.model.belongsTo(user, {
           foreignKey: {
             allowNull: false,
@@ -38,6 +40,59 @@ module.exports = class events extends nodefony.Entity {
           onDelete: 'CASCADE',
           onUpdate: 'CASCADE'
         });
+
+        this.model.belongsTo(room, {
+          foreignKey: {
+            name: "conferenceData",
+            allowNull: true
+          },
+          constraints: false,
+          //as:'room'
+        })
+        /*this.model.belongsTo(room, {
+          foreignKey: {
+            name: "conferenceData",
+            allowNull: true
+          },
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
+        })*/
+        room.belongsTo(this.model, {
+          foreignKey: {
+            name: "eventId",
+            allowNull: true
+          },
+          as:"event",
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
+        })
+
+        /*this.model.belongsTo(room, {
+          foreignKey: {
+            allowNull: true,
+            name: "conferenceData"
+          },
+          //as:'room',
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
+        })*/
+
+        /*room.hasOne(this.model, {
+          foreignKey: {
+            name: "event",
+            allowNull: true
+          },
+          as: 'conferenceData'
+        });
+        this.model.belongsTo(room, {
+          foreignKey: {
+            allowNull: true,
+            name: "conferenceData"
+          },
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
+        })*/
+
       } else {
         this.log("ENTITY ASSOCIATION calendar NOT AVAILABLE", "WARNING");
       }
@@ -196,10 +251,10 @@ module.exports = class events extends nodefony.Entity {
         type: DataTypes.STRING,
         defaultValue: "default"
       },
-      conferenceData: {
+      /*conferenceData: {
         type: DataTypes.JSON,
-        defaultValue: {}
-      },
+        allowNull: true
+      },*/
       guestsCanInviteOthers: {
         type: DataTypes.BOOLEAN,
         defaultValue: false

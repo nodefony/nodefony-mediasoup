@@ -35,19 +35,19 @@
     "node": ">=10"
   },
   "dependencies": {
-    "i18n-iso-countries": "7.4.0",
-    "mongoose": "6.3.5",
+    "i18n-iso-countries": "7.5.0",
+    "mongoose": "6.6.1",
     "nodefony": "6.12.0",
     "nodefony-client": "6.0.2",
     "pm2": "5.2.0",
     "pm2-logrotate": "^2.7.0",
-    "sequelize": "6.20.1",
-    "webpack": "5.73.0",
-    "webpack-dev-server": "4.9.1"
+    "sequelize": "6.21.6",
+    "webpack": "5.74.0",
+    "webpack-dev-server": "4.11.0"
   },
   "devDependencies": {
-    "@mapbox/node-pre-gyp": "1.0.9",
-    "node-gyp": "9.0.0"
+    "@mapbox/node-pre-gyp": "1.0.10",
+    "node-gyp": "9.1.0"
   },
   "author": "Christophe CAMENSULI <ccamensuli@gmail.com>",
   "readmeFilename": "README.md",

@@ -10,4 +10,4 @@ npx nodefony fixtures:load mediasoup room
 
 npx nodefony fixtures:load calendar calendar
 
-npx nodefony fixtures:load calendar events
+#npx nodefony fixtures:load calendar events

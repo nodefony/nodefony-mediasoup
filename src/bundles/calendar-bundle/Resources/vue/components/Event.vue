@@ -2,8 +2,6 @@
 <!--v-dialog v-model="show" persistent :max-width="!fullscreen?'600px':null" :fullscreen="fullscreen"-->
 <v-card v-if="event" rounded="lg" v-bind="{...$props, ...$attrs}">
   <v-system-bar v-if="!systemBar" height="35px" dark class="mycolor">
-
-
     <!--v-icon @click="moveCalendar" class="ml-2">mdi-calendar-plus</v-icon-->
     <v-subheader>@{{calendarInfo.summary}}</v-subheader>
     <v-spacer></v-spacer>
@@ -20,94 +18,202 @@
     <v-spacer></v-spacer>
   </v-toolbar>
 
+  <v-tabs v-model="tab" align-with-title background-color="">
+    <v-tabs-slider color="cyan"></v-tabs-slider>
+    <v-tab>
+      Event
+    </v-tab>
+    <v-tab>
+      Task
+    </v-tab>
+  </v-tabs>
+
   <v-card-text>
     <v-container fluid>
-      <v-row>
-        <v-col cols="12">
-          <v-text-field v-model="formData.summary" dense prepend-icon="mdi-map-marker" @input="summaryChange">
-            <template v-slot:label>
-              <div>
-                Event Name
-              </div>
-            </template>
-          </v-text-field>
 
-          <v-row>
-            <v-col cols="4" sm="4">
-              <v-checkbox @change="allDayCheckAction" prepend-icon="mdi-map-marker" v-model="dayAll" hide-details class="">
-                <template v-slot:label>
-                  <div>
-                    All day
-                  </div>
-                </template>
-              </v-checkbox>
-            </v-col>
+      <v-text-field v-model="formData.summary" dense @input="summaryChange">
+        <template v-slot:label>
+          <div>
+            Name
+          </div>
+        </template>
+      </v-text-field>
+      <v-divider></v-divider>
 
-            <v-col cols="8" sm="8">
-              <v-menu v-if="dayAll" offset-x v-model="menuAllDayStart" :close-on-content-click="true" max-width="290">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field dense :value="startFormat" v-bind="attrs" v-on="on" class="mt-5">
+      <v-tabs-items v-model="tab">
+        <v-tab-item>
+
+          <v-expansion-panels multiple accordion v-model="panel">
+            <v-expansion-panel readonly>
+              <v-expansion-panel-header hide-actions>
+                <v-list-item>
+                  <v-list-item-action>
+                    <v-icon>mdi-clipboard-text-clock</v-icon>
+                  </v-list-item-action>
+                  <v-checkbox @change="allDayCheckAction" v-model="dayAll" hide-details class="ma-0">
                     <template v-slot:label>
                       <div>
                         All day
                       </div>
                     </template>
-                  </v-text-field>
-                </template>
-                <v-date-picker @change="allDayStartAction" no-title :locale="locale" v-model="isoStart"></v-date-picker>
-              </v-menu>
-              <v-menu v-if="dayAll" offset-x v-model="menuAllDayEnd" :close-on-content-click="true" max-width="290">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field dense :value="endFormat" v-bind="attrs" v-on="on" class="mt-5">
-                    <template v-slot:label>
-                      <div>
-                        All day
-                      </div>
-                    </template>
-                  </v-text-field>
-                </template>
-                <v-date-picker @change="allDayEndAction" no-title :locale="locale" v-model="isoEnd"></v-date-picker>
-              </v-menu>
-            </v-col>
-          </v-row>
+                  </v-checkbox>
+                </v-list-item>
+              </v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-row>
+                  <v-col cols="4" sm="4">
+                    <!--v-checkbox @change="allDayCheckAction" v-model="dayAll" hide-details class="">
+                      <template v-slot:label>
+                        <div>
+                          All day
+                        </div>
+                      </template>
+                    </v-checkbox-->
+                  </v-col>
 
-          <v-row v-if="!dayAll">
-            <v-col cols="12" sm="6" class="pl-13">
-              <v-menu offset-x v-model="menuStart" :close-on-content-click="true" max-width="290">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field dense :value="startFormat" label="Start Event Date" v-bind="attrs" v-on="on"></v-text-field>
-                </template>
-                <v-date-picker no-title :locale="locale" v-model="isoStart"></v-date-picker>
-              </v-menu>
+                  <v-col cols="8" sm="8">
+                    <v-menu v-if="dayAll" offset-x v-model="menuAllDayStart" :close-on-content-click="true" max-width="290">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-text-field dense :value="startFormat" v-bind="attrs" v-on="on" class="mt-5">
+                          <template v-slot:label>
+                            <div>
+                              Start Day
+                            </div>
+                          </template>
+                        </v-text-field>
+                      </template>
+                      <v-date-picker @change="allDayStartAction" no-title :locale="locale" v-model="isoStart"></v-date-picker>
+                    </v-menu>
 
-            </v-col>
-            <v-col cols="12" sm="6">
-              <v-select @change="startTimeChange" v-model="timeStart" dense :items="hours" label="Start Event Time" menu-props="auto"></v-select>
-            </v-col>
-          </v-row>
-          <v-row v-if="!dayAll">
-            <v-col cols="12" sm="6" class="pl-13">
-              <v-menu offset-x v-model="menuEnd" :close-on-content-click="true" max-width="290">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field dense :value="endFormat" label="End Event Date" v-bind="attrs" v-on="on"></v-text-field>
-                </template>
-                <v-date-picker offset-y no-title :locale="locale" v-model="isoEnd"></v-date-picker>
-              </v-menu>
-            </v-col>
-            <v-col cols="12" sm="6">
-              <v-select @change="endTimeChange" v-model="timeEnd" dense :items="hours" label="End Event Time" menu-props="auto"></v-select>
-            </v-col>
-          </v-row>
+                    <v-menu v-if="dayAll" offset-x v-model="menuAllDayEnd" :close-on-content-click="true" max-width="290">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-text-field dense :value="endFormat" v-bind="attrs" v-on="on" class="mt-5">
+                          <template v-slot:label>
+                            <div>
+                              End Day
+                            </div>
+                          </template>
+                        </v-text-field>
+                      </template>
+                      <v-date-picker @change="allDayEndAction" no-title :locale="locale" v-model="isoEnd"></v-date-picker>
+                    </v-menu>
+                  </v-col>
+                </v-row>
+                <v-row v-if="!dayAll">
+                  <v-col cols="12" sm="6" class="pl-13">
+                    <v-menu offset-x v-model="menuStart" :close-on-content-click="true" max-width="290">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-text-field dense :value="startFormat" label="Start Event Date" v-bind="attrs" v-on="on"></v-text-field>
+                      </template>
+                      <v-date-picker no-title :locale="locale" v-model="isoStart"></v-date-picker>
+                    </v-menu>
 
-          <v-textarea dense v-model="formData.description" color="teal" prepend-icon="mdi-map-marker">
-            <template v-slot:label>
-              <div>
-                Deccription <small>(optional)</small>
-              </div>
-            </template>
-          </v-textarea>
-        </v-col>
-      </v-row>
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-select @change="startTimeChange" v-model="timeStart" dense :items="hours" label="Start Event Time" menu-props="auto"></v-select>
+                  </v-col>
+                </v-row>
+                <v-row v-if="!dayAll">
+                  <v-col cols="12" sm="6" class="pl-13">
+                    <v-menu offset-x v-model="menuEnd" :close-on-content-click="true" max-width="290">
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-text-field dense :value="endFormat" label="End Event Date" v-bind="attrs" v-on="on"></v-text-field>
+                      </template>
+                      <v-date-picker offset-y no-title :locale="locale" v-model="isoEnd"></v-date-picker>
+                    </v-menu>
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-select @change="endTimeChange" v-model="timeEnd" dense :items="hours" label="End Event Time" menu-props="auto"></v-select>
+                  </v-col>
+                </v-row>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+
+            <v-expansion-panel>
+              <v-expansion-panel-header>
+                <v-list-item>
+                  <v-list-item-action>
+                    <v-icon>mdi-monitor</v-icon>
+                  </v-list-item-action>
+                  Meeting
+
+                </v-list-item>
+              </v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-checkbox v-model="meeting" @change="changeMeeting" hide-details class="ma-0">
+                  <template v-slot:label>
+                    <div>
+                      Active
+                    </div>
+                  </template>
+                </v-checkbox>
+                <v-row v-if="meeting && !formData.conferenceData.locked">
+                  <v-col cols="3">
+                    <v-subheader>{{$t('rooms.access')}}</v-subheader>
+                  </v-col>
+                  <v-col cols="9">
+                    <v-switch v-model="formData.conferenceData.access" :false-value="`private`" :true-value="`public`" :label="formatAccessLabel(formData.conferenceData.access)"></v-switch>
+                  </v-col>
+                </v-row>
+                <v-row v-if="meeting && !formData.conferenceData.locked">
+                  <v-col cols=" 3">
+                    <v-subheader>{{$t('rooms.waiting')}}</v-subheader>
+                  </v-col>
+                  <v-col cols="9">
+                    <v-switch v-model="formData.conferenceData.waitingconnect"></v-switch>
+                  </v-col>
+                </v-row>
+
+
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+            <v-expansion-panel>
+              <v-expansion-panel-header disable-icon-rotate>
+                <v-list-item>
+                  <v-list-item-action>
+                    <v-icon>mdi-text</v-icon>
+                  </v-list-item-action>
+                  Description
+                </v-list-item>
+              </v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-textarea dense v-model="formData.description" color="teal">
+                  <template v-slot:label>
+                    <div>
+                      Description
+                    </div>
+                  </template>
+                </v-textarea>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+            <v-expansion-panel>
+              <v-expansion-panel-header disable-icon-rotate>
+                <v-list-item>
+                  <v-list-item-action>
+                    <v-icon>mdi-map-marker</v-icon>
+                  </v-list-item-action>
+                  Location
+                </v-list-item>
+
+              </v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-text-field v-model="formData.location" dense>
+                  <template v-slot:label>
+                    <div>
+                      Location
+                    </div>
+                  </template>
+                </v-text-field>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+
+          </v-expansion-panels>
+        </v-tab-item>
+
+        <v-tab-item>
+
+        </v-tab-item>
+      </v-tabs-items>
 
     </v-container>
 
@@ -144,7 +250,8 @@ export default {
 
   },
   data: () => ({
-    fullscreen: false,
+    tab: null,
+    panel: [0],
     show: "true",
     valid: true,
     menuEnd: false,
@@ -154,6 +261,7 @@ export default {
     menuStartDate: false,
     menuEndDate: false,
     formData: {},
+    meeting: false,
     dayAll: null,
     end: null,
     start: null,
@@ -189,6 +297,9 @@ export default {
   },
   mounted() {
     this.formData = this.event.event || {};
+    if (this.formData.conferenceData) {
+      this.meeting = true
+    }
     this.formData.start = this.event.start
     this.formData.end = this.event.end
     this.dayAll = !this.event.timed
@@ -281,6 +392,20 @@ export default {
     },
   },
   methods: {
+    changeMeeting(status) {
+      console.log(status)
+      if (status) {
+        this.formData.conferenceData = {
+          locked: false
+        }
+
+      } else {
+        this.formData.conferenceData = null
+      }
+    },
+    formatAccessLabel(label) {
+      return label == 'private' ? 'Private' : 'Public';
+    },
     checkTimed() {
       console.log(`Same DATE : ${this.start.isSame(this.end)}`, `Same DAY :  ${this.start.date() === this.start.date()}`)
       const sameDate = this.start.isSame(this.end);

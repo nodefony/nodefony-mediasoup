@@ -21,8 +21,9 @@ class roomEntity extends nodefony.Entity {
      */
     super(bundle, "room", "sequelize", "nodefony");
     this.orm.on("onOrmReady", (orm) => {
-      let User = this.orm.getEntity("user");
-      let Room = this.orm.getEntity("room");
+      const User = this.orm.getEntity("user");
+      const Room = this.orm.getEntity("room");
+      const Event = this.orm.getEntity("events");
       Room.belongsToMany(User, {
         through: 'UserRoom'
       });
@@ -41,10 +42,14 @@ class roomEntity extends nodefony.Entity {
         allowNull: false,
         validate: {
           is: {
-            args: /[^\w]|_|-|./g,
-            msg: `name allow alphanumeric and ( _ | - | . ) characters`
+            args: /^[\w-_.#\s]+$/,
+            msg: `Name allow alphanumeric and ( _ | - | . | #) characters`
           }
         }
+      },
+      locked: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
       },
       type: {
         type: DataTypes.ENUM,
@@ -63,8 +68,8 @@ class roomEntity extends nodefony.Entity {
         allowNull: true,
         validate: {
           is: {
-            args: /[^\w]|_|-|.|''/g,
-            msg: `description allow alphanumeric characters`
+            args: /^[\w-_.#\s]+$/,
+            msg: `Description allow alphanumeric and ( _ | - | . ) characters`
           }
         }
       },
@@ -124,7 +129,7 @@ class roomEntity extends nodefony.Entity {
                 throw err;
               });
           }
-          if (!room.sticky_cookie){
+          if (!room.sticky_cookie) {
             room.sticky_cookie = `sticky-room-${room.name}`;
           }
         },

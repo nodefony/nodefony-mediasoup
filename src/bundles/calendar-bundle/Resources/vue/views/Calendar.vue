@@ -191,6 +191,9 @@
       <template v-slot:event="{ event, timed, eventSummary }">
         <div class="v-event-draggable" v-html="eventSummary()">
         </div>
+        <v-btn v-if="event.event.conferenceData" @click.stop="joinMeeting(event.event.conferenceData)" rounded x-small color="primary" dark>
+          Join Meeting
+        </v-btn>
 
         <div v-if="timed" class="v-event-drag-bottom" @mousedown.stop="extendBottom(event)"></div>
       </template>
@@ -201,7 +204,7 @@
     </v-calendar>
 
     <v-menu v-model="selectedOpen" :activator="selectedElement" offset-x :close-on-content-click="false">
-      <event-item v-if="selectedEvent" min-width="500px" min-height="350px" :calendar="cal" :calendar-info="currentCalendar" :event="currentEvent" @cancel="cancelFormEvent" @valid="validFormEvent" @remove="removeEvent" @fullscreen="showFullscreenEvent"
+      <event-item v-if="selectedEvent" min-width="300px" max-width="500px" min-height="500px" :calendar="cal" :calendar-info="currentCalendar" :event="currentEvent" @cancel="cancelFormEvent" @valid="validFormEvent" @remove="removeEvent" @fullscreen="showFullscreenEvent"
         :read="!isNewEvent"></event-item>
     </v-menu>
   </v-sheet>
@@ -721,6 +724,9 @@ export default {
     updateEventCalendar() {
 
     },
+    joinMeeting(conferenceData) {
+      console.log(conferenceData)
+    },
 
     getIndexEvent(item) {
       return this.events.findIndex((ele, index) => {
@@ -922,7 +928,8 @@ export default {
           summary: name,
           start: this.createStart,
           end: this.createStart,
-          colorId: color
+          colorId: color,
+          conferenceData: null
         },
         newEvent: true
       }

@@ -1,5 +1,6 @@
 const {
-  Op
+  Op,
+  Transaction
 } = nodefony.Sequelize;
 
 module.exports = class events extends nodefony.Service {
@@ -7,6 +8,7 @@ module.exports = class events extends nodefony.Service {
   constructor(container, calendar) {
     super("events", container);
     this.calendarService = calendar;
+
     if (!this.kernel.ready) {
       this.kernel.once("onReady", () => {
         this.init();
@@ -21,6 +23,8 @@ module.exports = class events extends nodefony.Service {
     this.calendarEntity = this.orm.getEntity("calendar");
     this.User = this.orm.getEntity("user");
     this.eventsEntity = this.orm.getEntity("events");
+    this.roomsService = this.get("Rooms");
+    this.roomEntity = this.orm.getEntity("room");
 
   }
   sanitizeSequelizeError(error) {
@@ -28,6 +32,10 @@ module.exports = class events extends nodefony.Service {
       return new nodefony.Error(error);
     }
     return error;
+  }
+
+  createRoom(data, user, transaction){
+    return
   }
 
   list(calendarId, username, start = null, end = null /*, interval = 0*/ ) {
@@ -142,6 +150,8 @@ module.exports = class events extends nodefony.Service {
           },
           include: [{ // Notice `include` takes an ARRAY
             model: this.calendarEntity,
+          },{
+            model: this.roomEntity,
           }]
         })
         .then((res) => {
@@ -171,28 +181,45 @@ module.exports = class events extends nodefony.Service {
 
 
   async insert(calendarId, username, event) {
-    let transaction = null;
+    let transaction = null
+    let mytransaction = null
     try {
-      transaction = await this.orm.startTransaction("events");
+      mytransaction = this.orm.getTransaction("nodefony");
+
+      transaction = await mytransaction( {
+        type: this.orm.engine.Transaction.TYPES.IMMEDIATE
+      });
+
+      if( event.conferenceData ){
+        //event.meeting = event.conferenceData
+        event.conferenceData.name  = `event-${nodefony.generateId()}`
+        event.conferenceData.description = event.description
+      }
+      console.log(event)
       return this.eventsEntity.create(event, {
-          transaction: transaction
+          transaction: transaction,
+          include:[{
+            model: this.roomEntity,
+            as: 'event'
+          }]
         })
-        .then((el) => {
-          transaction.commit();
+        .then(async (el) => {
+          console.log( el)
+          await transaction.commit();
           let myevent = el.get({
             plain: true
           });
           return myevent;
-        }).catch(e => {
+        }).catch( async (e) => {
           this.log(e, 'ERROR')
           if (transaction) {
-            transaction.rollback();
+            await transaction.rollback();
           }
           throw this.sanitizeSequelizeError(e);
         });
-    } catch (e) {
+    } catch(e) {
       if (transaction) {
-        transaction.rollback();
+        await transaction.rollback();
       }
       this.log(e, "ERROR");
       throw this.sanitizeSequelizeError(e);

@@ -177,7 +177,7 @@ class eventsController extends nodefony.Controller {
     }
   }
 
-  formatEvent(calendarId, event, user){
+  formatEvent(calendarId, event, user= null){
     let start = moment(event.start)
     let end = moment(event.end)
     let myTZ = "";
@@ -188,25 +188,23 @@ class eventsController extends nodefony.Controller {
         myTZ = event.calendar.timeZone
       }
     }
-    return {
-      calendarId: calendarId,
-      start: {
-        date: start.format("YYYY-MM-DD"),
-        dateTime: event.start,
-        timeZone: myTZ,
-        iso: tz(start, myTZ).toISOString()
-      },
-      end: {
-        date: end.format("YYYY-MM-DD"),
-        dateTime: event.end,
-        timeZone: myTZ,
-        iso: tz(end, myTZ).toISOString()
-      },
-      colorId: event.color,
-      summary: event.summary,
-      creator: user.username,
-      description:event.description
+    event.calendarId = calendarId
+    event.start = {
+      date: start.format("YYYY-MM-DD"),
+      dateTime: event.start,
+      timeZone: myTZ,
+      iso: tz(start, myTZ).toISOString()
     }
+    event.end = {
+      date: end.format("YYYY-MM-DD"),
+      dateTime: event.end,
+      timeZone: myTZ,
+      iso: tz(end, myTZ).toISOString()
+    }
+    if( user){
+      event.creator = user.username
+    }
+    return event
   }
 
   /**
@@ -275,7 +273,7 @@ class eventsController extends nodefony.Controller {
   async updateAction(calendarId, id) {
     try {
       let user = this.getUser();
-      let event = this.formatEvent(calendarId, this.query.event, user)
+      let event = this.formatEvent(calendarId, this.query.event)
       console.log(event)
       let res = await this.eventsService.update(calendarId, id, user.username, event)
       return this.api.render(res)
@@ -296,7 +294,7 @@ class eventsController extends nodefony.Controller {
   async patchAction(calendarId, id) {
     try {
       let user = this.getUser();
-      let event = this.formatEvent(calendarId, this.query.event, user)
+      let event = this.formatEvent(calendarId, this.query.event)
       let res = await this.eventsService.patch(calendarId, id, user.username, event)
       return this.api.render(res)
         .catch(e => {
