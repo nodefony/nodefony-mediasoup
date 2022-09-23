@@ -39,16 +39,26 @@ module.exports = {
     /**
      *  FIREWALL  Authorization
      */
-    access_control: [{
-      path: /^\/nodefony/,
-      roles: ["ROLE_MONITORING"],
-      requires_channel: "https",
-      allow_if: {
-        roles: ["ROLE_ADMIN", "ROLE_USER"]
-      }
-    }],
+    access_control: [],
 
     firewalls: {
+      // SECURITY AREA  <passport-local>
+      nodefony_area: {
+        pattern: /^\/secure/,
+        provider: "nodefony",
+        form_login: {
+          login_path: "/login/secure",
+          check_path: "/login/check",
+          default_target_path: "/users"
+        },
+        "passport-local": {
+          usernameField: 'username',
+          passwordField: 'passwd'
+        },
+        logout: "/logout",
+        context: null,
+        redirectHttps: true
+      },
       // SECURITY AREA LOGIN API  <passport-local>
       login_api_area: {
         pattern: /^\/api\/jwt\/login/,

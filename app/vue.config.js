@@ -12,7 +12,6 @@ const {
 const title = Package.name;
 
 //const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-
 const packageVuetify = require(path.resolve("node_modules", "vuetify", "package.json"));
 process.env.VUE_APP_VERSION = Package.version;
 process.env.VUE_APP_VUE_VERSION = packageVue.version;
@@ -25,7 +24,8 @@ try {
   process.env.VUE_APP_HTTPS_PORT = kernel.httpsPort;
 } catch (e) {}
 
-
+const nodeModule = path.resolve(process.cwd(),"node_modules")
+let vuetify = path.resolve( path.dirname(require.resolve("vuetify")),"..")
 module.exports = {
   lintOnSave: false,
   publicPath: publicPath,
@@ -52,14 +52,23 @@ module.exports = {
 
   configureWebpack: {
     devtool: process.env.NODE_ENV === "development" ? "source-map" : "",
+    context:process.cwd(),
     resolve: {
       alias: {
-        "@bundles": path.join(__dirname, "..", "src", "bundles")
-      }
+        "@bundles": path.join(__dirname, "..", "src", "bundles"),
+        "vuetify":vuetify
+      },
+      modules: [nodeModule],
+      //roots:[process.cwd()]
+    },
+    resolveLoader: {
+      modules: [nodeModule]
     },
     output: {
-      hotUpdateChunkFilename: 'hot/[id].[hash].hot-update.js',
-      hotUpdateMainFilename: 'hot/[hash].hot-update.json'
+      //hotUpdateChunkFilename: 'hot/[id].[hash].hot-update.js',
+      //hotUpdateMainFilename: 'hot/[hash].hot-update.json'
+      hotUpdateChunkFilename: 'hot/[id].[fullhash].hot-update.js',
+      hotUpdateMainFilename: 'hot/[runtime].[fullhash].hot-update.json'
     },
     plugins: [
       new CleanWebpackPlugin({

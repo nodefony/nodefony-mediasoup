@@ -20,14 +20,13 @@ const defaultFixtures = [{
   password: "anonymous",
   email: "anonymous@nodefony.com",
   "2fa": false,
-  lang: "en_us",
+  lang: "en_en",
   roles: ["ROLE_ANONYMOUS"]
 }, {
   username: "admin",
   name: "administrator",
   surname: "nodefony",
   password: "admin",
-  lang: "en_us",
   "2fa": false,
   email: "administrator@nodefony.com",
   roles: ["ROLE_ADMIN"]

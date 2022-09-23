@@ -2,7 +2,7 @@ const {
   Sequelize,
   DataTypes,
   Model
-} = nodefony.Sequelize;
+} = nodefony.Sequelize; //require("sequelize");
 const validator = require('validator');
 /*
  *
@@ -21,6 +21,18 @@ class userEntity extends nodefony.Entity {
      *   @param connection name
      */
     super(bundle, "user", "sequelize", "nodefony");
+    /*this.orm.on("onOrmReady", ( orm ) => {
+        let session = this.orm.getEntity("session");
+        if (session) {
+          this.model.hasMany(session, {
+            foreignKey: 'username',
+            onDelete: 'CASCADE'
+          });
+
+        } else {
+          throw new Error("ENTITY ASSOCIATION session NOT AVAILABLE");
+        }
+      });*/
   }
 
   getSchema() {
@@ -88,7 +100,7 @@ class userEntity extends nodefony.Entity {
         allowNull: true,
         validate: {
           is: {
-            args: /^[\w-_.]+$/,
+            args: /^[\w-_.]*$/,
             msg: `name allow alphanumeric characters`
           }
         }
@@ -98,20 +110,14 @@ class userEntity extends nodefony.Entity {
         allowNull: true,
         validate: {
           is: {
-            args: /^[\w-_.]+$/,
+            args: /^[\w-_.]*$/,
             msg: `surname allow alphanumeric characters`
           }
         }
       },
       lang: {
         type: DataTypes.STRING,
-        defaultValue: "en_en",
-        /*validate: {
-          is: {
-            args: /^[a-z]{2}([_])?([A-Za-z]{2})?$/,
-            msg: `locale allow characters as en_EN`
-          }
-        }*/
+        defaultValue: "en_en"
       },
       roles: {
         type: DataTypes.JSON,
@@ -151,7 +157,19 @@ class userEntity extends nodefony.Entity {
   }
 
   registerModel(db) {
-    class MyModel extends Model {}
+    class MyModel extends Model {
+      hasRole(name){
+        for (let role in this.roles) {
+          if (this.roles[role] === name) {
+            return true;
+          }
+        }
+        return false;
+      }
+      isGranted(role){
+        return this.hasRole(role);
+      }
+    }
     MyModel.init(this.getSchema(), {
       sequelize: db,
       modelName: this.name,
@@ -183,10 +201,10 @@ class userEntity extends nodefony.Entity {
       },
       freezeTableName: true,
       //add indexes
-      //indexes: [{
-      //  unique: true,
-      //  fields: ['email']
-      //}]
+      indexes: [{
+        unique: true,
+        fields: ['email']
+      }]
       // add custom validations
       //validate: {}
     });
