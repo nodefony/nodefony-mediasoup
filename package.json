@@ -6,15 +6,16 @@
   "scripts": {
     "nodefony": "nodefony",
     "pm2": "pm2",
-    "start": "nodefony",
-    "dev": "nodefony dev",
+    "start": "npx --node-options='--openssl-legacy-provider' nodefony",
+    "dev": "npx --node-options='--openssl-legacy-provider' nodefony dev",
     "build": "nodefony build",
     "rebuild": "nodefony rebuild",
     "stop": "nodefony stop",
     "prod": "nodefony prod",
     "kill": "nodefony kill",
     "test": "nodefony test",
-    "help": "nodefony -h"
+    "help": "nodefony -h",
+    "fixtures": "./bin/fixtures.sh"
   },
   "private": true,
   "keywords": [
@@ -34,18 +35,20 @@
     "node": ">=10"
   },
   "dependencies": {
-    "mongoose": "^6.1.4",
-    "nodefony": "^6.10.0",
-    "nodefony-client": "^6.0.0",
-    "pm2": "^5.1.2",
+    "graphql": "16.6.0",
+    "i18n-iso-countries": "7.5.0",
+    "mongoose": "^6.7.0",
+    "nodefony": "^7.0.0-beta.8",
+    "nodefony-client": "6.0.2",
+    "pm2": "^5.2.2",
     "pm2-logrotate": "^2.7.0",
-    "sequelize": "^6.12.4",
-    "webpack": "^5.65.0",
-    "webpack-dev-server": "^4.7.2"
+    "sequelize": "^6.25.3",
+    "webpack": "5.74.0",
+    "webpack-dev-server": "4.11.1"
   },
   "devDependencies": {
-    "@mapbox/node-pre-gyp": "^1.0.8",
-    "node-gyp": "^8.4.1"
+    "@mapbox/node-pre-gyp": "1.0.10",
+    "node-gyp": "^9.3.0"
   },
   "author": "Christophe CAMENSULI <ccamensuli@gmail.com>",
   "readmeFilename": "README.md",

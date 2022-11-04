@@ -35,7 +35,7 @@ let domainCheck = false;
 let CDN = null;
 let statics = true;
 let monitoring = true;
-let documentation = false;
+let documentation = true;
 let mail = true;
 let unitTest = false;
 
@@ -121,7 +121,8 @@ module.exports = {
      */
     bundles: {
       "users-bundle": path.resolve("src", "bundles", "users-bundle"),
-      "mediasoup-bundle": path.resolve("src", "bundles", "mediasoup-bundle")
+      "mediasoup-bundle": path.resolve("src", "bundles", "mediasoup-bundle"),
+      "calendar-bundle": path.resolve("src", "bundles", "calendar-bundle"),
     },
     /**
      * SYSLOG NODEFONY

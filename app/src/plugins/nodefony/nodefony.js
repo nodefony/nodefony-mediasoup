@@ -1,5 +1,6 @@
 import nodefony from 'nodefony-client'
 import media from "nodefony-client/src/medias/medias";
+import qs from 'querystring'
 media(nodefony);
 
 import snackBar from './notify/snackbar';
@@ -29,6 +30,10 @@ class Nodefony extends nodefony.Kernel {
       }
     });
     this.notifyTab = new Map();
+  }
+
+  queryString(data){
+    return qs.stringify(data)
   }
 
   request(...args) {
