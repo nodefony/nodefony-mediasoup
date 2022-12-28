@@ -37,18 +37,18 @@
   "dependencies": {
     "graphql": "16.6.0",
     "i18n-iso-countries": "7.5.0",
-    "mongoose": "6.8.0",
-    "nodefony": "7.0.0-beta.10",
+    "mongoose": "6.8.1",
+    "nodefony": "7.0.0-beta.11",
     "nodefony-client": "6.0.2",
     "pm2": "^5.2.2",
     "pm2-logrotate": "^2.7.0",
-    "sequelize": "6.26.0",
+    "sequelize": "6.28.0",
     "webpack": "5.75.0",
     "webpack-dev-server": "4.11.1"
   },
   "devDependencies": {
     "@mapbox/node-pre-gyp": "1.0.10",
-    "node-gyp": "^9.3.0"
+    "node-gyp": "9.3.1"
   },
   "author": "Christophe CAMENSULI <ccamensuli@gmail.com>",
   "readmeFilename": "README.md",

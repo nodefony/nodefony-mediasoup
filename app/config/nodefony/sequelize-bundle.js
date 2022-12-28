@@ -43,6 +43,7 @@
  */
 module.exports = {
   debug: kernel.debug,
+  strategy: "sync",
   connectors: {
     nodefony: {
       driver: 'sqlite',
