@@ -9,7 +9,7 @@ const validator = require('validator');
  *    ENTITY calendar
  */
 
-module.exports = class calendar extends nodefony.Entity {
+module.exports = class calendarEntity extends nodefony.Entity {
 
   constructor(bundle) {
     /*
@@ -99,8 +99,23 @@ module.exports = class calendar extends nodefony.Entity {
   }
 
   registerModel(db) {
-    class MyModel extends Model {}
-    MyModel.init(this.getSchema(), {
+    class Calendar extends Model {
+
+      static associate(models){
+        models.calendar.belongsTo(models.user, {
+          foreignKey: {
+            allowNull: false,
+            name:"creator"
+          },
+          targetKey:"username",
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE'
+        });
+      }
+
+    }
+
+    Calendar.init(this.getSchema(), {
       sequelize: db,
       modelName: this.name,
       hooks: {},
@@ -111,7 +126,7 @@ module.exports = class calendar extends nodefony.Entity {
         fields: ["id",'creator']
       }]*/
     })
-    return MyModel;
+    return Calendar;
   }
 
   log(pci /*, sequelize*/ ) {

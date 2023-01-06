@@ -20,17 +20,7 @@ class roomEntity extends nodefony.Entity {
      *   @param connection name
      */
     super(bundle, "room", "sequelize", "nodefony");
-    this.orm.on("onOrmReady", (orm) => {
-      const User = this.orm.getEntity("user");
-      const Room = this.orm.getEntity("room");
-      const Event = this.orm.getEntity("events");
-      Room.belongsToMany(User, {
-        through: 'UserRoom'
-      });
-      User.belongsToMany(Room, {
-        through: 'UserRoom'
-      });
-    });
+
   }
 
   getSchema() {
@@ -112,8 +102,19 @@ class roomEntity extends nodefony.Entity {
   }
 
   registerModel(db) {
-    class MyModel extends Model {}
-    MyModel.init(this.getSchema(), {
+    class Room extends Model {
+
+      static associate(models){
+        models.room.belongsToMany(models.user, {
+          through: 'UserRoom'
+        });
+        models.user.belongsToMany(models.room, {
+          through: 'UserRoom'
+        });
+      }
+
+    }
+    Room.init(this.getSchema(), {
       sequelize: db,
       modelName: this.name,
       hooks: {
@@ -153,7 +154,7 @@ class roomEntity extends nodefony.Entity {
       // add custom validations
       //validate: {}
     });
-    return MyModel;
+    return Room;
   }
 
   logger(pci /*, sequelize*/ ) {

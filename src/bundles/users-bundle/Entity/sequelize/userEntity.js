@@ -21,18 +21,7 @@ class userEntity extends nodefony.Entity {
      *   @param connection name
      */
     super(bundle, "user", "sequelize", "nodefony");
-    /*this.orm.on("onOrmReady", ( orm ) => {
-        let session = this.orm.getEntity("session");
-        if (session) {
-          this.model.hasMany(session, {
-            foreignKey: 'username',
-            onDelete: 'CASCADE'
-          });
 
-        } else {
-          throw new Error("ENTITY ASSOCIATION session NOT AVAILABLE");
-        }
-      });*/
   }
 
   getSchema() {
@@ -58,7 +47,9 @@ class userEntity extends nodefony.Entity {
         allowNull: false,
         validate: {
           min: {
-            args: [[4]],
+            args: [
+              [4]
+            ],
             msg: `password  allow 4 characters min  `
           }
         }
@@ -124,7 +115,7 @@ class userEntity extends nodefony.Entity {
         defaultValue: ["ROLE_USER"],
         get(key) {
           let val = this.getDataValue(key);
-          if (typeof (val) === "string") {
+          if (typeof(val) === "string") {
             val = JSON.parse(val);
           }
           return val;
@@ -157,8 +148,8 @@ class userEntity extends nodefony.Entity {
   }
 
   registerModel(db) {
-    class MyModel extends Model {
-      hasRole(name){
+    class User extends Model {
+      hasRole(name) {
         for (let role in this.roles) {
           if (this.roles[role] === name) {
             return true;
@@ -166,11 +157,11 @@ class userEntity extends nodefony.Entity {
         }
         return false;
       }
-      isGranted(role){
+      isGranted(role) {
         return this.hasRole(role);
       }
     }
-    MyModel.init(this.getSchema(), {
+    User.init(this.getSchema(), {
       sequelize: db,
       modelName: this.name,
       hooks: {
@@ -208,7 +199,7 @@ class userEntity extends nodefony.Entity {
       // add custom validations
       //validate: {}
     });
-    return MyModel;
+    return User;
   }
 
   logger(pci /*, sequelize*/ ) {

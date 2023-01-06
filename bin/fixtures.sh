@@ -2,9 +2,6 @@
 
 
 #rm -rf  app/Resources/databases/nodefony.db
-npx nodefony sequelize:sync force
-
-npx nodefony users:fixtures:default
 
 npx nodefony fixtures:load mediasoup room
 
