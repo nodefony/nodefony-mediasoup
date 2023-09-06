@@ -83,16 +83,16 @@ class appKernel extends nodefony.kernel {
     switch (environment) {
       case 'production':
         return {
-          active: true,
-            prepareAuth: false,
-            getVaultCredentialsApprole: this.getVaultCredentialsApprole(environment)
+          active: false,
+          prepareAuth: false,
+          getVaultCredentialsApprole: this.getVaultCredentialsApprole(environment)
         }
       case 'development':
       default:
         return {
-          active: true,
-            prepareAuth: true,
-            getVaultCredentialsApprole: this.getVaultCredentialsApprole(environment)
+          active: false,
+          prepareAuth: true,
+          getVaultCredentialsApprole: this.getVaultCredentialsApprole(environment)
         }
     }
   }

@@ -20,45 +20,38 @@
  *        "^.*\\.nodefony-mediasoup\\.eu$"
  *      ]
  */
+
 const path = require("path");
 let certificats = {
   options: {
     rejectUnauthorized: true
   }
 };
+
 let domain = "127.0.0.1";
 let domainAlias = [
   "^localhost$",
   "^mediasoup.nodefony.com$"
 ];
-let domainCheck = false;
 let CDN = null;
 let statics = true;
 let monitoring = true;
-let documentation = true;
+let unitTest = true;
+let domainCheck = false;
 let mail = true;
-let unitTest = false;
 
-if (process.env && process.env.NODE_ENV === "production") {
-  domain = "127.0.0.1";
-  domainAlias = [
-    "^localhost$",
-    "^mediasoup.nodefony.com$"
-  ];
-  domainCheck = true;
-  certificats.key = path.resolve("config", "certificates", "server", "privkey.pem");
-  certificats.cert = path.resolve("config", "certificates", "server", "fullchain.pem");
-  certificats.ca = path.resolve("config", "certificates", "ca", "nodefony-mediasoup-root-ca.crt.pem");
-  CDN = null;
-  mail = true;
-  statics = true;
-  documentation = false;
-  monitoring = true;
-  unitTest = false;
-} else {
-  certificats.key = path.resolve("config", "certificates", "server", "privkey.pem");
-  certificats.cert = path.resolve("config", "certificates", "server", "fullchain.pem");
-  certificats.ca = path.resolve("config", "certificates", "ca", "nodefony-mediasoup-root-ca.crt.pem");
+switch (kernel.appEnvironment) {
+  case "production":
+  case "development":
+  default:
+    certificats.key = path.resolve("config", "certificates", "server", "privkey.pem");
+    certificats.cert = path.resolve("config", "certificates", "server", "fullchain.pem");
+    certificats.ca = path.resolve("config", "certificates", "ca", "nodefony-mediasoup-root-ca.crt.pem");
+    CDN = null;
+    statics = true;
+    monitoring = true;
+    unitTest = true;
+    domainCheck = true;
 }
 
 module.exports = {
@@ -69,7 +62,6 @@ module.exports = {
     httpsPort: 5152,
     domainCheck: domainCheck,
     locale: "en_en",
-
     /**
      * BUNDLES CORE
      */
@@ -77,7 +69,6 @@ module.exports = {
     realtime: true,
     monitoring: monitoring,
     mail: mail,
-    documentation: documentation,
     unitTest: unitTest,
     redis: false,
     mongo: false,
@@ -180,6 +171,7 @@ module.exports = {
    *
    *       npm
    *       yarn
+   *       pnpm
    */
   packageManager: "yarn"
 

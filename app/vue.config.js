@@ -65,6 +65,15 @@ module.exports = {
     resolveLoader: {
       modules: [nodeModule]
     },
+    module: {
+      rules: [{
+        test: /\.js$/,
+        include: /mediasoup-client\/.*.js/,
+        use: {
+          loader: 'babel-loader'
+        }
+      }]
+    },
     output: {
       //hotUpdateChunkFilename: 'hot/[id].[hash].hot-update.js',
       //hotUpdateMainFilename: 'hot/[hash].hot-update.json'
