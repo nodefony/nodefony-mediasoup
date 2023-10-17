@@ -18,85 +18,7 @@ module.exports = class events extends nodefony.Entity {
      *   @param connection name
      */
     super(bundle, "events", "sequelize", "nodefony");
-    this.orm.on("onOrmReady", (orm) => {
-      const calendar = this.orm.getEntity("calendar");
-      const user = this.orm.getEntity("user");
-      const room = this.orm.getEntity("room");
-      if (calendar && user) {
-        this.model.belongsTo(calendar, {
-          foreignKey: {
-            allowNull: false
-          },
-          onDelete: 'CASCADE',
-          onUpdate: 'CASCADE'
-        });
-
-        this.model.belongsTo(user, {
-          foreignKey: {
-            allowNull: false,
-            name: "creator"
-          },
-          targetKey: "username",
-          onDelete: 'CASCADE',
-          onUpdate: 'CASCADE'
-        });
-
-        this.model.belongsTo(room, {
-          foreignKey: {
-            name: "conferenceData",
-            allowNull: true
-          },
-          constraints: false,
-          //as:'room'
-        })
-        /*this.model.belongsTo(room, {
-          foreignKey: {
-            name: "conferenceData",
-            allowNull: true
-          },
-          onDelete: 'CASCADE',
-          onUpdate: 'CASCADE'
-        })*/
-        room.belongsTo(this.model, {
-          foreignKey: {
-            name: "eventId",
-            allowNull: true
-          },
-          as:"event",
-          onDelete: 'CASCADE',
-          onUpdate: 'CASCADE'
-        })
-
-        /*this.model.belongsTo(room, {
-          foreignKey: {
-            allowNull: true,
-            name: "conferenceData"
-          },
-          //as:'room',
-          onDelete: 'CASCADE',
-          onUpdate: 'CASCADE'
-        })*/
-
-        /*room.hasOne(this.model, {
-          foreignKey: {
-            name: "event",
-            allowNull: true
-          },
-          as: 'conferenceData'
-        });
-        this.model.belongsTo(room, {
-          foreignKey: {
-            allowNull: true,
-            name: "conferenceData"
-          },
-          onDelete: 'CASCADE',
-          onUpdate: 'CASCADE'
-        })*/
-
-      } else {
-        this.log("ENTITY ASSOCIATION calendar NOT AVAILABLE", "WARNING");
-      }
-    });
+   
   }
 
   getSchema() {
@@ -267,8 +189,55 @@ module.exports = class events extends nodefony.Entity {
   }
 
   registerModel(db) {
-    class MyModel extends Model {}
-    MyModel.init(this.getSchema(), {
+
+    class EventModel extends Model {
+
+      static associate(models){
+        if (models.calendar && models.user && models.events) {
+          models.events.belongsTo(models.calendar, {
+            foreignKey: {
+              allowNull: false
+            },
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE'
+          });
+
+          models.events.belongsTo(models.user, {
+            foreignKey: {
+              allowNull: false,
+              name: "creator"
+            },
+            targetKey: "username",
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE'
+          });
+
+          models.events.belongsTo(models.room, {
+            foreignKey: {
+              name: "conferenceData",
+              allowNull: true
+            },
+            constraints: false,
+            //as:'room'
+          })
+        
+          models.room.belongsTo(models.events, {
+            foreignKey: {
+              name: "eventId",
+              allowNull: true
+            },
+            as:"events",
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE'
+          })
+
+        } else {
+          this.log("ENTITY ASSOCIATIONS NOT AVAILABLE", "WARNING");
+        }
+      }
+    }
+
+    EventModel.init(this.getSchema(), {
       sequelize: db,
       modelName: this.name,
       hooks: {
@@ -290,7 +259,8 @@ module.exports = class events extends nodefony.Entity {
       //  fields: ['creator',"calendarId","id"]
       //}]
     })
-    return MyModel;
+    
+    return EventModel;
   }
 
   log(pci /*, sequelize*/ ) {

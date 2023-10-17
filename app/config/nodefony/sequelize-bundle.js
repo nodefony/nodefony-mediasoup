@@ -74,8 +74,8 @@ if (nodefony.Sequelize) {
 const vault = async () => {
   const serviceVault = kernel.get("vault");
   return await serviceVault.getSecret({
-      path: "nodefony/data/database/postgresql/connector/nodefony"
-    })
+    path: "nodefony/data/database/postgresql/connector/nodefony"
+  })
     .then((secret) => {
       return secret.data.data
     })
@@ -112,45 +112,45 @@ switch (kernel.appEnvironment.environment) {
         }
       }
     }
-    /*connectors.nodefony = {
-      driver: "postgres",
-      dbname: 'nodefony',
-      username: 'postgres',
-      password: 'nodefony',
-      //credentials: vault,
-      options: {
-        dialect: "postgres",
-        host: "localhost",
-        port: "5432",
-        //isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
-        retry: {
-          match: [
-            //Sequelize.ConnectionError,
-            //Sequelize.ConnectionTimedOutError,
-            //Sequelize.TimeoutError,
-            /Deadlock/i
-          ],
-          max: 5
-        },
-        pool: {
-          max: 20,
-          min: 0,
-          idle: 10000,
-          acquire: 60000
-        }
+  /*connectors.nodefony = {
+    driver: "postgres",
+    dbname: 'nodefony',
+    username: 'postgres',
+    password: 'nodefony',
+    //credentials: vault,
+    options: {
+      dialect: "postgres",
+      host: "localhost",
+      port: "5432",
+      //isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
+      retry: {
+        match: [
+          //Sequelize.ConnectionError,
+          //Sequelize.ConnectionTimedOutError,
+          //Sequelize.TimeoutError,
+          /Deadlock/i
+        ],
+        max: 5
+      },
+      pool: {
+        max: 20,
+        min: 0,
+        idle: 10000,
+        acquire: 60000
       }
-    }*/
+    }
+  }*/
 }
 
 module.exports = {
   debug: false,
-  strategy: "sync", // sync || migrate || none  when nodefony build  or  nodefony install
+  strategy: "migrate", // sync || migrate || none  when nodefony build  or  nodefony install
   connectors: connectors,
   migrations: {
     storage: "sequelize", // sequelize || memory || json
     path: path.resolve(kernel.path, "migrations", "sequelize"),
     seedeersPath: path.resolve(kernel.path, "migrations", "seedeers"),
-    storageSeedeers:"sequelize",
+    storageSeedeers: "sequelize",
     options: {}
   }
 }

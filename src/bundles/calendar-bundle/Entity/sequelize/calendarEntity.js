@@ -19,7 +19,7 @@ module.exports = class calendarEntity extends nodefony.Entity {
      *   @param connection name
      */
     super(bundle, "calendar", "sequelize", "nodefony");
-    this.orm.on("onOrmReady", (orm) => {
+    /*this.orm.on("onOrmReady", (orm) => {
       try{
         let user = this.orm.getEntity("user");
         if (user) {
@@ -39,7 +39,7 @@ module.exports = class calendarEntity extends nodefony.Entity {
         this.log(e,"ERROR")
         throw e
       }
-    });
+    });*/
 
   }
 
