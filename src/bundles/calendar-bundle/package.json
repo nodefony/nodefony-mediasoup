@@ -16,12 +16,12 @@
     "@withshepherd/faker": "^5.5.5",
     "bcp-47": "^2.1.0",
     "i18n-iso-countries": "7.7.0",
-    "ical-generator": "5.0.1",
+    "ical-generator": "6.0.0",
     "moment": "2.29.4",
     "moment-timezone": "0.5.43"
   },
   "devDependencies": {
-    "node-gyp": "9.4.0",
+    "node-gyp": "9.4.1",
     "node-pre-gyp": "^0.17.0"
   },
   "license": "",

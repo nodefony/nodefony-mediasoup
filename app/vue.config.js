@@ -22,10 +22,10 @@ try {
   process.env.VUE_APP_DOMAIN = kernel.domain;
   process.env.VUE_APP_HTTP_PORT = kernel.httpPort;
   process.env.VUE_APP_HTTPS_PORT = kernel.httpsPort;
-} catch (e) {}
+} catch (e) { }
 
-const nodeModule = path.resolve(process.cwd(),"node_modules")
-let vuetify = path.resolve( path.dirname(require.resolve("vuetify")),"..")
+const nodeModule = path.resolve(process.cwd(), "node_modules")
+let vuetify = path.resolve(path.dirname(require.resolve("vuetify")), "..")
 module.exports = {
   lintOnSave: false,
   publicPath: publicPath,
@@ -51,13 +51,13 @@ module.exports = {
   },
 
   configureWebpack: {
-    cache:false,
+    cache: false,
     devtool: process.env.NODE_ENV === "development" ? "source-map" : "",
-    context:process.cwd(),
+    context: process.cwd(),
     resolve: {
       alias: {
         "@bundles": path.join(__dirname, "..", "src", "bundles"),
-        "vuetify":vuetify
+        "vuetify": vuetify
       },
       modules: [nodeModule],
       //roots:[process.cwd()]
@@ -68,9 +68,18 @@ module.exports = {
     module: {
       rules: [{
         test: /\.js$/,
-        include: /mediasoup-client\/.*.js/,
+        include: [/mediasoup-client\/.*.js/, /awaitqueue\/.*.js/],
         use: {
-          loader: 'babel-loader'
+          loader: 'babel-loader',
+          options: {
+            presets: [
+              //['@babel/preset-env', { targets: "defaults" }]
+            ],
+            plugins: [
+              "@babel/plugin-proposal-nullish-coalescing-operator",
+              "@babel/plugin-proposal-optional-chaining"
+            ],
+          }
         }
       }]
     },
