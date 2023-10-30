@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@mapbox/node-pre-gyp": "1.0.11",
-    "node-gyp": "9.4.1",
+    "node-gyp": "10.0.0",
     "sequelize-cli": "6.6.1",
     "stream": "0.0.2"
   },

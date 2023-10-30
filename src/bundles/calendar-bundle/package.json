@@ -21,7 +21,7 @@
     "moment-timezone": "0.5.43"
   },
   "devDependencies": {
-    "node-gyp": "9.4.1",
+    "node-gyp": "10.0.0",
     "node-pre-gyp": "^0.17.0"
   },
   "license": "",
