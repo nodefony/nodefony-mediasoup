@@ -13,7 +13,7 @@
   ],
   "repository": {},
   "dependencies": {
-    "mediasoup": "3.12.16"
+    "mediasoup": "3.13.10"
   },
   "devDependencies": {
     "@mapbox/node-pre-gyp": "1.0.11",
