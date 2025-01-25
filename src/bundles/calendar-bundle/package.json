@@ -16,7 +16,7 @@
     "@withshepherd/faker": "^5.5.5",
     "bcp-47": "^2.1.0",
     "i18n-iso-countries": "7.13.0",
-    "ical-generator": "8.0.1",
+    "ical-generator": "8.1.1",
     "moment": "2.30.1",
     "moment-timezone": "0.5.46"
   },
