@@ -2,7 +2,7 @@ const {
   Sequelize,
   DataTypes,
   Model
-} = nodefony.Sequelize;
+} = nodefony.Sequelize; //require("sequelize");
 const validator = require('validator');
 /*
  *
@@ -21,18 +21,7 @@ class userEntity extends nodefony.Entity {
      *   @param connection name
      */
     super(bundle, "user", "sequelize", "nodefony");
-    /*this.orm.on("onOrmReady", ( orm ) => {
-        let session = this.orm.getEntity("session");
-        if (session) {
-          this.model.hasMany(session, {
-            foreignKey: 'username',
-            onDelete: 'CASCADE'
-          });
 
-        } else {
-          throw new Error("ENTITY ASSOCIATION session NOT AVAILABLE");
-        }
-      });*/
   }
 
   getSchema() {
@@ -44,7 +33,7 @@ class userEntity extends nodefony.Entity {
         allowNull: false,
         validate: {
           is: {
-            args: /[^\w]|_|-|./g,
+            args: /^[\w-_.]+$/,
             msg: `username allow alphanumeric and ( _ | - | . ) characters`
           }
           /*notIn: {
@@ -58,7 +47,9 @@ class userEntity extends nodefony.Entity {
         allowNull: false,
         validate: {
           min: {
-            args: [[4]],
+            args: [
+              [4]
+            ],
             msg: `password  allow 4 characters min  `
           }
         }
@@ -86,7 +77,7 @@ class userEntity extends nodefony.Entity {
       },
       email: {
         type: DataTypes.STRING,
-        primaryKey: true,
+        //primaryKey: true,
         unique: true,
         allowNull: false,
         validate: {
@@ -100,7 +91,7 @@ class userEntity extends nodefony.Entity {
         allowNull: true,
         validate: {
           is: {
-            args: /[^\w]|_|-|.|'/g,
+            args: /^[\w-_.]*$/,
             msg: `name allow alphanumeric characters`
           }
         }
@@ -110,7 +101,7 @@ class userEntity extends nodefony.Entity {
         allowNull: true,
         validate: {
           is: {
-            args: /[^\w]|_|-|.|''/g,
+            args: /^[\w-_.]*$/,
             msg: `surname allow alphanumeric characters`
           }
         }
@@ -124,7 +115,7 @@ class userEntity extends nodefony.Entity {
         defaultValue: ["ROLE_USER"],
         get(key) {
           let val = this.getDataValue(key);
-          if (typeof (val) === "string") {
+          if (typeof(val) === "string") {
             val = JSON.parse(val);
           }
           return val;
@@ -157,8 +148,20 @@ class userEntity extends nodefony.Entity {
   }
 
   registerModel(db) {
-    class MyModel extends Model {}
-    MyModel.init(this.getSchema(), {
+    class User extends Model {
+      hasRole(name) {
+        for (let role in this.roles) {
+          if (this.roles[role] === name) {
+            return true;
+          }
+        }
+        return false;
+      }
+      isGranted(role) {
+        return this.hasRole(role);
+      }
+    }
+    User.init(this.getSchema(), {
       sequelize: db,
       modelName: this.name,
       hooks: {
@@ -196,7 +199,7 @@ class userEntity extends nodefony.Entity {
       // add custom validations
       //validate: {}
     });
-    return MyModel;
+    return User;
   }
 
   logger(pci /*, sequelize*/ ) {

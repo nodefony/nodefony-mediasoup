@@ -43,6 +43,9 @@
     "admin_panel": "Admin panel",
     "control_policy": "Control policy",
     "media_url": "Media URL"
+  },
+  "calendar":{
+    "calendar":"calendar"
   }
 
 }

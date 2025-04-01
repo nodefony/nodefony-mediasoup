@@ -43,5 +43,8 @@
     "admin_panel": "Panneau admin",
     "control_policy": "Politique de prise de contrôle",
     "media_url": "URL média"
+  },
+  "calendar":{
+    "calendar":"calendrier"
   }
 }

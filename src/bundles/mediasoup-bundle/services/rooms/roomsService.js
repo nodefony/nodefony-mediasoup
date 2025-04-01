@@ -116,11 +116,12 @@ class Rooms extends nodefony.Service {
             transaction.commit();
           }
           if (username){
-            await el.addUser(username);
+            await el.addUser(username, {transaction:transaction});
           }
           let room = el.get({
             plain: true
           });
+          console.log("passsss")
           return room;
         }).catch(e => {
           transaction.rollback();

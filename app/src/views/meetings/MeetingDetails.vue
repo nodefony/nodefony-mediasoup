@@ -1,7 +1,7 @@
 <template>
 <v-card v-if="currentRoom" outlined width="100%" class="mb-10 scroll" style="background:transparent">
 
-  <v-toolbar fixed outlined width="100%" color="blue-grey" dark flat style="">
+  <v-toolbar fixed outlined width="100%" color="#1a242d" dark flat style="">
 
     <v-icon class="mr-5">mdi-video</v-icon>
     <v-toolbar-title class="mx-5"> {{$t('meetings.meetings')}} {{ currentRoom.id || ""}}

@@ -1,0 +1,30 @@
+{
+  "name": "calendar",
+  "version": "1.0.0",
+  "description": "calendar description",
+  "author": "Christophe CAMENSULI <ccamensuli@gmail.com>",
+  "main": "calendarBundle.js",
+  "scripts": {},
+  "private": true,
+  "keywords": [
+    "nodefony",
+    "javascript",
+    "calendar"
+  ],
+  "repository": {},
+  "dependencies": {
+    "@withshepherd/faker": "^5.5.5",
+    "bcp-47": "^2.1.0",
+    "i18n-iso-countries": "7.13.0",
+    "ical-generator": "8.1.1",
+    "moment": "2.30.1",
+    "moment-timezone": "0.5.46"
+  },
+  "devDependencies": {
+    "node-gyp": "11.0.0",
+    "node-pre-gyp": "^0.17.0"
+  },
+  "license": "",
+  "readmeFilename": "README.md",
+  "contributors": []
+}

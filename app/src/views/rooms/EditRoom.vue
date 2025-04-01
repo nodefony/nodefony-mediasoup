@@ -1,7 +1,7 @@
 <template>
 <v-window>
   <v-card>
-    <v-toolbar color="blue-grey" dark flat>
+    <v-toolbar color="#1a242d" dark flat>
       <v-icon class="mr-5">mdi-home</v-icon>
       <v-toolbar-title>
         {{room ? room.name : ""}}

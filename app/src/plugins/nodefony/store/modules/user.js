@@ -20,6 +20,13 @@ const Api = new baseApi("users", {
   }
 });
 
+import countries from "i18n-iso-countries";
+import en from "i18n-iso-countries/langs/en.json"
+countries.registerLocale(en);
+import fr from "i18n-iso-countries/langs/fr.json"
+countries.registerLocale(fr);
+const reg = /^(..){1}_?(..)?$/;
+
 const state = {
   status: '',
   error: null,
@@ -76,6 +83,23 @@ const getters = {
       return state.user.surname;
     }
     return "";
+  },
+  getLocale(){
+    // lang/Pays
+    if (state.user) {
+      let res = reg.exec(state.user.lang);
+      if (res){
+        let lang = res[1]
+        let country = res[2].toUpperCase()
+        let locale = countries.getName(country, lang, {select: "all"});
+        locale.push(countries.alpha3ToAlpha2(locale[2]))
+        locale.push(lang)
+        return locale;
+      }
+    }
+    let locale = countries.getName("US", "en", {select: "all"});
+    locale.push(countries.alpha3ToAlpha2(locale[2]))
+    return locale;
   }
 
 }
@@ -97,6 +121,18 @@ const actions = {
         commit(USER_ERROR, e)
         throw e;
       })
+  },
+  getAllUsers({
+    commit,
+    state
+  }){
+    return Api.http("/api/users")
+    .then(resp => {
+      return resp
+    })
+    .catch(e => {
+      throw e;
+    })
   }
 }
 

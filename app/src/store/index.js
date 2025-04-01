@@ -17,6 +17,10 @@ import app from './application/index.js'
 import appRoom from './application/room/index.js'
 
 
+// calendar store
+import calendar from '../../../src/bundles/calendar-bundle/Resources/vue/store/calendar.js'
+import events from '../../../src/bundles/calendar-bundle/Resources/vue/store/events.js'
+
 export default new Vuex.Store({
   modules: {
     app,
@@ -25,6 +29,8 @@ export default new Vuex.Store({
     auth,
     mediasoup,
     mediasoupPeer,
-    mediasoupRoom
+    mediasoupRoom,
+    calendar,
+    events
   }
 });

@@ -10,20 +10,23 @@
       <meta name="generator" content="Nodefony (https://nodefony.net)">
       <meta name="keywords" content="web,Framework,realtime,node.js,symfony,javascript,npm,linux">
       <link rel="icon" type="image/x-icon" href="/app/favicon.ico"/>
+      <link rel="manifest" href="/app/manifest.json">
     {% endblock %}
     {% block description %}
-      <meta name="description" content="Node.js full-stack web framework Symfony Like">
+      <meta name="description" content="Nodefony Node.js full-stack web framework Symfony Like">
     {% endblock %}
     <title>
       {% block title %}{{nodefony.name|escape}}{% endblock %}
     </title>
     {% block stylesheets %}
+      <!-- WEBPACK BUNDLE -->
       <link rel="stylesheet" href="{{CDN('stylesheet')}}/framework-bundle/assets/css/framework.css"/>
     {% endblock %}
   </head>
   <body>
     {% block body %}{% endblock %}
     {% block javascripts %}
+      <!-- WEBPACK BUNDLE -->
       <script type="text/javascript" src="{{CDN('javascript')}}/framework-bundle/assets/js/framework.js"></script>
     {% endblock %}
   </body>

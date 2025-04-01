@@ -50,7 +50,7 @@ module.exports = {
    *      }
    *
    */
-  watch: true,
+  watch: false,
 
   /**
    *
@@ -74,10 +74,10 @@ module.exports = {
   },
   jwt: {
     token: {
-      expiresIn: 15*60 // 15 minutes in secondes
+      expiresIn: 900 // seconds
     },
     refreshToken: {
-      expiresIn: 24*60*60  // 24 hours in secondes
+      expiresIn: 3600 // seconds
     }
   }
 };

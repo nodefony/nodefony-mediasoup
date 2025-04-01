@@ -24,6 +24,24 @@
       </v-list-item-icon>
       <v-list-item-title @click="$router.resolve({ name: 'About'})">Home</v-list-item-title>
     </v-list-item>
+
+    <v-list-group class="" v-if="isAuthenticated && calendars && calendars.length" :value="false" prepend-icon="mdi-calendar-month">
+
+      <template v-slot:activator>
+        <v-list-item-title>{{$t('calendar.calendar')}}</v-list-item-title>
+      </template>
+
+      <v-list-item v-for="{summary, id, etag} in  calendars" :key="id" sub-group @click="redirectId('Calendar', id)">
+        <v-list-item-title class="ml-6">
+          {{ summary }}
+        </v-list-item-title>
+        <v-list-item-icon>
+          <v-icon>mdi-calendar-account-outline</v-icon>
+        </v-list-item-icon>
+      </v-list-item>
+
+    </v-list-group>
+
     <v-list-group v-if="isAuthenticated" :value="false" prepend-icon="mdi-google-classroom">
       <template v-slot:activator>
         <v-list-item-title>{{$t('meetings.meetings')}}</v-list-item-title>
@@ -75,6 +93,8 @@
 
     </v-list-group>
 
+
+
   </v-list>
   <!--v-list nav dense>
     <v-list-item link>
@@ -102,16 +122,23 @@
 
 <script>
 import {
-  mapGetters
+  mapGetters,
+  mapActions,
+  mapState
 } from 'vuex';
 export default {
   name: 'Navigation',
   components: {},
   props: {},
   data(vm) {
-    return {}
+    return {
+      //calendars: []
+    }
   },
   computed: {
+    ...mapGetters({
+      calendars: 'getCalendars'
+    }),
     ...mapGetters([
       'isAuthenticated',
       'getUser',
@@ -133,12 +160,31 @@ export default {
   },
   async mounted() {
     //console.log(this.$vuetify.breakpoint)
+    if (this.isAuthenticated) {
+      await this.getRemoteCalendars()
+        //await this.$nodefony.request("calendar/list")
+        .then((res) => {
+          if (res) {
+            //this.calendars = res.result;
+          }
+        })
+    }
   },
   async destroyed() {},
   methods: {
+    ...mapActions(["getRemoteCalendars"]),
     redirect(route) {
       return this.$router.push({
           name: route
+        })
+        .catch(() => {})
+    },
+    redirectId(route, id) {
+      return this.$router.push({
+          name: route,
+          params: {
+            id: id
+          }
         })
         .catch(() => {})
     }

@@ -20,16 +20,7 @@ class roomEntity extends nodefony.Entity {
      *   @param connection name
      */
     super(bundle, "room", "sequelize", "nodefony");
-    this.orm.on("onOrmReady", (orm) => {
-      let User = this.orm.getEntity("user");
-      let Room = this.orm.getEntity("room");
-      Room.belongsToMany(User, {
-        through: 'UserRoom'
-      });
-      User.belongsToMany(Room, {
-        through: 'UserRoom'
-      });
-    });
+
   }
 
   getSchema() {
@@ -41,10 +32,14 @@ class roomEntity extends nodefony.Entity {
         allowNull: false,
         validate: {
           is: {
-            args: /[^\w]|_|-|./g,
-            msg: `name allow alphanumeric and ( _ | - | . ) characters`
+            args: /^[\w-_.#\s]+$/,
+            msg: `Name allow alphanumeric and ( _ | - | . | #) characters`
           }
         }
+      },
+      locked: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
       },
       type: {
         type: DataTypes.ENUM,
@@ -63,8 +58,8 @@ class roomEntity extends nodefony.Entity {
         allowNull: true,
         validate: {
           is: {
-            args: /[^\w]|_|-|.|''/g,
-            msg: `description allow alphanumeric characters`
+            args: /^[\w-_.#\s]+$/,
+            msg: `Description allow alphanumeric and ( _ | - | . ) characters`
           }
         }
       },
@@ -107,8 +102,19 @@ class roomEntity extends nodefony.Entity {
   }
 
   registerModel(db) {
-    class MyModel extends Model {}
-    MyModel.init(this.getSchema(), {
+    class Room extends Model {
+
+      static associate(models){
+        models.room.belongsToMany(models.user, {
+          through: 'UserRoom'
+        });
+        models.user.belongsToMany(models.room, {
+          through: 'UserRoom'
+        });
+      }
+
+    }
+    Room.init(this.getSchema(), {
       sequelize: db,
       modelName: this.name,
       hooks: {
@@ -124,7 +130,7 @@ class roomEntity extends nodefony.Entity {
                 throw err;
               });
           }
-          if (!room.sticky_cookie){
+          if (!room.sticky_cookie) {
             room.sticky_cookie = `sticky-room-${room.name}`;
           }
         },
@@ -148,7 +154,7 @@ class roomEntity extends nodefony.Entity {
       // add custom validations
       //validate: {}
     });
-    return MyModel;
+    return Room;
   }
 
   logger(pci /*, sequelize*/ ) {

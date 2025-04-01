@@ -1,7 +1,7 @@
 <template>
 <v-window style="background-color:#f2f5f8;">
   <v-container fluid class="ma-0 pa-0">
-    <v-toolbar fixed outlined width="100%" color="blue-grey" dark flat style="top: 64px;position:fixed;">
+    <v-toolbar fixed outlined width="100%" color="#1a242d" dark flat style="top: 64px;position:fixed;">
 
       <v-icon class="mr-5">mdi-video</v-icon>
       <v-toolbar-title class="mx-5"> {{$t('meetings.meetings')}}</v-toolbar-title>
